@@ -8,18 +8,30 @@
 #' @return A list of components and the leverage
 #' @export
 #'
-#' @importFrom gmodels fast.prcomp
+#' @importFrom bootSVD fastSVD
 #' @examples
 #' n_voxels = 1e5
 #' n_timepoints = 100
 #' x = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 #'
 #' lev = pca_leverage(x)
-pca_leverage = function(x,
-                        center = TRUE,
-                        scale. = FALSE,
-                        ...
-                        ) {
-  res = fast.prcomp(x, center = center,
-                    scale. = scale)
+pca_leverage = function(
+  x,
+  center = TRUE,
+  scale. = FALSE,
+  ...
+) {
+  x <- as.matrix(x)
+  x <- scale(x, center = center, scale = scale.)
+  res = bootSVD::fastSVD(x, center_A = FALSE, ...)
+
+  res$sdev = res$d
+  res$d = NULL
+  res$center = center
+  res$scale = scale
+  res$rotation = res$v
+  res$v = NULL
+
+  class(res) = "prcomp"
+  return(res)
 }
