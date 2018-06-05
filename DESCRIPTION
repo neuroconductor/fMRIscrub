@@ -1,0 +1,15 @@
+Package: clever
+Type: Package
+Title: Calculate Leverage of Component Models
+Version: 0.1.0
+Author: John Muschelli <muschellij2@gmail.com>
+Maintainer: John Muschelli <muschellij2@gmail.com>
+Description: Extends the linear model leverage idea to 
+    principal components analysis.  The name is based on component leverage,
+    or clever.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    gmodels
+RoxygenNote: 6.0.1
