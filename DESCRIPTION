@@ -19,7 +19,9 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    bootSVD
+    miscTools, 
+    robustbase,
+    stats
 RoxygenNote: 6.0.1
-URL: https://github.com/muschellij2/clever
-BugReports: https://github.com/muschellij2/clever/issues
+URL: https://github.com/mandymejia/clever
+BugReports: https://github.com/mandymejia/clever/issues
