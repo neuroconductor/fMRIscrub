@@ -4,10 +4,16 @@
 \alias{pca_leverage}
 \title{Calculate the Leverage for a Principal Components Analysis}
 \usage{
-pca_leverage(x)
+pca_leverage(x, center = TRUE, scale. = FALSE, ...)
 }
 \arguments{
 \item{x}{data matrix of values, passed to \code{\link{fast.prcomp}}}
+
+\item{center}{logical value for centering, passed to \code{\link{prcomp}}}
+
+\item{scale.}{logical value for scaling, passed to \code{\link{prcomp}}}
+
+\item{...}{additional arguments passed to \code{\link{fast.prcomp}}}
 }
 \value{
 A list of components and the leverage
@@ -16,6 +22,9 @@ A list of components and the leverage
 Calculate the Leverage for a Principal Components Analysis
 }
 \examples{
-x = matrix(rnorm(100*3), ncol = 3)
+n_voxels = 1e5
+n_timepoints = 100
+x = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
+
 lev = pca_leverage(x)
 }
