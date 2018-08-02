@@ -5,18 +5,21 @@
 
 The goal of clever is to compute principal Components LEVERage (CLEVER)
 and robust distance, measures of outlyingness for high-dimensional data
-such as fMRI data.
+such as fMRI
+data.
 
 ## Installation
 
-You can install the released version of clever from
-[CRAN](https://CRAN.R-project.org) with:
+<!-- You can install the released version of clever from [CRAN](https://CRAN.R-project.org) with: -->
 
-``` r
-install.packages("clever")
-```
+<!-- ``` r -->
 
-And the development version from [GitHub](https://github.com/) with:
+<!-- install.packages("clever") -->
+
+<!-- ``` -->
+
+You can install the development version of clever from
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")

@@ -1,0 +1,86 @@
+---
+title: "Clever: Using PCA Leverage for Outlier Detection in High-Dimensional Data"
+author: "Amanda Mejia & Preya Shah"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{clever}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Overview
+
+The Clever package implements the PCA leverage outlier detection method for high-dimensional (HD) data, as detailed in this manuscript:
+
+Citation: Mejia, Amanda F., Mary Beth Nebel, Ani Eloyan, Brian Caffo, and Martin A. Lindquist. "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data." Biostatistics 18, no. 3 (2017): 521-536. [paper link](https://academic.oup.com/biostatistics/article/18/3/521/3056185)
+
+In summary, the manuscript proposed a method to detect outlier observations in HD data by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While the primary application is for detecting outlying time points in an fMRI scan, the method can also be applied to other forms of HD data, such as gene expression data.
+
+
+
+## Method Outline
+
+As input, the algorithm take an __T__ x __V__ matrix, __Y__. In our case, __Y__ represents an fMRI run, where each row of __Y__ is a vectorized volume, and each column represents one timepoint. Next, the algorithm involves the following key steps: 
+
+
+1. Normalize the __Y__ matrix.
+
+2. Carry out PCA on the normalized Y matrix using singular value decomposition (SVD), in order to obtain the PC score matrix, __U__ (of dimensionality __T__ x __T__)     
+
+3. Retain the first __Q__ rows of the U matrix corresponding to the first __Q__ < __T__ principal components.  We will refer to this submatrix as __Ũ__ (of dimensionality __T__ x __Q__). This is our dimensionality reduction step. _Note_: To choose the model order __Q__, we retain only components with a greater-than-average eigenvalue; however, the user may input their own __Q__ if desired.
+
+
+4. Now that we can apply outlier detection on __Ũ__. The primary method is _PCA leverage_, though we also propose an alternative called _robust distance_ (see paper for further details). The output of either of these outlier detection methods is a __T__ x __1__ vector representing the "outlyingness" of each time point.  
+
+5. Now that we have our outlyingness vector, we can threshold it to identify the outliers. We choose 3 thresholds, with increasing level of stringency. Our function outputs the outliers associated with all 3 thresholds.  
+
+
+## Installation
+
+To install the package from GitHub:
+
+```{r, warning = FALSE, message = FALSE}
+library(devtools)
+devtools::install_github('mandymejia/clever')
+library(clever)
+```
+
+
+## Tutorial Data
+ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. 
+ 
+
+## A Simple Example
+
+Here, we will run through a simple example. First let's pull the data, as follows:
+
+```{r, warning = FALSE, message = FALSE}
+data(dat1)
+data(dat2)
+dim(dat1)
+dim(dat2)
+```
+
+Quick visualization of the data.  This is one slice of the first fMRI volume and of the brain mask for the first subject.
+
+```{r}
+par(mfrow=c(1,2))
+image(dat1[,45,,1])
+image(mask1[,45,])
+```
+
+
+
+Let's first apply the brain mask for 
+
+
+```{r, warning = FALSE, message = FALSE}
+#Insert main function
+```
+
+
+## Results
+
+Here, w will 
+

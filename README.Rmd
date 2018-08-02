@@ -18,13 +18,13 @@ The goal of clever is to compute principal Components LEVERage (CLEVER) and robu
 
 ## Installation
 
-You can install the released version of clever from [CRAN](https://CRAN.R-project.org) with:
+<!-- You can install the released version of clever from [CRAN](https://CRAN.R-project.org) with: -->
 
-``` r
-install.packages("clever")
-```
+<!-- ``` r -->
+<!-- install.packages("clever") -->
+<!-- ``` -->
 
-And the development version from [GitHub](https://github.com/) with:
+You can install the  development version of clever from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
