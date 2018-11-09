@@ -1,56 +1,68 @@
-#keep only components that explain more than the mean variance
-choosePCs_mean <- function(svd, method){
+#' Selects the principle components of greatest variance from a SVD.
+#'
+#' PCs with above-average variance are kept. The total number kept can be
+#' constrained within a range using the `max_keep` and min_keep` arguments.
+#' PCs with greater variance will be prioritized for keeping. 
+#'
+#' @param svd An SVD decomposition; i.e. a list containing u, d, and v. 
+#' @param max_keep If specified, the total number kept will be at most this value.
+#' @param min_keep If specified, the total number kept will be at least this value.
+#'
+#' @return The subsetted u matrix with only the chosen columns (PCs).
+#' @export
+#'
+#' @examples
+choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 	U <- svd$u
-	var = svd$d
+	var <- svd$d
 
-	if(method %in% c('robdist','robdist_subset')){
-		#Let q = n_PCs/n_timepoints (ncol(U)/nrow(U)).
-		#covMcd() requires q <= 1/2.
-		#Higher q will use more components for estimation,
-		#	thus retaining a higher resolution of information.
-		#Lower q will have higher breakdown points,
-		#	thus being more resistant to outliers.
-		#(At q = 1/2, the breakdown point ~= .25)
-		#(At q = 1/20, the breakdown point ~= .475)
-		q <- 1/3
-		div = switch(method, robdist=1/q, robdist_subset=1/3*q)
-		#Keep components with above-average variance, up to
-		#	(q*n_timepoints) components. 
-		n_keep <- min(max(floor(nrow(U)*div),1), ncol(U)) 
-		min_var <- max(mean(var), var[order(-var)][n_keep])
-		keep <- which(var >= min_var)
-	} else {
-		keep <- which(var > mean(var))
-	}
+	# Identify how many PCs will be kept.
+	n_keep <- sum(var > mean(var))
 
-	U <- U[,keep]
+	# Constrain this number kept between the minumum and maximum, if specified.
+	if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
+	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
+
+	# PCs are already ordered by decreasing variance.
+	U <- U[,1:n_keep]
 	return(U)
 }
 
-#keep components that have high kurtosis
-choosePCs_kurtosis <- function(svd, method){
-	U <- svd$u #<-- U matrix
-	#Remember original number of PCs.
-	n_PCs <- ncol(U)
-	#first remove components that explain less than 99% of variation
-	cumvarexp <- cumsum(svd$d/sum(svd$d)) #sd?
-	keep <- (cumvarexp < .99)
-	U <- U[,keep] #<-- U matrix
-	#compute kurtosis of remaining PCs
+#' Selects the principle components of greatest kurtosis from a SVD.
+#' 
+#' PCs with kurtosis greater than 2 are kept. The total number kept can be
+#' constrained within a range using the `max_keep` and min_keep` arguments.
+#' PCs with greater kurtosis will be prioritized for keeping. 
+#'
+#' @param svd An SVD decomposition; i.e. a list containing u, d, and v. 
+#' @param max_keep If specified, the total number kept will be at most this value.
+#' @param min_keep If specified, the total number kept will be at least this value.
+#'
+#' @return The subsetted u matrix with only the chosen columns (PCs).
+#' @export
+#'
+#' @examples
+choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=NULL){
+	U <- svd$u
+
+	# First remove components that explain less than 99% of variation.
+	cumvarexp <- cumsum(svd$d/sum(svd$d))
+	n_keep <- min(which((cumvarexp > .99)))
+
+	U <- U[,1:n_keep] 
+
+	# Compute kurtosis of remaining PCs.
 	kurt <- apply(U, 2, rob_kurtosis)
 
-	if(method %in% c('robdist','robdist_subset')){
-		q <- 1/3
-		div <- switch(method, robdist=q, robdist_subset=1/3*q)
-		#Keep components with kurt > 2, up to 
-		#	(q*n_timepoints) components. 
-		max_keep <- min(max(floor(nrow(U)*div),1), n_PCs)
-		min_kurt <- max(2, kurt[order(-kurt)][max_keep])
-		keep <- which(kurt >= min_kurt)
-	} else {
-		keep <- which(kurt > 2)
-	}
+	# Identify how many PCs will be kept.
+	n_keep <- sum(kurt > 2)
 
-	U <- U[,keep]
+	# Constrain the number kept between the minumum and maximum, if specified.
+	if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
+	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
+
+	# The PCs with greatest kurtosis are chosen.
+	to_keep = order(-kurt)[1:n_keep]
+	U <- U[,to_keep]
 	return(U)
 }
