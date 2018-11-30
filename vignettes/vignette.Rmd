@@ -1,6 +1,6 @@
 ---
 title: "Clever: Using PCA Leverage for Outlier Detection in High-Dimensional Data"
-author: "Amanda Mejia & Preya Shah"
+author: "Amanda Mejia, Preya Shah & Damon Pham"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -20,30 +20,25 @@ The Clever package implements the PCA leverage outlier detection method for high
 
 Citation: Mejia, Amanda F., Mary Beth Nebel, Ani Eloyan, Brian Caffo, and Martin A. Lindquist. "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data." Biostatistics 18, no. 3 (2017): 521-536. [paper link](https://academic.oup.com/biostatistics/article/18/3/521/3056185)
 
-In summary, the manuscript proposed a method to detect outlier observations in HD data by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While the primary application is for detecting outlying time points in an fMRI scan, the method can also be applied to other forms of HD data, such as gene expression data.
-
-
+In summary, the manuscript proposes a method to detect outlier observations in HD data by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While the primary application is for detecting outlying time points in an fMRI scan, the method can also be applied to other forms of HD data, such as gene expression data.
 
 ## Method Outline
 
-As input, the algorithm take an __T__ x __V__ matrix, __Y__. In our case, __Y__ represents an fMRI run, where each row of __Y__ is a vectorized volume, and each column represents one timepoint. Next, the algorithm involves the following key steps: 
-
+As input, the algorithm takes a __T__ x __V__ matrix, __Y__. In our case, __Y__ represents an fMRI run, where each row of __Y__ is a vectorized volume, and each column represents one timepoint. Next, the algorithm performs the following steps: 
 
 1. Normalize the __Y__ matrix.
 
-2. Carry out PCA on the normalized Y matrix using singular value decomposition (SVD), in order to obtain the PC score matrix, __U__ (of dimensionality __T__ x __T__)     
+2. Perform PCA on the normalized __Y__ matrix using singular value decomposition (SVD), in order to obtain the PC score matrix, __U__ (of dimension __T__ x __T__).
 
-3. Retain the first __Q__ rows of the U matrix corresponding to the first __Q__ < __T__ principal components.  We will refer to this submatrix as __Ũ__ (of dimensionality __T__ x __Q__). This is our dimensionality reduction step. _Note_: To choose the model order __Q__, we retain only components with a greater-than-average eigenvalue; however, the user may input their own __Q__ if desired.
+3. To reduce the dimensions, retain the first __Q__ rows of the __U__ matrix corresponding to the first __Q__ < __T__ principal components.  We will refer to this submatrix as __A__ (of dimension __T__ x __Q__). _Note_: To choose the model order __Q__, we retain only components with a greater-than-average eigenvalue for the "mean" method, or components with kurtosis greater than 2 for the "kurtosis" method. The number kept will be further restricted if _robust distance_ will be used, since it requires __T__ to be appropriately large relative to __Q__ for estimation of the covariance matrix.
 
+4. Now we can apply outlier detection on __A__. The primary method is _PCA leverage_, though we also propose an alternative called _robust distance_ (see paper for further details). The output of either of these outlier detection methods is a __T__ x __1__ vector representing the "outlyingness" of each time point.  
 
-4. Now that we can apply outlier detection on __Ũ__. The primary method is _PCA leverage_, though we also propose an alternative called _robust distance_ (see paper for further details). The output of either of these outlier detection methods is a __T__ x __1__ vector representing the "outlyingness" of each time point.  
-
-5. Now that we have our outlyingness vector, we can threshold it to identify the outliers. We choose 3 thresholds, with increasing level of stringency. Our function outputs the outliers associated with all 3 thresholds.  
-
+5. Thresholds are used to identify the outliers. We choose 3 thresholds, with increasing level of stringency. Our function outputs the outliers associated with each threshold.  
 
 ## Installation
 
-To install the package from GitHub and load it:
+Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE}
 library(devtools)
@@ -51,11 +46,10 @@ devtools::install_github('damondpham/clever')
 library(clever)
 ```
 
-
 ## Tutorial Data
-ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. 
- 
 
+ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. The first dataset contains a number of artifacts; the second is relatively artifact-free.
+ 
 ## A Simple Example
 
 Here, we will run through a simple example. First let's pull the data, as follows:
@@ -72,29 +66,23 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-TO DO:
-1. Run clever on both datasets
-  a. ID PCs with mean eigenvalues, compute leverage and distance
-  b. ID PCs with kurtosis, compute leverage and distance
-2. Identify outliers
-3. Visualize with outliers
-4. Visualize distribution of values (at least for distance)
-
-### 1
+We next run clever on both datasets using all possible combinations of parameters.
 
 ```{r}
 clever.Dat1.mean.lev = clever(Dat1)
-clever.Dat1.kurt.lev = clever(Dat1, choosePCs = 'kurtosis')
 clever.Dat2.mean.lev = clever(Dat2)
-clever.Dat2.kurt.lev = clever(Dat2, choosePCs = 'kurtosis')
+```
 
+```{r, warning = FALSE, message = FALSE}
+clever.Dat1.kurt.lev = clever(Dat1, choosePCs = 'kurtosis')
 clever.Dat1.mean.rds = clever(Dat1, method = 'robdist_subset')
 clever.Dat1.kurt.rds = clever(Dat1, choosePCs = 'kurtosis', method = 'robdist_subset')
-clever.Dat2.mean.rds = clever(Dat2, method = 'robdist_subset')
-clever.Dat2.kurt.rds = clever(Dat2, choosePCs = 'kurtosis', method = 'robdist_subset')
-
 clever.Dat1.mean.rbd = clever(Dat1, method = 'robdist')
 clever.Dat1.kurt.rbd = clever(Dat1, choosePCs = 'kurtosis', method = 'robdist')
+
+clever.Dat2.kurt.lev = clever(Dat2, choosePCs = 'kurtosis')
+clever.Dat2.mean.rds = clever(Dat2, method = 'robdist_subset')
+clever.Dat2.kurt.rds = clever(Dat2, choosePCs = 'kurtosis', method = 'robdist_subset')
 clever.Dat2.mean.rbd = clever(Dat2, method = 'robdist')
 clever.Dat2.kurt.rbd = clever(Dat2, choosePCs = 'kurtosis', method = 'robdist')
 
@@ -103,18 +91,93 @@ clevers.Dat1 = list(clever.Dat1.mean.lev, clever.Dat1.kurt.lev, clever.Dat1.mean
 clevers.Dat2 = list(clever.Dat2.mean.lev, clever.Dat2.kurt.lev, clever.Dat2.mean.rds, clever.Dat2.kurt.rds, clever.Dat2.mean.rbd, clever.Dat2.kurt.rbd)
 ```
 
-```{r}
-for(clever in clevers.Dat1){
-  plot(clever)
-  plot(clever, log_measure = T)
+There were zero-variance voxels in both files, but neither had so much as to warrant concern.
+
+Here are the outlier distributions for the first dataset:
+
+```{r warning=FALSE, message=FALSE}
+library(ggpubr)
+library(gridExtra)
+```
+
+```{r fig.height=12, fig.width=8}
+library(ggpubr)
+library(gridExtra)
+theme_set(theme_pubr())
+
+plt_cell = vector('list', length=6)
+plt_row = vector('list', length=3)
+for(j in 0:2){
+  for(i in 1:2){
+    plt_cell[[j*2 + i]] = plot(clevers.Dat1[[j*2 + i]], type='n')
+  }
+  r = c(plt_cell[(j*2+1):(j*2+2)], common.legend=T, legend='bottom', align='hv', ncol=2)
+  plt_row[[j + 1]] = do.call(ggarrange, r)
 }
+
+grid.arrange(grobs=plt_row, ncol=1)
+```
+
+And for the second:
+
+```{r fig.height=12, fig.width=8}
+plt_cell = vector('list', length=6)
+plt_row = vector('list', length=3)
+for(j in 0:2){
+  for(i in 1:2){
+    plt_cell[[j*2 + i]] = plot(clevers.Dat2[[j*2 + i]], type='n')
+  }
+  r = c(plt_cell[(j*2+1):(j*2+2)], common.legend=T, legend='bottom', align='hv', ncol=2)
+  plt_row[[j + 1]] = do.call(ggarrange, r)
+}
+
+grid.arrange(grobs=plt_row, ncol=1)
+```
+
+For the first dataset, clever identifies a few outlying time ranges consistently across all parameter settings. The exception is kurtosis and leverage, where the same time ranges do have high leverage, but are not labeled as outliers since they do not surpass the cutoffs. For the second dataset, some parameter settings identify a handful of outliers, but most do not. Of those outliers identified, their time ranges are not consistent, and their outlyingness measures are fairly low. Overall, these results are consistent with our prior knowledge of both datasets. 
+
+In fact, We can reconstruct the original fMRI images with the mask used to obtain their vectorized matrix representations.
+
+```{r warning=FALSE}
+library(oro.nifti)
+library(neurobase)
 ```
 
 ```{r}
-for(clever in clevers.Dat2){
-  plot(clever)
-  plot(clever, log_measure = T)
+Mask1 = readNIfTI('../data/Dat1_mask.nii.gz') #Pitt_0050048 (full of artifacts)
+
+Matrix_to_VolumeTimeSeries = function(mat, mask){
+  t = nrow(mat)
+  dims = c(dim(mask), t)
+  in.mask = mask > 0
+  nif = array(0, dim=dims)
+  for(i in 1:t){
+    nif[,,,i][in.mask] = mat[i,]
+  }
+  return(nif)
+}
+
+Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
+```
+
+Below, we look at sagittal midsections of the first data set. We will compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the mean and leverage parameter settings.
+
+```{r}
+Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
+  vol = VolumeTimeSeries[,,,time]
+  vol = copyNIfTIHeader(img=mask, arr=vol)
+  return(vol)
+}
+
+levs = clever.Dat1.mean.lev$leverage
+t_med = order(levs)[ceiling(length(levs)/2)]
+t_high = which.max(levs)
+times = c(t_med, t_high)
+z = floor(dim(Mask1)[2]/2)
+plots = vector(mode='list', length(times))
+for(i in 1:length(times)){
+  image(Volume_to_NIfTI(Img1, times[i], Mask1), z=z, plane='sagittal', plot.type='single')
 }
 ```
 
-
+The median time point appears normal, whereas the most outlying time point clearly has banding artifacts.

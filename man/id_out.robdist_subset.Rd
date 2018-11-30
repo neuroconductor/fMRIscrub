@@ -4,7 +4,7 @@
 \alias{id_out.robdist_subset}
 \title{Identifies outliers based on robust distance, with adjustment for the subset method.}
 \usage{
-id_out.robdist_subset(distance, inMCD, Q, Fparam)
+id_out.robdist_subset(distance, inMCD, Fparam)
 }
 \arguments{
 \item{distance}{A vector of length n with the robust distance estimate of each observation.}
