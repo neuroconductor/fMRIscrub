@@ -8,17 +8,15 @@
 #'
 #' @return The input matrix centered and scaled. 
 scale_med <- function(mat){
-	# X is nxp; we want to scale the columns.
+	# mat is nxp; we want to scale the columns.
 	n <- nrow(mat)
 	p <- ncol(mat)
 
-	ctr <- colMedians(mat, na.rm=TRUE)
-	ctr_mat <- matrix(ctr, nrow=n, ncol=p, byrow=TRUE)
+	# Center.
+	mat <- sweep(mat, 2, colMedians(mat, na.rm=TRUE), '-')
 
-	mad <- 1.4826 * colMedians(abs(mat - ctr_mat), na.rm=TRUE)
-	mad_mat <- matrix(mad, nrow=n, ncol=p, byrow=TRUE)
-
-	# Check for voxels with MAD == 0.
+	# Compute MAD and check for zero-variance voxels.
+	mad <- 1.4826 * colMedians(abs(mat), na.rm=TRUE)
 	zero_mad <- mad == 0
 	if(any(zero_mad)){
 		if(all(zero_mad)){
@@ -30,23 +28,10 @@ scale_med <- function(mat){
 		}
 	}
 
-	mat_scaled <- ifelse(mad_mat == 0, 0, (mat - ctr_mat)/mad_mat)
+	# Scale.
+	scale_col <- function(col, v){ return(ifelse(v != 0, col/v, 0)) }
+	mat_scaled <- sweep(mat, 2, mad, scale_col)
 	return(mat_scaled)
-}
-
-#' Computes the median absolute deviation for columns in a matrix.
-#'
-#' @param mat A numerical matrix.
-#'
-#' @return A vector with the median absolute deviations of each column in the input matrix.
-get_mad <- function(mat){
-	n <- nrow(mat)
-	p <- ncol(mat)
-
-	ctr <- colMedians(mat, na.rm=TRUE)
-	ctr_mat <- matrix(ctr, nrow=n, ncol=p, byrow=TRUE)
-	mad <- 1.4826 * colMedians(abs(mat - ctr_mat), na.rm=TRUE)
-	return(mad)
 }
 
 #' Computes the log likelihood of a sample of values from an F distribution. 
