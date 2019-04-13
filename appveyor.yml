@@ -14,7 +14,11 @@ cache:
   - C:\RLibrary
 
 environment:
-  NOT_CRAN: true
+  global:
+    NOT_CRAN: true    
+    USE_RTOOLS: true
+    R_REMOTES_NO_ERRORS_FROM_WARNINGS: true    
+    WARNINGS_ARE_ERRORS: 1
 
 # Adapt as necessary starting from here
 
