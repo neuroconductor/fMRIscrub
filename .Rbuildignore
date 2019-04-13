@@ -7,3 +7,5 @@
 ^braintree-demo.RMD$
 ^.*_clever.csv$
 ^.*_clever.png$
+^\.travis\.yml$
+^appveyor\.yml$
