@@ -11,7 +11,14 @@ Authors@R: c(
            family = "Muschelli",
            email = "muschellij2@gmail.com",
            role = c("aut"),
-           comment = c(ORCID = "0000-0001-6469-1750")))
+           comment = c(ORCID = "0000-0001-6469-1750")),
+    person(given = "Preya",
+           family = "Shah",
+           role = c("ctb")),
+    person(given = "Damon",
+           family = "Pham",
+           role = c("ctb"))
+           )
 Description: Extends the definition of leverage from linear models 
     to principal components analysis.  The name is based on component leverage,
     or clever.
@@ -23,7 +30,7 @@ Imports:
     miscTools, 
     robustbase,
     stats
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
 Suggests: 

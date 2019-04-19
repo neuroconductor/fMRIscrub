@@ -40,10 +40,8 @@ As input, the algorithm takes a __T__ x __V__ matrix, __Y__. In our case, __Y__ 
 
 Install the package from GitHub and load it:
 
-```{r, warning = FALSE, message = FALSE}
-library(devtools)
+```{r, warning = FALSE, message = FALSE, eval = FALSE}
 devtools::install_github('mandymejia/clever')
-library(clever)
 ```
 
 ## Tutorial Data
@@ -55,6 +53,7 @@ ABIDE is a publicly available resource of neuroimaging and phenotypic informatio
 Here, we will run through a simple example. First let's pull the data, as follows:
 
 ```{r, warning = FALSE, message = FALSE}
+library(clever)
 data(dat1)
 data(dat2)
 ```

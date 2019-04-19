@@ -2,16 +2,14 @@
 #'
 #' PCs with above-average variance are kept. The total number kept can be
 #' constrained within a range using the `max_keep` and min_keep` arguments.
-#' PCs with greater variance will be prioritized for keeping. 
+#' PCs with greater variance will be prioritized for keeping.
 #'
-#' @param svd An SVD decomposition; i.e. a list containing u, d, and v. 
+#' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param max_keep If specified, the total number kept will be at most this value.
 #' @param min_keep If specified, the total number kept will be at least this value.
 #'
 #' @return The subsetted u matrix with only the chosen columns (PCs).
 #' @export
-#'
-#' @examples
 choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 	U <- svd$u
 	var <- svd$d
@@ -29,19 +27,17 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 }
 
 #' Selects the principle components of greatest kurtosis from a SVD.
-#' 
+#'
 #' PCs with kurtosis greater than 2 are kept. The total number kept can be
 #' constrained within a range using the `max_keep` and min_keep` arguments.
-#' PCs with greater kurtosis will be prioritized for keeping. 
+#' PCs with greater kurtosis will be prioritized for keeping.
 #'
-#' @param svd An SVD decomposition; i.e. a list containing u, d, and v. 
+#' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param max_keep If specified, the total number kept will be at most this value.
 #' @param min_keep If specified, the total number kept will be at least this value.
 #'
 #' @return The subsetted u matrix with only the chosen columns (PCs).
 #' @export
-#'
-#' @examples
 choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=NULL){
 	U <- svd$u
 
@@ -49,7 +45,7 @@ choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=NULL){
 	cumvarexp <- cumsum(svd$d/sum(svd$d))
 	n_keep <- min(which((cumvarexp > .99)))
 
-	U <- U[,1:n_keep] 
+	U <- U[,1:n_keep]
 
 	# Compute kurtosis of remaining PCs.
 	kurt <- apply(U, 2, rob_kurtosis)

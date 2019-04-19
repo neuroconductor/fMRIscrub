@@ -6,8 +6,6 @@
 #'
 #' @return A vector of length n with the leverage of each observation.
 #' @export
-#'
-#' @examples
 PCleverage <- function(U){
 	return(diag(U %*% t(U)))
 }
@@ -31,8 +29,6 @@ PCleverage <- function(U){
 #'	\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
 #' }
 #' @export
-#'
-#' @examples
 PCrobdist_subset <- function(U){
 
 	n <- nrow(U)
@@ -73,7 +69,7 @@ PCrobdist_subset <- function(U){
 	mah[!inMCD] <- scale*mah[!inMCD] #apply scale to obs not in MCD
 
 	# Match 10th quantile of sample and F distributions.
-	mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) / 
+	mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) /
 		quantile(mah[!inMCD], 0.1) #match 10th quantile
 
 	result <- list(mah, inMCD, Fparam)
@@ -99,8 +95,6 @@ PCrobdist_subset <- function(U){
 #'	\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
 #' }
 #' @export
-#'
-#' @examples
 PCrobdist <- function(U){
 
 	n <- nrow(U)
@@ -109,7 +103,7 @@ PCrobdist <- function(U){
 	MCD <- covMcd(U)
 	mah <- MCD$mah
 	inMCD <- (MCD$mcd.wt==1)
-	
+
 	# Scale left-out observations to follow F-distribution.
 	Fparam <- fit.F(Q, n, sum(inMCD))
 
@@ -119,7 +113,7 @@ PCrobdist <- function(U){
 	mah[!inMCD] <- scale*mah[!inMCD]
 
 	# Match 10th quantile of sample and F distributions.
-	mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) / 
+	mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) /
 		quantile(mah[!inMCD], 0.1)
 
 	result <- list(mah, inMCD, Fparam)
