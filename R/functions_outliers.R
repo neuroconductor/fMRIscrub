@@ -1,13 +1,13 @@
 #' Identifies outliers based on leverage.
 #'
-#' Observations with leverage greater than 3, 4, and 5 times the median are labeled as outliers. 
+#' Observations with leverage greater than 3, 4, and 5 times the median are labeled as outliers.
 #'
 #' @param leverage A vector of length n with the leverage of each observation.
 #'
 #' @return A list with components
 #' \describe{
 #' 	\item{outliers}{
-#'		An n x 3 data.frame indicating if each observation is an outlier at the 
+#'		An n x 3 data.frame indicating if each observation is an outlier at the
 #'		3*median, 4*median, and 5*median levels.
 #'	}
 #'	\item{cutoffs}{The leverage cutoff values: 3*median, 4*median, and 5*median.}
@@ -21,7 +21,7 @@ id_out.leverage <- function(leverage){
 	out.lev5 <- (leverage > cutoffs[[3]])
 
 	out <- data.frame(out.lev3, out.lev4, out.lev5)
-	names(out) <- c('3med_outlier','4med_outlier','5med_outlier')
+	names(out) <- c('3 x median','4 x median','5 x median')
 	result <- list(outliers=out, cutoffs=cutoffs)
 	return(result)
 }
@@ -38,7 +38,7 @@ id_out.leverage <- function(leverage){
 #' @return A list with components
 #' \describe{
 #' 	\item{outliers}{
-#'		An n x 3 data.frame indicating if each observation is an outlier at the 
+#'		An n x 3 data.frame indicating if each observation is an outlier at the
 #'		1e-2, 1e-3, and 1e-4 quantile levels.
 #'	}
 #'	\item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and 1e-4th quantiles}
@@ -62,7 +62,7 @@ id_out.robdist_subset <- function(distance, inMCD, Fparam){
 	out.mah9999[!inMCD] <- (distance[!inMCD] > cutoffs[3])
 
 	out <- data.frame(out.mah99, out.mah999, out.mah9999)
-	names(out) <- c('0.99 quantile outlier','0.999 quantile outlier','0.9999 quantile outlier')
+	names(out) <- c('0.99 quantile','0.999 quantile','0.9999 quantile')
 
 	result <- list(outliers=out, cutoffs=cutoffs)
 	return(result)
@@ -80,7 +80,7 @@ id_out.robdist_subset <- function(distance, inMCD, Fparam){
 #' @return A list with components
 #' \describe{
 #' 	\item{outliers}{
-#'		An n x 3 data.frame indicating if each observation is an outlier at the 
+#'		An n x 3 data.frame indicating if each observation is an outlier at the
 #'		1e-2, 1e-3, and 1e-4 quantile levels.
 #'	}
 #'	\item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and 1e-4th quantiles}
@@ -102,7 +102,7 @@ id_out.robdist <- function(distance, inMCD, Fparam){
 	out.mah9999[!inMCD] <- (distance[!inMCD] > cutoffs[3])
 
 	out <- data.frame(out.mah99, out.mah999, out.mah9999)
-	names(out) <- c('0.99 quantile outlier','0.999 quantile outlier','0.9999 quantile outlier')
+	names(out) <- c('0.99 quantile','0.999 quantile','0.9999 quantile')
 
 	result <- list(outliers=out, cutoffs=cutoffs)
 	return(result)
