@@ -17,8 +17,8 @@ Prints a dot plot of the observations (x-axis) against their outlyingness (y-axi
  their leverage or robust distance.
 }
 \details{
-Cutoffs for each outlier level are marked by horizontal dashed lines. Outliers are 
- highlighted by vertical lines which extend down to the x-axis; they are colored yellow, 
+Cutoffs for each outlier level are marked by horizontal dashed lines. Outliers are
+ highlighted by vertical lines which extend down to the x-axis; they are colored yellow,
  orange and red in order of increasing outlyingness.
 
 If the outlyingness measure is robust distance, observations within the MCD are plotted

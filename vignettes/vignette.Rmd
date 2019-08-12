@@ -55,8 +55,8 @@ ABIDE is a publicly available resource of neuroimaging and phenotypic informatio
 Here, we will run through a simple example. First let's pull the data, as follows:
 
 ```{r, warning = FALSE, message = FALSE}
-data(dat1)
-data(dat2)
+data(Dat1)
+data(Dat2)
 ```
 
 The fMRI data for both subjects has already had a brain mask applied has been vectorized to form a $T\times V$ (time by voxels or vertices) data *matrix*.

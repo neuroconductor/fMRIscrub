@@ -1,7 +1,7 @@
 Package: clever
 Type: Package
 Title: Calculate Leverage of Component Models
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -12,21 +12,22 @@ Authors@R: c(
            email = "muschellij2@gmail.com",
            role = c("aut"),
            comment = c(ORCID = "0000-0001-6469-1750")))
-Description: Extends the definition of leverage from linear models 
+Description: Extends the definition of leverage from linear models
     to principal components analysis.  The name is based on component leverage,
     or clever.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Imports: 
-	ggplot2,
-    miscTools, 
-    robustbase,
-    stats
-RoxygenNote: 6.1.0
+Imports:
+  miscTools,
+  robustbase,
+  stats,
+  ggplot2,
+  ggrepel
+RoxygenNote: 6.1.1
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
-Suggests: 
+Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
