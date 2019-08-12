@@ -14,6 +14,7 @@
 #' @return The clever ggplot.
 #'
 #' @import ggplot2
+#' @import ggrepel
 #' @export
 #'
 #' @examples
@@ -110,7 +111,7 @@ plot.clever <- function(clev, ...){
 			#geom_text(aes(label=ifelse(is_outlier, as.character(index) ,'')), size=4,
 			#	nudge_y=nudge_y, check_overlap=TRUE, show.legend=FALSE)
 			geom_text_repel(aes(label=ifelse(is_outlier, as.character(index) ,'')), size=4,
-				nudge_y=nudge_y, check_overlap=TRUE, show.legend=FALSE)
+				nudge_y=nudge_y, show.legend=FALSE)
 	}
 	plt <- plt + geom_point(show.legend = FALSE) +
 	scale_color_manual(values=c('grey','black','black','black')) +
