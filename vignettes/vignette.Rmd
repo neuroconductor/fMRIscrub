@@ -98,13 +98,10 @@ Here are the outlier distributions for the first dataset:
 ```{r warning=FALSE, message=FALSE}
 library(ggpubr)
 library(gridExtra)
+theme_set(theme_pubr())
 ```
 
 ```{r fig.height=12, fig.width=8}
-library(ggpubr)
-library(gridExtra)
-theme_set(theme_pubr())
-
 plt_cell = vector('list', length=6)
 plt_row = vector('list', length=3)
 for(j in 0:2){
