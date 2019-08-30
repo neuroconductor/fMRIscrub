@@ -125,7 +125,7 @@ plot.clever <- function(clev, ...){
 	theme(legend.position=legend.position, panel.spacing.y=unit(1.5, 'lines')) +
 	scale_x_continuous(expand=c(0,0)) +
 	scale_y_continuous(expand=c(0,0)) +
-	ggtitle(main, subtitle=sub) + geom_rug(col=rgb(.5,0,0,alpha=.2))
+	ggtitle(main, subtitle=sub) #+ geom_rug(sides='l', col=rgb(.5,0,0,alpha=.2))
 
 	if(method %in% c('robdist','robdist_subset')){
 		plt <- plt + facet_grid(inMCD~.)
