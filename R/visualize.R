@@ -59,6 +59,7 @@ plot.clever <- function(clev, ...){
 	if(any_outliers){
 		# Obtain the coordinates of the outliers' lines' vertices.
 		drop_line <- d[is_outlier,]
+		drop_line$outlier_level <- factor(colnames(outliers)[outlier_level_num[is_outlier]], levels=colnames(outliers)) # remove 'not an outlier' level
 		drop_line$xmin <- drop_line$index - .5
 		drop_line$xmax <- drop_line$index + .5
 		drop_line$ymin <- 0
@@ -81,11 +82,11 @@ plot.clever <- function(clev, ...){
 
 	# The lowest, middle, and highest outlier levels are colored
 	#  yellow, orange, and red, respectively.
-	cols <- c(hsv(h=c(.1,.05,1), s=c(.6,.8,1)), '#000000')
-	if(any_outliers){
-		cols <- cols[sort(unique(
-			outlier_level_num[outlier_level_num!=0]))]
-	}
+	cols <- hsv(h=c(.1,.05,1), s=c(.6,.8,1))
+	#if(any_outliers){
+	#	cols <- cols[sort(unique(
+	#		outlier_level_num[outlier_level_num!=0]))]
+	#}
 
 	main <- ifelse('main' %in% names(args), args$main,
 		paste0('Outlier Distribution',
@@ -113,9 +114,9 @@ plot.clever <- function(clev, ...){
 			geom_text_repel(aes(label=ifelse(is_outlier, as.character(index) ,'')), size=4,
 				nudge_y=nudge_y, show.legend=FALSE)
 	}
-	plt <- plt + geom_point(show.legend = FALSE) +
+	plt <- plt + geom_point(show.legend=FALSE) +
 	scale_color_manual(values=c('grey','black','black','black')) +
-	scale_fill_manual(values=cols) +
+	scale_fill_manual(values=cols, labels=colnames(outliers), drop=FALSE) +
 	geom_hline(yintercept=cutoffs, linetype='dashed', color='gray') +
 	labs(x=xlab, y=ylab, fill='Outlier Level') +
 	coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)),
@@ -124,7 +125,7 @@ plot.clever <- function(clev, ...){
 	theme(legend.position=legend.position, panel.spacing.y=unit(1.5, 'lines')) +
 	scale_x_continuous(expand=c(0,0)) +
 	scale_y_continuous(expand=c(0,0)) +
-	ggtitle(main, subtitle=sub)
+	ggtitle(main, subtitle=sub) + geom_rug(col=rgb(.5,0,0,alpha=.2))
 
 	if(method %in% c('robdist','robdist_subset')){
 		plt <- plt + facet_grid(inMCD~.)
