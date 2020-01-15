@@ -1,12 +1,12 @@
 #' Centers and scales a matrix robustly for the purpose of covariance estimation.
 #'
-#' Centers each column on its median, and scales each column by its median absolute deviation (MAD).
-#'  If any column MAD is zero, its values become zero and a warning is raised. If all MADs are 
-#'  zero, an error is raised. 
+#' Centers each column on its median, and scales each column by its median
+#' absolute deviation (MAD). If any column MAD is zero, its values become zero
+#' and a warning is raised. If all MADs are zero, an error is raised.
 #'
 #' @param mat A numerical matrix.
 #'
-#' @return The input matrix centered and scaled. 
+#' @return The input matrix centered and scaled.
 scale_med <- function(mat){
 	# mat is nxp; we want to scale the columns.
 	n <- nrow(mat)
@@ -34,7 +34,7 @@ scale_med <- function(mat){
 	return(mat_scaled)
 }
 
-#' Computes the log likelihood of a sample of values from an F distribution. 
+#' Computes the log likelihood of a sample of values from an F distribution.
 #'
 #' @param par A vector of length two which contains the degrees of freedom values.
 #' @param vals A vector of values for which log likelihood will be calculated.
@@ -48,7 +48,7 @@ logL.F <- function(par, vals, cutoff){
 	return(-1*sum(log(df(vals, df1, df2)) - log(pf(cutoff, df1, df2))))
 }
 
-#' Computes the log likelihood of a sample of values from a log normal distribution. 
+#' Computes the log likelihood of a sample of values from a log normal distribution.
 #'
 #' @param par A vector of length two which contains the degrees of freedom values.
 #' @param vals A vector of values for which log likelihood will be calculated.
@@ -61,5 +61,3 @@ logL.lnorm <- function(par, vals, cutoff){
 	vals <- vals[vals <= cutoff]
 	return(-1*sum(log(dlnorm(vals, mean, sd)) - log(plnorm(cutoff, mean, sd))))
 }
-
-

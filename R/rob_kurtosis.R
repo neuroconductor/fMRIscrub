@@ -5,6 +5,8 @@
 #' @return A scalar representing the robust kurtosis.
 #' @export
 #'
+#' @import stats
+#'
 #' @examples
 #' n = 10
 #' x = rnorm(10)

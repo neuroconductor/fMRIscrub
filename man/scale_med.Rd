@@ -13,7 +13,7 @@ scale_med(mat)
 The input matrix centered and scaled.
 }
 \description{
-Centers each column on its median, and scales each column by its median absolute deviation (MAD).
- If any column MAD is zero, its values become zero and a warning is raised. If all MADs are 
- zero, an error is raised.
+Centers each column on its median, and scales each column by its median
+absolute deviation (MAD). If any column MAD is zero, its values become zero
+and a warning is raised. If all MADs are zero, an error is raised.
 }

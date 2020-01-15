@@ -2,22 +2,23 @@
 % Please edit documentation in R/choosePCs.R
 \name{choosePCs_mean}
 \alias{choosePCs_mean}
-\title{Selects the principle components of greatest variance from a SVD.}
+\title{Selects the principle components of sufficient variance from a SVD.}
 \usage{
 choosePCs_mean(svd, max_keep = NULL, min_keep = NULL)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
 
-\item{max_keep}{If specified, the total number kept will be at most this value.}
+\item{max_keep}{If specified, the total number kept will be at most this
+value.}
 
-\item{min_keep}{If specified, the total number kept will be at least this value.}
+\item{min_keep}{If specified, the total number kept will be at least this
+value.}
 }
 \value{
 The subsetted u matrix with only the chosen columns (PCs).
 }
 \description{
-PCs with above-average variance are kept. The total number kept can be
-constrained within a range using the `max_keep` and min_keep` arguments.
-PCs with greater variance will be prioritized for keeping.
+PCs with above-average variance are retained, but the total number kept is
+constrained by the \code{max_keep} and \code{min_keep} arguments.
 }
