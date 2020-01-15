@@ -24,12 +24,14 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-  miscTools,
-  robustbase,
   ggplot2,
   ggrepel,
-  splines,
-  stats
+  stats,
+  e1071,
+  MASS,
+  miscTools,
+  robustbase,
+  splines
 RoxygenNote: 6.1.1
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues

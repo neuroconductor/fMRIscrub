@@ -25,7 +25,6 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 	# PCs are already ordered by decreasing variance.
 	U <- U[,1:n_keep]
 
-	print(n_keep)
 	return(U)
 }
 
@@ -48,6 +47,8 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' value.  Default 1.
 #'
 #' @return The subsetted u matrix with only the chosen columns (PCs).
+#'
+#' @importFrom e1071 kurtosis
 #' @export
 choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=1, n_sim=5000){
 	U <- svd$u

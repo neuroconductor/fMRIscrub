@@ -5,8 +5,7 @@
 #'
 #' @return The estimated trend.
 #'
-#' @import splines
-#' @import stats
+#' @importFrom splines bs
 est_trend <- function(ts, n_knots=5){
 	t = length(ts)
 	i = 1:t
@@ -162,6 +161,8 @@ est_ACF <- function(X,
 #'
 #' @return A ts_length by n matrix whose columns represent the simulated time
 #' 	series.
+#'
+#' @importFrom MASS mvrnorm
 sim_ts <- function(n, ts_length, Sigma=NULL,
                    fit_check=FALSE, fit_tol=.2, fit_tries=5, fit_print=FALSE){
   if(fit_tries < 1){ stop('Could not generate AR data within fit tolerance.') }
@@ -189,9 +190,7 @@ sim_ts <- function(n, ts_length, Sigma=NULL,
     } else {
       n_colsamp = min(1000, ncol(X))
       colsamp = sample(1:ncol(X), n_colsamp, replace=FALSE)
-      AR_est = apply(X[,colsamp], 2, arima, order=c(length(AR_coefs), 0, 0),
-                     include.mean=FALSE, method='CSS-ML')
-      AR_est = apply(matrix(sapply(AR_est, '[[', 'coef'), ncol=n_colsamp), 1, median)
+      AR_est = est_ACF(X, cor_method='pearson', diag_center_method=mean)
       if(fit_print){ print(list(phi_estimated=AR_est, phi_true=AR_coefs)) }
       errors = (AR_est - AR_coefs) / AR_coefs
       if(any(abs(errors) > fit_tol)){

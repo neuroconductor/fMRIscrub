@@ -20,8 +20,7 @@ plot.clever <- function(clev, ...){
 	choosePCs <- clev$params$choosePCs
 	choosePCs_formatted <- switch(choosePCs,
 		mean='Mean',
-		kurtosis='Kurtosis (Old Method)',
-		kurtosis2='Kurtosis')
+		kurtosis='Kurtosis')
 	method <- clev$params$method
 	method_formatted <- switch(method,
 		leverage='Leverage',
