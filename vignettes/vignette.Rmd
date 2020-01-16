@@ -173,7 +173,7 @@ Mask2 = readNIfTI('../data/Dat2_mask.nii.gz')
 Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 ```
 
-Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the mean and leverage parameter settings.
+Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the kurtosis and leverage parameter settings.
 
 ```{r}
 Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
@@ -185,7 +185,7 @@ Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
-levs = clever.Dat1.mean.lev$leverage
+levs = clever.Dat1.kurt.lev$leverage
 t_med = order(levs)[ceiling(length(levs)/2)]
 t_max = which.max(levs)
 

@@ -6,9 +6,9 @@
 #' @return The estimated trend.
 #'
 #' @importFrom splines bs
-est_trend <- function(ts, n_knots=5){
-	t = length(ts)
-	i = 1:t
+est_trend <- function(ts, n_knots=5, rm_out='combined'){
+	t <- length(ts)
+	i <- 1:t
 
 	loc_knots <- function(t, n_knots){
 		if(n_knots >= t){stop('n_knots >= length(ts)')}
@@ -16,15 +16,31 @@ est_trend <- function(ts, n_knots=5){
 	}
 
 	# Do not use outliers (MAD > 3).
-	out = abs(ts/stats::mad(ts)) > 3
-	i[out] = NA
+	if(rm_out=='combined'){
+		trend_pre <- data.frame(
+			tr1=runmed(ts,floor(t/5/2)*2+1, endrule='constant'),
+			tr2=est_trend(ts, rm_out='median'),
+			tr3=median(ts)
+		)
+		trend_pre <- apply(trend_pre, 1, median)
+		out <- abs(ts - trend_pre)/stats::mad(ts) > 3
+		i[out] <- NA
+	} else if(rm_out=='median'){
+		out <- abs(ts - median(ts))/stats::mad(ts) > 3
+		i[out] <- NA
+
+		# But, we need to retain the boundary points.
+		# (Replace ts values with outlier boundary values?)
+		i[1] <- 1
+		i[t] <- t
+	}
 
 	# Use cubic spline with five knots.
-	model = lm(ts~bs(i, knots=loc_knots(t, n_knots),
+	model <- lm(ts~bs(i, knots=loc_knots(t, n_knots),
 					 degree=3, Boundary.knots=c(1, t))
 	)
 
-	est = predict(model, newdata=data.frame(i=1:t))
+	est <- predict(model, newdata=data.frame(i=1:t))
 
 	return(est)
 }
@@ -37,15 +53,15 @@ est_trend <- function(ts, n_knots=5){
 #'
 #' @return The diagonal in a numerical vector.
 upper_diag <- function(X,i) {
-	n = nrow(X)
-	len = n-i+1
-	r = 1:len
-	c = i:n
-	idx = (c-1)*n+r
+	n <- nrow(X)
+	len <- n-i+1
+	r <- 1:len
+	c <- i:n
+	idx <- (c-1)*n+r
 	return(X[idx])
 }
 
-#' Applies a summary function to each diagonal in X.
+#' Applies a summary function to each upper diagonal in X.
 #'
 #' @param X The input matrix.
 #' @param FUN a function which takes in a numerical vector and returns a value.
@@ -56,8 +72,12 @@ apply_diag <- function(X, FUN=mean) {
 	sapply(1:nrow(X), function(i){FUN(upper_diag(X,i))})
 }
 
-# Cai, Ren, and Zhou, 2013
-k_choice = function(beta, n, p){
+#' k from Cai, Ren, and Zhou, 2013
+#'
+#' @param beta The beta value (see paper).
+#' @param n The number of observations of the data.
+#' @param p The length of the data.
+k_choice <- function(beta, n, p){
   return( (n*p/log(n*p))^(1/(2*beta+1)) )
 }
 
@@ -74,17 +94,17 @@ k_choice = function(beta, n, p){
 #' @return The weight vector.
 acf_weights <- function(p, n, beta=.1, type=1, k=NULL){
 	if(is.null(k)){
-	k = k_choice(beta, n, p)
+	k <- k_choice(beta, n, p)
 	}
-	k = min(k, n)
+	k <- min(k, n)
 	# tapering
 	if(type == 1){
-		k = max(2, round(k/2)*2)
-		w = c(rep(1, k/2), (k/2-1):0 / (k/2), rep(0, n-k))
+		k <- max(2, round(k/2)*2)
+		w <- c(rep(1, k/2), (k/2-1):0 / (k/2), rep(0, n-k))
 	# banding
 	} else if(type == 2){
-		k = max(1, round(k))
-		w = c(rep(1, k), rep(0, n-k))
+		k <- max(1, round(k))
+		w <- c(rep(1, k), rep(0, n-k))
 	} else {
 	stop('Invalid type.')
 	}
@@ -116,27 +136,27 @@ est_ACF <- function(X,
 	ACF_est_method='tapering',
 	k=NULL){
 
-	t = nrow(X)
-	p = ncol(X)
+	t <- nrow(X)
+	p <- ncol(X)
 
 	if(detrend){
-		X_trend = apply(X, 2, est_trend)
-		X = X - X_trend
+		X_trend <- apply(X, 2, est_trend)
+		X <- X - X_trend
 	}
 
 	# Obtain initial ACF estimate using a measure of center for each diagonal
 	#  of the sample correlation matrix.
-	acf = apply_diag(
+	acf <- apply_diag(
 		cor(t(X), method=cor_method),
 		FUN=diag_center_method)
 
 	# Stabilize higher-lag terms by tapering or banding.
 	if(ACF_est_method == 'tapering'){
-		w = acf_weights(p, t, beta, 1, k)
-		acf = acf * w
+		w <- acf_weights(p, t, beta, 1, k)
+		acf <- acf * w
 	} else if(ACF_est_method == 'banding'){
-		w = acf_weights(p, t, beta, 2, k)
-		acf = acf * w
+		w <- acf_weights(p, t, beta, 2, k)
+		acf <- acf * w
 	} else if(ACF_est_method != 'none'){
 		stop('ACF_est_method must be "tapering", "banding", or "none".')
 	}
@@ -167,34 +187,35 @@ sim_ts <- function(n, ts_length, Sigma=NULL,
                    fit_check=FALSE, fit_tol=.2, fit_tries=5, fit_print=FALSE){
   if(fit_tries < 1){ stop('Could not generate AR data within fit tolerance.') }
 
-  if(is.null(Sigma)){Sigma = diag(ts_length)}
+  if(is.null(Sigma)){Sigma <- diag(ts_length)}
 
   # Generate X~N(0, I)
-  X = t(mvrnorm(n, mu=rep(0, ts_length), diag(ts_length)))
+  X <- t(mvrnorm(n, mu=rep(0, ts_length), diag(ts_length)))
 
   # Premultiply to obtain X~N(0, Sigma)
   if(!identical(Sigma, diag(ts_length))){
-    V = Sigma #from AR_coefs: toeplitz(ARMAacf(ar=AR_coefs, lag.max=ts_length-1))
-    V = svd(V)
-    V_sqrt = V$u %*% diag(sqrt(V$d)) %*% t(V$v)
-    X = V_sqrt %*% X
+    V <- Sigma #from AR_coefs: toeplitz(ARMAacf(ar=AR_coefs, lag.max=ts_length-1))
+    V <- svd(V)
+    V_sqrt <- V$u %*% diag(sqrt(V$d)) %*% t(V$v)
+    X <- V_sqrt %*% X
   }
 
   # Rudimentary check for proper AR model:
   # Try again if any (phi_est - phi_true) / phi_true > fit_tol. <-- fix: increase n
   if(fit_check){
+	stop('Does not work at the moment.')
     if(ts_length < 20){
       warning('Time series too short to estimate coefficients. Skipping check.')
     } else if(n < 20){
       warning('Too few runs to estimate coefficients. Skipping check.')
     } else {
-      n_colsamp = min(1000, ncol(X))
-      colsamp = sample(1:ncol(X), n_colsamp, replace=FALSE)
-      AR_est = est_ACF(X, cor_method='pearson', diag_center_method=mean)
+      n_colsamp <- min(1000, ncol(X))
+      colsamp <- sample(1:ncol(X), n_colsamp, replace=FALSE)
+      AR_est <- est_ACF(X, cor_method='pearson', detrend=FALSE, diag_center_method=mean)
       if(fit_print){ print(list(phi_estimated=AR_est, phi_true=AR_coefs)) }
-      errors = (AR_est - AR_coefs) / AR_coefs
+      errors <- (AR_est - AR_coefs) / AR_coefs
       if(any(abs(errors) > fit_tol)){
-        X = sim_ts(n=n, ts_length=ts_length, AR_coefs=AR_coefs,
+        X <- sim_ts(n=n, ts_length=ts_length, AR_coefs=AR_coefs,
                    fit_check=fit_check, fit_tol=fit_tol,
                    fit_tries=fit_tries-1, fit_print=fit_print)
       }

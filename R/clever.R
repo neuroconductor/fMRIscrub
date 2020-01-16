@@ -18,7 +18,6 @@
 #'
 #' @import stats
 #' @importFrom robustbase covMcd
-#' @importFrom miscTools colMedians
 #'
 #' @examples
 #' n_voxels = 1e4
@@ -28,7 +27,7 @@
 #' lev = clever(x)
 clever = function(
 	x,
-	choosePCs = c('mean','kurtosis', 'kurtosis2'),
+	choosePCs = c('mean','kurtosis'),
 	method = c('leverage','robdist_subset','robdist'),
 	id_out = TRUE) {
 
@@ -49,8 +48,7 @@ clever = function(
 	SVDi <- svd(XXt)
 
 	# Choose which PCs to retain.
-	choosePCs_fun <- switch(choosePCs, mean=choosePCs_mean,
-		kurtosis=choosePCs_kurtosis, kurtosis2=choosePCs_kurtosis2)
+	choosePCs_fun <- switch(choosePCs, mean=choosePCs_mean, kurtosis=choosePCs_kurtosis)
 	if((id_out == TRUE) & (method %in% c('robdist','robdist_subset'))){
 		# Let q = n_PCs/n_timepoints (ncol(U)/nrow(U)). robustbase::covMcd()
 		#  requires q <= approx. 1/2 for computation of the MCD covariance estimate.

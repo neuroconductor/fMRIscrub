@@ -7,6 +7,8 @@
 #' @param mat A numerical matrix.
 #'
 #' @return The input matrix centered and scaled.
+#'
+#' @importFrom miscTools colMedians
 scale_med <- function(mat){
 	# mat is nxp; we want to scale the columns.
 	n <- nrow(mat)
