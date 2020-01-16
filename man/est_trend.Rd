@@ -4,7 +4,7 @@
 \alias{est_trend}
 \title{Estimates the trend of \code{ts} using a cubic spline.}
 \usage{
-est_trend(ts, n_knots = 5)
+est_trend(ts, n_knots = 5, rm_out = "combined")
 }
 \arguments{
 \item{ts}{A numeric vector.}

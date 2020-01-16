@@ -2,7 +2,7 @@
 % Please edit documentation in R/est_ACF.R
 \name{apply_diag}
 \alias{apply_diag}
-\title{Applies a summary function to each diagonal in X.}
+\title{Applies a summary function to each upper diagonal in X.}
 \usage{
 apply_diag(X, FUN = mean)
 }
@@ -16,5 +16,5 @@ The summary function values in a vector, beginning with the one for
 the main diagonal and ending with the one for the upper-right corner of X.
 }
 \description{
-Applies a summary function to each diagonal in X.
+Applies a summary function to each upper diagonal in X.
 }

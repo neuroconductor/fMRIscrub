@@ -4,8 +4,8 @@
 \alias{clever}
 \title{Calculates PCA leverage or robust distance and identifies outliers.}
 \usage{
-clever(x, choosePCs = c("mean", "kurtosis", "kurtosis2"),
-  method = c("leverage", "robdist_subset", "robdist"), id_out = TRUE)
+clever(x, choosePCs = c("mean", "kurtosis"), method = c("leverage",
+  "robdist_subset", "robdist"), id_out = TRUE)
 }
 \arguments{
 \item{x}{A wide (obs x vars) data matrix of values.}
