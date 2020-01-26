@@ -2,18 +2,20 @@
 % Please edit documentation in R/est_ACF.R
 \name{est_trend}
 \alias{est_trend}
-\title{Estimates the trend of \code{ts} using a cubic spline.}
+\title{Estimates the trend of \code{ts} using a robust discrete cosine transform.}
 \usage{
-est_trend(ts, n_knots = 5, rm_out = "combined")
+est_trend(ts, robust = TRUE)
 }
 \arguments{
 \item{ts}{A numeric vector.}
 
-\item{n_knots}{The number of knots to use for the spline model.}
+\item{robust}{Should a robust linear model be used? Default FALSE.}
+
+\item{t}{The vector of values to regress.}
 }
 \value{
 The estimated trend.
 }
 \description{
-Estimates the trend of \code{ts} using a cubic spline.
+Estimates the trend of \code{ts} using a robust discrete cosine transform.
 }

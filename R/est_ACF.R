@@ -1,48 +1,37 @@
-#' Estimates the trend of \code{ts} using a cubic spline.
+#' Estimates the trend of \code{ts} using a robust discrete cosine transform.
 #'
 #' @param ts A numeric vector.
-#' @param n_knots The number of knots to use for the spline model.
+#'
+#' @param t The vector of values to regress.
+#' @param robust Should a robust linear model be used? Default FALSE.
 #'
 #' @return The estimated trend.
 #'
-#' @importFrom splines bs
-est_trend <- function(ts, n_knots=5, rm_out='combined'){
-	t <- length(ts)
-	i <- 1:t
+#' @importFrom robustbase lmrob
+#' @importFrom robustbase lmrob.control
+#' @export
+est_trend <- function(ts, robust=TRUE){
+  df <- data.frame(
+    index=1:length(ts),
+    ts=ts
+  )
 
-	loc_knots <- function(t, n_knots){
-		if(n_knots >= t){stop('n_knots >= length(ts)')}
-		return( t/(n_knots+1)*c(1:(n_knots)) )
+  i_scaled <- 2*(df$index-1)/(length(df$index)-1) - 1 #range on [-1, 1]
+
+  df['p1'] <- cos(2*pi*(i_scaled/4 - .25)) #cosine on [-1/2, 0]*2*pi
+  df['p2'] <- cos(2*pi*(i_scaled/2 - .5)) #cosine on [-1, 0]*2*pi
+  df['p3'] <- cos(2*pi*(i_scaled*3/4  -.75)) # [-1.5, 0]*2*pi
+  df['p4'] <- cos(2*pi*(i_scaled - 1)) # [2, 0]*2*pi
+
+  if(robust){
+		control <- lmrob.control(scale.tol=1e-3, refine.tol=1e-2) # increased tol.
+		# later: warn.limit.reject=NULL
+		trend <- lmrob(ts~p1+p2+p3+p4, df, control=control)$fitted.values
+  } else {
+		trend <- lm(ts~p1+p2+p3+p4, df)$fitted.values
 	}
 
-	# Do not use outliers (MAD > 3).
-	if(rm_out=='combined'){
-		trend_pre <- data.frame(
-			tr1=runmed(ts,floor(t/5/2)*2+1, endrule='constant'),
-			tr2=est_trend(ts, rm_out='median'),
-			tr3=median(ts)
-		)
-		trend_pre <- apply(trend_pre, 1, median)
-		out <- abs(ts - trend_pre)/stats::mad(ts) > 3
-		i[out] <- NA
-	} else if(rm_out=='median'){
-		out <- abs(ts - median(ts))/stats::mad(ts) > 3
-		i[out] <- NA
-
-		# But, we need to retain the boundary points.
-		# (Replace ts values with outlier boundary values?)
-		i[1] <- 1
-		i[t] <- t
-	}
-
-	# Use cubic spline with five knots.
-	model <- lm(ts~bs(i, knots=loc_knots(t, n_knots),
-					 degree=3, Boundary.knots=c(1, t))
-	)
-
-	est <- predict(model, newdata=data.frame(i=1:t))
-
-	return(est)
+  return(trend)
 }
 
 #' Yields the upper diagonals of the input matrix.
@@ -112,57 +101,92 @@ acf_weights <- function(p, n, beta=.1, type=1, k=NULL){
 	return(w)
 }
 
-#' Estimates the ACF of columns in X.
+#' Regularizes an initial estimate of the ACF, \code{sigma}.
 #'
-#' @param X A txp matrix representing p length-t time series.
-#' @param detrend Should the time series be detrended? Default TRUE.
-#' @param cor_method The \code{method} parameter for \code{stats::cor} to use
-#' 	for ACF estimation. Default is 'spearman'.
-#' @param diag_center_method How ACF estimates for each column should be
-#' 	aggregated. Default is \code{stats::median}.
+#' @param method Regularization method: 'tapering' or 'banding' for the
+#'	estimators from Cai, Ren and Zhou, 2013; or, 'AR' for an AR(6) model.
 #' @param beta The beta value for the tapering/banding estimator. See
 #' 	\code{k_choice()}.
-#' @param ACF_est_method Whether to use the 'tapering' or 'banding' estimator
-#' 	from Cai, Ren and Zhou, 2013.
-#' @param The k value for the tapering/banding estimator. Overrides \code{beta}.
+#' @param k The k value for the tapering/banding estimator. Overrides \code{beta}.
 #' 	See \code{k_choice()}.
+#' @param p The number of time series used to estimate the input sigma. Needed for
+#' 	tapering or banding estimator.
+#'
+#' @return The ACF as a numeric vector.
+reg_ACF <- function(sigma, method, beta=.1, k=NULL, p=NULL){
+	t <- length(sigma)
+
+	# Stabilize higher-lag terms by tapering.
+	if(method == 'tapering'){
+		if(is.null(p)){stop('p must be specified for tapering estimator.')}
+		w <- acf_weights(p, t, beta, 1, k)
+		sigma <- sigma * w
+
+	# Stabilize higher-lag terms by banding.
+	} else if(method == 'banding'){
+		if(is.null(p)){stop('p must be specified for banding estimator.')}
+		w <- acf_weights(p, t, beta, 2, k)
+		sigma <- sigma * w
+
+	# Estimate an AR model, then obtain its ACF.
+	} else if(method == 'AR'){
+		ar <- solve(toeplitz(sigma[1:6]), sigma[2:7])
+		sigma <- as.numeric(ARMAacf(ar=ar, lag.max=t-1))
+
+	} else {
+    stop(paste0('method ', as.character(method), ' is not recognized.'))
+  }
+
+	return(sigma)
+}
+
+#' Estimates the ACF of columns in X.
+#'
+#' @param X A numeric vector representing a length-t time series; or, a
+#'	txp matrix representing p length-t time series.
+#' @param detrend Should the time series be detrended? Default TRUE.
+#' @param method 'matrixwise' will compute the multivariate correlation and
+#'	take the center of the diagonals (default). 'vectorwise' will compute the
+#'	ACF for each column, and then take the center at each lag. Different
+#'	measures of correlation are available for 'matrixwise'; only Pearson
+#'	correlation is available for 'vectorwise'.
+#' @param cor_meas The \code{method} parameter for \code{stats::cor} to
+#' 	use for ACF estimation with the 'matrixwise' method. Default is 'spearman'.
+#' @param center_meas How values should be aggregated. Default is
+#' \code{stats::median}.
 #'
 #' @return The ACF as a numeric vector.
 est_ACF <- function(X,
 	detrend=TRUE,
-	cor_method='spearman', # pearson or spearman
-	diag_center_method=median, #mean or median
-	beta=.1,
-	ACF_est_method='tapering',
-	k=NULL){
+	method='matrixwise',
+	cor_meas='spearman', # pearson or spearman, for multivariate X
+	center_meas=median){ #mean or median, for multivariate X
 
-	t <- nrow(X)
-	p <- ncol(X)
-
-	if(detrend){
-		X_trend <- apply(X, 2, est_trend)
-		X <- X - X_trend
+	if(method=='vectorwise'){
+		vector_ACF <- function(x){
+			return(as.numeric(acf(x, lag.max=nrow(x)-1, plot=FALSE, demean=FALSE)$acf))
+		}
+		if(is.vector(X)){
+			if(detrend){X <- X - est_trend(X)}
+			sigma <- vector_ACF(X)
+		} else {
+			if(detrend){X <- X - apply(X, 2, est_trend)}
+			sigma <- apply(X, 2, vector_ACF)
+			sigma <- as.numeric(apply(sigma, 1, mean))
+		}
+	} else if(method=='matrixwise'){
+		if(is.vector(X)){stop('Cannot compute matrixwise ACF on vector.')}
+		if(detrend){ X <- X - apply(X, 2, est_trend) }
+		# Obtain initial ACF estimate using a measure of center for each diagonal
+		#  of the sample correlation matrix.
+		sigma <- apply_diag(
+			cor(t(X), method=cor_meas),
+			FUN=center_meas
+		)
+	} else {
+		stop(paste0(c('Unknown method argument in est_ACF(), ', method)))
 	}
-
-	# Obtain initial ACF estimate using a measure of center for each diagonal
-	#  of the sample correlation matrix.
-	acf <- apply_diag(
-		cor(t(X), method=cor_method),
-		FUN=diag_center_method)
-
-	# Stabilize higher-lag terms by tapering or banding.
-	if(ACF_est_method == 'tapering'){
-		w <- acf_weights(p, t, beta, 1, k)
-		acf <- acf * w
-	} else if(ACF_est_method == 'banding'){
-		w <- acf_weights(p, t, beta, 2, k)
-		acf <- acf * w
-	} else if(ACF_est_method != 'none'){
-		stop('ACF_est_method must be "tapering", "banding", or "none".')
-	}
-
-	return(acf)
-
+	return(sigma)
 }
 
 #' Simulates a time series with specified length and autocorrelation.
@@ -211,7 +235,7 @@ sim_ts <- function(n, ts_length, Sigma=NULL,
     } else {
       n_colsamp <- min(1000, ncol(X))
       colsamp <- sample(1:ncol(X), n_colsamp, replace=FALSE)
-      AR_est <- est_ACF(X, cor_method='pearson', detrend=FALSE, diag_center_method=mean)
+      AR_est <- est_ACF(X, cor_meas='pearson', detrend=FALSE, center_meas=mean)
       if(fit_print){ print(list(phi_estimated=AR_est, phi_true=AR_coefs)) }
       errors <- (AR_est - AR_coefs) / AR_coefs
       if(any(abs(errors) > fit_tol)){

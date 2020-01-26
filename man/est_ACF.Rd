@@ -4,29 +4,26 @@
 \alias{est_ACF}
 \title{Estimates the ACF of columns in X.}
 \usage{
-est_ACF(X, detrend = TRUE, cor_method = "spearman",
-  diag_center_method = median, beta = 0.1,
-  ACF_est_method = "tapering", k = NULL)
+est_ACF(X, detrend = TRUE, method = "matrixwise",
+  cor_meas = "spearman", center_meas = median)
 }
 \arguments{
-\item{X}{A txp matrix representing p length-t time series.}
+\item{X}{A numeric vector representing a length-t time series; or, a
+txp matrix representing p length-t time series.}
 
 \item{detrend}{Should the time series be detrended? Default TRUE.}
 
-\item{cor_method}{The \code{method} parameter for \code{stats::cor} to use
-for ACF estimation. Default is 'spearman'.}
+\item{method}{'matrixwise' will compute the multivariate correlation and
+take the center of the diagonals (default). 'vectorwise' will compute the
+ACF for each column, and then take the center at each lag. Different
+measures of correlation are available for 'matrixwise'; only Pearson
+correlation is available for 'vectorwise'.}
 
-\item{diag_center_method}{How ACF estimates for each column should be
-aggregated. Default is \code{stats::median}.}
+\item{cor_meas}{The \code{method} parameter for \code{stats::cor} to
+use for ACF estimation with the 'matrixwise' method. Default is 'spearman'.}
 
-\item{beta}{The beta value for the tapering/banding estimator. See
-\code{k_choice()}.}
-
-\item{ACF_est_method}{Whether to use the 'tapering' or 'banding' estimator
-from Cai, Ren and Zhou, 2013.}
-
-\item{The}{k value for the tapering/banding estimator. Overrides \code{beta}.
-See \code{k_choice()}.}
+\item{center_meas}{How values should be aggregated. Default is
+\code{stats::median}.}
 }
 \value{
 The ACF as a numeric vector.

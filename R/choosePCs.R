@@ -66,6 +66,7 @@ choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=1, n_sim=5000){
 	# Compute the kurtosis cutoff.
 	U.top10 <- U.detrended[,1:min(10, n)]
 	ACF <- est_ACF(U.top10, detrend=FALSE)
+	ACF <- reg_ACF(ACF, method='AR')
 	Sigma <- toeplitz(ACF)
 	sim <- apply(sim_ts(n_sim, m, Sigma, fit_check=FALSE), 2, kurtosis, type=1)
 	cut <- quantile(sim, .90)
