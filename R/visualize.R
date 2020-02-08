@@ -32,7 +32,7 @@ plot.clever <- function(clev, ...){
 		robdist_subset=clev$robdist)
 	outliers <- clev$outliers
 	cutoffs <- clev$cutoffs
-    args <- list(...)
+	args <- list(...)
 
 	#Log the y-axis if the measurement is robust distance.
 	log_measure <- switch(method,
@@ -98,6 +98,8 @@ plot.clever <- function(clev, ...){
 		'none')
 	if(method=='leverage'){ ylim_max <- 1 }
 	else { ylim_max <- max(d$measure) }
+
+	
 
 	plt <- ggplot(d, aes(x=index,y=measure, color=outlier_level))
 	if(any_outliers){

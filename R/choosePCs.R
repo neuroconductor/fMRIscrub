@@ -25,7 +25,7 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 	# PCs are already ordered by decreasing variance.
 	U <- U[,1:n_keep]
 
-	return(U)
+	return(list(U=U, indices=1:n_keep))
 }
 
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
@@ -41,6 +41,7 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' \code{max_keep} and \code{min_keep} arguments.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
+#' @param kurt_quantile_cut PCs with kurtosis of at least this quantile are kept.
 #' @param max_keep If specified, the total number kept will be at most this
 #' value.
 #' @param min_keep If specified, the total number kept will be at least this
@@ -49,8 +50,9 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' @return The subsetted u matrix with only the chosen columns (PCs).
 #'
 #' @importFrom e1071 kurtosis
+#' @importFrom MASS mvrnorm
 #' @export
-choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=1, n_sim=5000){
+choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_keep=1, n_sim=5000){
 	U <- svd$u
 	m <- nrow(U)
 
@@ -64,12 +66,8 @@ choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=1, n_sim=5000){
 	U.detrended <- U - U.trend
 
 	# Compute the kurtosis cutoff.
-	U.top10 <- U.detrended[,1:min(10, n)]
-	ACF <- est_ACF(U.top10, detrend=FALSE)
-	ACF <- reg_ACF(ACF, method='AR')
-	Sigma <- toeplitz(ACF)
-	sim <- apply(sim_ts(n_sim, m, Sigma, fit_check=FALSE), 2, kurtosis, type=1)
-	cut <- quantile(sim, .90)
+	sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
+	cut <- quantile(sim, kurt_quantile_cut)
 
 	# Compute the kurtosis of remaining PCs.
 	kurt <- apply(U.detrended, 2, kurtosis, type=1)
@@ -86,5 +84,5 @@ choosePCs_kurtosis <- function(svd, max_keep=NULL, min_keep=1, n_sim=5000){
 	to_keep <- to_keep[order(to_keep)]
 	U <- U[,to_keep]
 
-	return(U)
+	return(list(U=U, indices=to_keep))
 }
