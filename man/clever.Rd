@@ -4,23 +4,25 @@
 \alias{clever}
 \title{Calculates PCA leverage or robust distance and identifies outliers.}
 \usage{
-clever(x, choosePCs = c("mean", "kurtosis"), method = c("leverage",
-  "robdist_subset", "robdist"), id_out = TRUE)
+clever(x, choosePCs = c("mean", "kurtosis"), kurt_quantile_cut = 0.9,
+  method = c("leverage", "robdist_subset", "robdist"), id_out = TRUE)
 }
 \arguments{
 \item{x}{A wide (obs x vars) data matrix of values.}
 
-\item{choosePCs}{The method to be utilized in choosing which PCs to retain. Default is mean.}
+\item{choosePCs}{The method to use for choosing which PCs to retain. Default is kurtosis.}
 
-\item{method}{The method to be utilized in measuring outlyingness. Default is leverage.}
+\item{kurt_quantile_cut}{The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.}
+
+\item{method}{The method to use to measure outlyingness. Default is leverage.}
 
 \item{id_out}{If TRUE (default), will label outliers based on leverage or distance.}
 }
 \value{
 A clever object, i.e. a list with components
 \describe{
-	\item{params}{A list with the \code{choosePCs} and \code{method} arguments used in the clever call.}
- \item{PCs}{The PCs used to calculate leverage or robust distance, i.e. the subsetted U matrix from the SVD.}
+	\item{params}{A list with the \code{choosePCs}, \code{kurt_quantile_cut}, and \code{method} arguments used.}
+ \item{PCs}{The PCs selected by \code{choosePCs}, i.e. the subsetted U matrix from the SVD.}
  \item{leverage}{The leverage of each observation. NULL if \code{method} is not PCA leverage.}
  \item{robdist}{The robust distance of each observation. NULL if \code{method} is not robust distance (subset).}
  \item{inMCD}{Whether each observation is within the MCD subset. NULL if \code{method} is not robust distance (subset).}

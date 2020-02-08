@@ -4,10 +4,13 @@
 \alias{choosePCs_kurtosis}
 \title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
 \usage{
-choosePCs_kurtosis(svd, max_keep = NULL, min_keep = 1, n_sim = 5000)
+choosePCs_kurtosis(svd, kurt_quantile_cut = 0.9, max_keep = NULL,
+  min_keep = 1, n_sim = 5000)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
+
+\item{kurt_quantile_cut}{PCs with kurtosis of at least this quantile are kept.}
 
 \item{max_keep}{If specified, the total number kept will be at most this
 value.}
