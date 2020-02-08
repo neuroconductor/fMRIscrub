@@ -31,14 +31,12 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
 #'
 #' First, the largest PCs which together explain 90% of the variance are
-#' retained, and smaller components are removed. Each PC is detrended, and the
-#' autocorrelation function of the top 10 PCs is measured. The kurtosis cutoff
-#' is then the 90% quantile of the sampling distribution of kurtosis for
-#' Normal data of the same length and autocorrelation as the PCs; it is
-#' estimated by simulation or calculated from the theoretical asymptotic
-#' distribution if the time series is long enough and autocorrelation is
-#' negligible. Finally, the total number kept is constrained by the
-#' \code{max_keep} and \code{min_keep} arguments.
+#' retained, and smaller components are removed. Each PC is detrended. The
+#' kurtosis cutoff is then the 90% quantile of the sampling distribution of
+#' kurtosis for Normal data of the same length as the PCs; it is estimated by
+#' simulation or calculated from the theoretical asymptotic distribution if the
+#' time series is long enough. Finally, the total number kept is constrained by
+#' the \code{max_keep} and \code{min_keep} arguments.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param kurt_quantile_cut PCs with kurtosis of at least this quantile are kept.
@@ -46,8 +44,11 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' value.
 #' @param min_keep If specified, the total number kept will be at least this
 #' value.  Default 1.
+#' @param n_sim The number of simulation data to use for estimating the sampling
+#' distribution of kurtosis.
 #'
-#' @return The subsetted u matrix with only the chosen columns (PCs).
+#' @return A list with the subsetted u matrix with only the chosen columns (PCs),
+#' and the original indices of the PCs which were retained.
 #'
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
@@ -66,8 +67,12 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_kee
 	U.detrended <- U - U.trend
 
 	# Compute the kurtosis cutoff.
-	sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
-	cut <- quantile(sim, kurt_quantile_cut)
+	if(m < 10000){
+		sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
+		cut <- quantile(sim, kurt_quantile_cut)
+	} else {
+		cut <- qnorm(kurt_quantile_cut) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
+	}
 
 	# Compute the kurtosis of remaining PCs.
 	kurt <- apply(U.detrended, 2, kurtosis, type=1)

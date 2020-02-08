@@ -66,9 +66,7 @@ logL.lnorm <- function(par, vals, cutoff){
 
 #' Estimates the trend of \code{ts} using a robust discrete cosine transform.
 #'
-#' @param ts A numeric vector.
-#'
-#' @param t The vector of values to regress.
+#' @param ts A numeric vector to detrend.
 #' @param robust Should a robust linear model be used? Default FALSE.
 #'
 #' @return The estimated trend.
