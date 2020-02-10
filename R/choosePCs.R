@@ -66,11 +66,17 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_kee
 	U.trend <- apply(U, 2, est_trend)
 	U.detrended <- U - U.trend
 
-	# Compute the kurtosis cutoff.
-	if(m < 10000){
-		sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
-		cut <- quantile(sim, kurt_quantile_cut)
+	if(m < 1000){
+		if(kurt_quantile_cut == .9){
+			# Use precomputed empirical quantile.
+			cut <- clever:::kurt_90_quant(m)
+		} else {
+			# Simulate and compute the quantile.
+			sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
+			cut <- quantile(sim, kurt_quantile_cut)
+		}
 	} else {
+		# Use theoretical quantile.
 		cut <- qnorm(kurt_quantile_cut) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
 	}
 

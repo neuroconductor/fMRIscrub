@@ -17,18 +17,20 @@ value.}
 
 \item{min_keep}{If specified, the total number kept will be at least this
 value.  Default 1.}
+
+\item{n_sim}{The number of simulation data to use for estimating the sampling
+distribution of kurtosis.}
 }
 \value{
-The subsetted u matrix with only the chosen columns (PCs).
+A list with the subsetted u matrix with only the chosen columns (PCs),
+and the original indices of the PCs which were retained.
 }
 \description{
 First, the largest PCs which together explain 90% of the variance are
-retained, and smaller components are removed. Each PC is detrended, and the
-autocorrelation function of the top 10 PCs is measured. The kurtosis cutoff
-is then the 90% quantile of the sampling distribution of kurtosis for
-Normal data of the same length and autocorrelation as the PCs; it is
-estimated by simulation or calculated from the theoretical asymptotic
-distribution if the time series is long enough and autocorrelation is
-negligible. Finally, the total number kept is constrained by the
-\code{max_keep} and \code{min_keep} arguments.
+retained, and smaller components are removed. Each PC is detrended. The
+kurtosis cutoff is then the 90% quantile of the sampling distribution of
+kurtosis for Normal data of the same length as the PCs; it is estimated by
+simulation or calculated from the theoretical asymptotic distribution if the
+time series is long enough. Finally, the total number kept is constrained by
+the \code{max_keep} and \code{min_keep} arguments.
 }

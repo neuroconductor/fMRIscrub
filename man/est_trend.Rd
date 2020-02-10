@@ -7,11 +7,9 @@
 est_trend(ts, robust = TRUE)
 }
 \arguments{
-\item{ts}{A numeric vector.}
+\item{ts}{A numeric vector to detrend.}
 
 \item{robust}{Should a robust linear model be used? Default FALSE.}
-
-\item{t}{The vector of values to regress.}
 }
 \value{
 The estimated trend.
