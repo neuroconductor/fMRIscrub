@@ -40,6 +40,8 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param kurt_quantile_cut PCs with kurtosis of at least this quantile are kept.
+#' @param detrend Should PCs be detrended before measuring kurtosis? Default is
+#' 	TRUE. Recommended if observations represent a time series.
 #' @param max_keep If specified, the total number kept will be at most this
 #' value.
 #' @param min_keep If specified, the total number kept will be at least this
@@ -53,7 +55,8 @@ choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_keep=1, n_sim=5000){
+choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
+	max_keep=NULL, min_keep=1, n_sim=5000){
 	U <- svd$u
 	m <- nrow(U)
 
@@ -62,16 +65,21 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_kee
 	n <- min(which((cumvarexp > .90)))
 	U <- U[,1:n]
 
-	# Detrend each PC.
-	U.trend <- apply(U, 2, est_trend)
-	U.detrended <- U - U.trend
+	# Compute the kurtosis of the remaining PCs, detrending if applicable.
+	if(detrend){
+		U.dt <- U - apply(U, 2, est_trend)
+		kurt <- apply(U.dt, 2, kurtosis, type=1)
+	} else {
+		kurt <- apply(U, 2, kurtosis, type=1)
+	}
 
+	# Determine the quantile cutoff.
 	if(m < 1000){
 		if(kurt_quantile_cut == .9){
 			# Use precomputed empirical quantile.
 			cut <- clever:::kurt_90_quant[m]
 		} else {
-			# Simulate and compute the quantile.
+			# Simulate and compute the empirical quantile.
 			sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
 			cut <- quantile(sim, kurt_quantile_cut)
 		}
@@ -79,9 +87,6 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, max_keep=NULL, min_kee
 		# Use theoretical quantile.
 		cut <- qnorm(kurt_quantile_cut) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
 	}
-
-	# Compute the kurtosis of remaining PCs.
-	kurt <- apply(U.detrended, 2, kurtosis, type=1)
 
 	# Identify how many PCs will be kept.
 	n_keep <- sum(kurt > cut)

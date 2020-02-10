@@ -3,6 +3,8 @@
 #' @param x A wide (obs x vars) data matrix of values.
 #' @param choosePCs The method to use for choosing which PCs to retain. Default is kurtosis.
 #' @param kurt_quantile_cut The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.
+#' @param kurt_detrend If \code{choosePCs} is \code{kurtosis}, should PCs be detrended before measuring kurtosis?
+#' 	Default is TRUE. Recommended if observations represent a time series.
 #' @param method The method to use to measure outlyingness. Default is leverage.
 #' @param id_out If TRUE (default), will label outliers based on leverage or distance.
 #'
@@ -30,6 +32,7 @@ clever = function(
 	x,
 	choosePCs = c('mean','kurtosis'),
 	kurt_quantile_cut = .9,
+	kurt_detrend = TRUE,
 	method = c('leverage','robdist_subset','robdist'),
 	id_out = TRUE) {
 
@@ -78,6 +81,7 @@ clever = function(
 	}
 	if(choosePCs == 'kurtosis'){
 		choosePCs_kwargs$kurt_quantile_cut = kurt_quantile_cut
+		choosePCs_kwargs$detrend = kurt_detrend
 	}
 	chosen_PCs <- do.call(choosePCs_fun, choosePCs_kwargs)
 	Q <- ncol(chosen_PCs$U)

@@ -5,7 +5,8 @@
 \title{Calculates PCA leverage or robust distance and identifies outliers.}
 \usage{
 clever(x, choosePCs = c("mean", "kurtosis"), kurt_quantile_cut = 0.9,
-  method = c("leverage", "robdist_subset", "robdist"), id_out = TRUE)
+  kurt_detrend = TRUE, method = c("leverage", "robdist_subset",
+  "robdist"), id_out = TRUE)
 }
 \arguments{
 \item{x}{A wide (obs x vars) data matrix of values.}
@@ -13,6 +14,9 @@ clever(x, choosePCs = c("mean", "kurtosis"), kurt_quantile_cut = 0.9,
 \item{choosePCs}{The method to use for choosing which PCs to retain. Default is kurtosis.}
 
 \item{kurt_quantile_cut}{The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.}
+
+\item{kurt_detrend}{If \code{choosePCs} is \code{kurtosis}, should PCs be detrended before measuring kurtosis?
+Default is TRUE. Recommended if observations represent a time series.}
 
 \item{method}{The method to use to measure outlyingness. Default is leverage.}
 
