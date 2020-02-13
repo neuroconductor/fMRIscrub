@@ -1,7 +1,7 @@
 Package: clever
 Type: Package
 Title: Calculate Leverage of Component Models
-Version: 0.1.3
+Version: 0.1.4
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
