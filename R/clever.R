@@ -30,7 +30,7 @@
 #' lev = clever(x)
 clever = function(
 	x,
-	choosePCs = c('mean','kurtosis'),
+	choosePCs = c('kurtosis', 'variance'),
 	kurt_quantile_cut = .9,
 	kurt_detrend = TRUE,
 	method = c('leverage','robdist_subset','robdist'),
@@ -63,7 +63,7 @@ clever = function(
 
 	# Choose which PCs to retain.
 	choosePCs_kwargs <- list(svd=SVDi)
-	choosePCs_fun <- switch(choosePCs, mean=choosePCs_mean, kurtosis=choosePCs_kurtosis)
+	choosePCs_fun <- switch(choosePCs, variance=choosePCs_variance, kurtosis=choosePCs_kurtosis)
 	if((id_out == TRUE) & (method %in% c('robdist','robdist_subset'))){
 		# Let q = n_PCs/n_timepoints (ncol(U)/nrow(U)). robustbase::covMcd()
 		#  requires q <= approx. 1/2 for computation of the MCD covariance estimate.

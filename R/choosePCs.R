@@ -11,7 +11,7 @@
 #'
 #' @return The subsetted u matrix with only the chosen columns (PCs).
 #' @export
-choosePCs_mean <- function(svd, max_keep=NULL, min_keep=NULL){
+choosePCs_variance <- function(svd, max_keep=NULL, min_keep=NULL){
 	U <- svd$u
 	var <- svd$d
 
