@@ -31,11 +31,11 @@ Imports:
   MASS,
   miscTools,
   robustbase,
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    ggpubr
 VignetteBuilder: knitr
-

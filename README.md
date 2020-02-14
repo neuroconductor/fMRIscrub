@@ -13,8 +13,7 @@ status](https://ci.appveyor.com/api/projects/status/github/muschellij2/clever?br
 
 The goal of clever is to compute principal Components LEVERage (CLEVER)
 and robust distance, measures of outlyingness for high-dimensional data
-such as fMRI
-data.
+such as fMRI data.
 
 ## Installation
 
