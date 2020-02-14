@@ -4,10 +4,12 @@
 \alias{plot.clever}
 \title{Visualizes the outlier distribution of a clever object.}
 \usage{
-\method{plot}{clever}(clev, ...)
+\method{plot}{clever}(x, ...)
 }
 \arguments{
-\item{clev}{A clever object.}
+\item{x}{A clever object.}
+
+\item{...}{additional arguments to pass to \code{\link{plot}}}
 }
 \value{
 The clever ggplot.

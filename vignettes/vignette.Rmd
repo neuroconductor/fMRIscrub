@@ -11,7 +11,7 @@ vignette: >
 
 ```{r}
 library(knitr)
-opts_chunk$set(cache=TRUE, autodep=TRUE)
+opts_chunk$set(autodep = TRUE)
 ```
 
 ## Overview
@@ -40,10 +40,8 @@ As input, the algorithm takes a __T__ x __V__ matrix, __Y__. In our case, __Y__ 
 
 Install the package from GitHub and load it:
 
-```{r, warning = FALSE, message = FALSE}
-library(devtools)
+```{r, warning = FALSE, message = FALSE, eval = FALSE}
 devtools::install_github('mandymejia/clever')
-library(clever)
 ```
 
 ## Tutorial Data
@@ -55,6 +53,7 @@ ABIDE is a publicly available resource of neuroimaging and phenotypic informatio
 Here, we will run through a simple example. First let's pull the data, as follows:
 
 ```{r, warning = FALSE, message = FALSE}
+library(clever)
 data(Dat1)
 data(Dat2)
 ```
@@ -96,7 +95,7 @@ Here are the outliers for the first dataset:
 ```{r warning=FALSE, message=FALSE}
 library(ggpubr)
 library(gridExtra)
-theme_set(theme_pubr())
+ggplot2::theme_set(ggpubr::theme_pubr())
 ```
 
 ```{r fig.height=12, fig.width=8}
@@ -166,10 +165,12 @@ Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
 ```
 
 ```{r}
-Mask1 = readNIfTI('../data/Dat1_mask.nii.gz') #Pitt_0050048 (full of artifacts)
+fname = system.file("extdata", "Dat1_mask.nii.gz", package = "clever")
+Mask1 = readNIfTI(fname) #Pitt_0050048 (full of artifacts)
 Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
 
-Mask2 = readNIfTI('../data/Dat2_mask.nii.gz')
+fname = system.file("extdata", "Dat2_mask.nii.gz", package = "clever")
+Mask2 = readNIfTI(fname)
 Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 ```
 

@@ -77,7 +77,8 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
 	if(m < 1000){
 		if(kurt_quantile_cut == .9){
 			# Use precomputed empirical quantile.
-			cut <- clever:::kurt_90_quant[m]
+			# cut <- clever:::kurt_90_quant[m]
+		  cut <- kurt_90_quant[m]
 		} else {
 			# Simulate and compute the empirical quantile.
 			sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
