@@ -1,0 +1,36 @@
+---
+title: "Kurtosis Sampling Dist. 90% Quantile Precompution"
+author: "Damon Pham"
+date: "2/9/2020"
+output: html_document
+---
+
+```{r}
+library(MASS)
+library(e1071)
+```
+
+```{r}
+n <- 50000
+p <- 1000
+
+set.seed(0)
+X <- t(mvrnorm(n, mu=rep(0, p), Sigma=diag(p)))
+```
+
+```{r}
+kurt <- function(X){
+  return(apply(X, 2, kurtosis, type=1))
+}
+
+kurt_90_quant <- vector(mode='numeric', length=p)
+kurt_90_quant[1:4] <- NA
+for(i in 5:p){
+  kurt_90_quant[i] <- as.numeric(quantile(kurt(X[1:i,]), .9))
+}
+```
+
+```{r}
+usethis::use_data(kurt_90_quant, internal=TRUE)
+```
+

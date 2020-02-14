@@ -41,6 +41,7 @@ As input, the algorithm takes a __T__ x __V__ matrix, __Y__. In our case, __Y__ 
 Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
+library(devtools)
 devtools::install_github('mandymejia/clever')
 ```
 
