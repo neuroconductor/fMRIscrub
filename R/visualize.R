@@ -80,7 +80,7 @@ plot.clever <- function(clev, ...){
 
 	# The lowest, middle, and highest outlier levels are colored
 	#  yellow, orange, and red, respectively.
-	cols <- hsv(h=c(.1,.05,1), s=c(.6,.8,1))
+	cols <- grDevices::hsv(h=c(.1,.05,1), s=c(.6,.8,1))
 	#if(any_outliers){
 	#	cols <- cols[sort(unique(
 	#		outlier_level_num[outlier_level_num!=0]))]
