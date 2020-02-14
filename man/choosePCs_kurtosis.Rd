@@ -4,8 +4,14 @@
 \alias{choosePCs_kurtosis}
 \title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
 \usage{
-choosePCs_kurtosis(svd, kurt_quantile_cut = 0.9, detrend = TRUE,
-  max_keep = NULL, min_keep = 1, n_sim = 5000)
+choosePCs_kurtosis(
+  svd,
+  kurt_quantile_cut = 0.9,
+  detrend = TRUE,
+  max_keep = NULL,
+  min_keep = 1,
+  n_sim = 5000
+)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
