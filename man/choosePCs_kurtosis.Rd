@@ -2,22 +2,38 @@
 % Please edit documentation in R/choosePCs.R
 \name{choosePCs_kurtosis}
 \alias{choosePCs_kurtosis}
-\title{Selects the principle components of greatest kurtosis from a SVD.}
+\title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
 \usage{
-choosePCs_kurtosis(svd, max_keep = NULL, min_keep = NULL)
+choosePCs_kurtosis(svd, kurt_quantile_cut = 0.9, detrend = TRUE,
+  max_keep = NULL, min_keep = 1, n_sim = 5000)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
 
-\item{max_keep}{If specified, the total number kept will be at most this value.}
+\item{kurt_quantile_cut}{PCs with kurtosis of at least this quantile are kept.}
 
-\item{min_keep}{If specified, the total number kept will be at least this value.}
+\item{detrend}{Should PCs be detrended before measuring kurtosis? Default is
+TRUE. Recommended if observations represent a time series.}
+
+\item{max_keep}{If specified, the total number kept will be at most this
+value.}
+
+\item{min_keep}{If specified, the total number kept will be at least this
+value.  Default 1.}
+
+\item{n_sim}{The number of simulation data to use for estimating the sampling
+distribution of kurtosis.}
 }
 \value{
-The subsetted u matrix with only the chosen columns (PCs).
+A list with the subsetted u matrix with only the chosen columns (PCs),
+and the original indices of the PCs which were retained.
 }
 \description{
-PCs with kurtosis greater than 2 are kept. The total number kept can be
-constrained within a range using the `max_keep` and min_keep` arguments.
-PCs with greater kurtosis will be prioritized for keeping.
+First, the largest PCs which together explain 90% of the variance are
+retained, and smaller components are removed. Each PC is detrended. The
+kurtosis cutoff is then the 90% quantile of the sampling distribution of
+kurtosis for Normal data of the same length as the PCs; it is estimated by
+simulation or calculated from the theoretical asymptotic distribution if the
+time series is long enough. Finally, the total number kept is constrained by
+the \code{max_keep} and \code{min_keep} arguments.
 }

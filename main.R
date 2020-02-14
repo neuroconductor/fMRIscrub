@@ -1,5 +1,5 @@
 library(oro.nifti)
-library(ggplot2)
+library(ggplot2) # add ggrepel?
 
 vectorize_NIftI = function(NIfTI_fname, mask_fname){
 	dat = readNIfTI(NIfTI_fname)
@@ -23,7 +23,7 @@ generate_fname = function(existing_fname){
 	extension <- substr(existing_fname, last_period_index, nchar(existing_fname))
 	# If parenthesized number exists...
 	if(substr(existing_fname, last_period_index-1, last_period_index-1) == ')'){
-		in_last_parenthesis <- gsub(paste0('(*\\))', extension), '', 
+		in_last_parenthesis <- gsub(paste0('(*\\))', extension), '',
 			gsub('.*(*\\()', '', existing_fname))
 		n <- suppressWarnings(as.numeric(in_last_parenthesis))
 		if(is.numeric(n)){
@@ -32,7 +32,7 @@ generate_fname = function(existing_fname){
 				np1 <- as.character(n + 1)
 				n <- as.character(n)
 				return(gsub(
-						paste0( '(\\(', n, '\\))', extension), 
+						paste0( '(\\(', n, '\\))', extension),
 						paste0('\\(', np1, '\\)', extension),
 						existing_fname))
 			}
@@ -102,7 +102,7 @@ if(!is.null(outliers)){
 	table <- cbind(table, outliers)
 }
 names(table) <- c(
-	paste0(method, '. PCs chosen by ', choosePCs), 
+	paste0(method, '. PCs chosen by ', choosePCs),
 	paste0(names(outliers), ' = ', cutoffs))
 if(!is.null(out$in_MCD)){
 	table <- cbind(table, in_MCD=out$in_MCD)

@@ -17,7 +17,7 @@ id_out.robdist_subset(distance, inMCD, Fparam)
 A list with components
 \describe{
 	\item{outliers}{
-	An n x 3 data.frame indicating if each observation is an outlier at the 
+	An n x 3 data.frame indicating if each observation is an outlier at the
 	1e-2, 1e-3, and 1e-4 quantile levels.
 }
 \item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and 1e-4th quantiles}

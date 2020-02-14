@@ -46,7 +46,7 @@ devtools::install_github('mandymejia/clever')
 
 ## Tutorial Data
 
-ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. The first dataset contains a number of artifacts; the second is relatively artifact-free.
+ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. The first dataset contains artifacts toward the beginning time point; the second is relatively artifact-free. Axial slices are used instead of the entire volumes to minimize the clever package's download time. 
  
 ## A Simple Example
 
@@ -54,11 +54,11 @@ Here, we will run through a simple example. First let's pull the data, as follow
 
 ```{r, warning = FALSE, message = FALSE}
 library(clever)
-data(dat1)
-data(dat2)
+data(Dat1)
+data(Dat2)
 ```
 
-The fMRI data for both subjects has already had a brain mask applied has been vectorized to form a $T\times V$ (time by voxels or vertices) data *matrix*.
+The fMRI data for both subjects consist of a single slice from a volume. A brain mask has been applied to vectorize the data, forming a $T\times V$ (time by voxels or vertices) data *matrix*.
 
 ```{r}
 dim(Dat1)
@@ -90,20 +90,15 @@ clevers.Dat1 = list(clever.Dat1.mean.lev, clever.Dat1.kurt.lev, clever.Dat1.mean
 clevers.Dat2 = list(clever.Dat2.mean.lev, clever.Dat2.kurt.lev, clever.Dat2.mean.rds, clever.Dat2.kurt.rds, clever.Dat2.mean.rbd, clever.Dat2.kurt.rbd)
 ```
 
-There were zero-variance voxels in both files, but neither had so much as to warrant concern.
-
-Here are the outlier distributions for the first dataset:
+Here are the outliers for the first dataset:
 
 ```{r warning=FALSE, message=FALSE}
 library(ggpubr)
 library(gridExtra)
+theme_set(theme_pubr())
 ```
 
 ```{r fig.height=12, fig.width=8}
-library(ggpubr)
-library(gridExtra)
-theme_set(theme_pubr())
-
 plt_cell = vector('list', length=6)
 plt_row = vector('list', length=3)
 for(j in 0:2){
@@ -133,9 +128,9 @@ for(j in 0:2){
 grid.arrange(grobs=plt_row, ncol=1)
 ```
 
-For the first dataset, clever identifies a few outlying time ranges consistently across all parameter settings. The exception is kurtosis and leverage, where the same time ranges do have high leverage, but are not labeled as outliers since they do not surpass the cutoffs. For the second dataset, some parameter settings identify a handful of outliers, but most do not. Of those outliers identified, their time ranges are not consistent, and their outlyingness measures are fairly low. Overall, these results are consistent with our prior knowledge of both datasets. 
+For the first dataset, clever identifies 59-61 and 150-151 consistently across all parameter settings. Other times are variously identified as well, with the mean method of choosing PCs tending to identify more outliers than the kurtosis method. For the second dataset, few or no outliers are identified. Overall, these results are consistent with our prior knowledge of both datasets. 
 
-In fact, We can reconstruct the original fMRI images with the mask used to obtain their vectorized matrix representations.
+In fact, We can reconstruct the original fMRI images with the mask used for vectorizing.
 
 ```{r warning=FALSE}
 library(oro.nifti)
@@ -143,23 +138,41 @@ library(neurobase)
 ```
 
 ```{r}
-Mask1 = readNIfTI('../data/Dat1_mask.nii.gz') #Pitt_0050048 (full of artifacts)
-
-Matrix_to_VolumeTimeSeries = function(mat, mask){
-  t = nrow(mat)
-  dims = c(dim(mask), t)
+Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
   in.mask = mask > 0
-  nif = array(0, dim=dims)
-  for(i in 1:t){
-    nif[,,,i][in.mask] = mat[i,]
+  t = nrow(mat)
+             
+  if(length(dim(mask)) == 3){
+    dims = c(dim(mask), t)
+  } else if(length(dim(mask)) == 2) {
+    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
+    dims = switch(sliced.dim,
+                  c(1, dim(mask), t),
+                  c(dim(mask)[1], 1, dim(mask)[2], t),
+                  c(dim(mask), 1, t)
+    )
+  } else {
+    stop('Not Implemented: mask must be 2D or 3D.')
   }
-  return(nif)
-}
 
-Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
+  vts = array(0, dim=dims)
+  for(i in 1:t){
+    vts[,,,i][in.mask] = mat[i,]
+  }
+
+  return(vts)
+}
 ```
 
-Below, we look at sagittal midsections of the first data set. We will compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the mean and leverage parameter settings.
+```{r}
+Mask1 = readNIfTI('../data/Dat1_mask.nii.gz') #Pitt_0050048 (full of artifacts)
+Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
+
+Mask2 = readNIfTI('../data/Dat2_mask.nii.gz')
+Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
+```
+
+Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the kurtosis and leverage parameter settings.
 
 ```{r}
 Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
@@ -167,16 +180,16 @@ Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
   vol = copyNIfTIHeader(img=mask, arr=vol)
   return(vol)
 }
+```
 
-levs = clever.Dat1.mean.lev$leverage
+```{r, fig.width=7, fig.height=4}
+par(mfrow=c(1,2))
+levs = clever.Dat1.kurt.lev$leverage
 t_med = order(levs)[ceiling(length(levs)/2)]
-t_high = which.max(levs)
-times = c(t_med, t_high)
-z = floor(dim(Mask1)[2]/2)
-plots = vector(mode='list', length(times))
-for(i in 1:length(times)){
-  image(Volume_to_NIfTI(Img1, times[i], Mask1), z=z, plane='sagittal', plot.type='single')
-}
+t_max = which.max(levs)
+
+image(Img1[,,,t_med], main=paste0('Median leverage (T = ', t_med, ')'))
+image(Img1[,,,t_max], main=paste0('Maximum leverage (T = ', t_max, ')'))
 ```
 
 The median time point appears normal, whereas the most outlying time point clearly has banding artifacts.

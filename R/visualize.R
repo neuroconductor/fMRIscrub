@@ -14,6 +14,7 @@
 #' @return The clever ggplot.
 #'
 #' @import ggplot2
+#' @import ggrepel
 #' @export
 plot.clever <- function(clev, ...){
 	choosePCs <- clev$params$choosePCs
@@ -31,7 +32,7 @@ plot.clever <- function(clev, ...){
 		robdist_subset=clev$robdist)
 	outliers <- clev$outliers
 	cutoffs <- clev$cutoffs
-    args <- list(...)
+	args <- list(...)
 
 	#Log the y-axis if the measurement is robust distance.
 	log_measure <- switch(method,
@@ -56,6 +57,7 @@ plot.clever <- function(clev, ...){
 	if(any_outliers){
 		# Obtain the coordinates of the outliers' lines' vertices.
 		drop_line <- d[is_outlier,]
+		drop_line$outlier_level <- factor(colnames(outliers)[outlier_level_num[is_outlier]], levels=colnames(outliers)) # remove 'not an outlier' level
 		drop_line$xmin <- drop_line$index - .5
 		drop_line$xmax <- drop_line$index + .5
 		drop_line$ymin <- 0
@@ -78,11 +80,11 @@ plot.clever <- function(clev, ...){
 
 	# The lowest, middle, and highest outlier levels are colored
 	#  yellow, orange, and red, respectively.
-	cols <- c(hsv(h=c(.1,.05,1), s=c(.6,.8,1)), '#000000')
-	if(any_outliers){
-		cols <- cols[sort(unique(
-			outlier_level_num[outlier_level_num!=0]))]
-	}
+	cols <- hsv(h=c(.1,.05,1), s=c(.6,.8,1))
+	#if(any_outliers){
+	#	cols <- cols[sort(unique(
+	#		outlier_level_num[outlier_level_num!=0]))]
+	#}
 
 	main <- ifelse('main' %in% names(args), args$main,
 		paste0('Outlier Distribution',
@@ -91,25 +93,38 @@ plot.clever <- function(clev, ...){
 		paste0(choosePCs_formatted,', ',method_formatted))
 	xlab <- ifelse('xlab' %in% names(args), args$xlab, 'Index (Time Point)')
 	ylab <- ifelse('ylab' %in% names(args), args$ylab, method_formatted)
+	legend.position <- ifelse('show.legend' %in% names(args),
+		ifelse(args$show.legend, 'bottom', 'none'),
+		'none')
 	if(method=='leverage'){ ylim_max <- 1 }
-	else { ylim_max <- max(d$measure) * 1.01 }
+	else { ylim_max <- max(d$measure) }
+
 
 	plt <- ggplot(d, aes(x=index,y=measure, color=outlier_level))
 	if(any_outliers){
-		plt <- plt + geom_rect(data=drop_line, inherit.aes=FALSE,
-			aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
-				fill=outlier_level), alpha=.9)
+		if(method=='leverage'){ nudge_y <- ylim_max * .08 }
+	  else { nudge_y <- ylim_max * .12 }
+		plt <- plt +
+			geom_rect(data=drop_line, inherit.aes=FALSE,
+				aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
+				fill=outlier_level), alpha=.9) +
+			#geom_text(aes(label=ifelse(is_outlier, as.character(index) ,'')), size=4,
+			#	nudge_y=nudge_y, check_overlap=TRUE, show.legend=FALSE)
+			geom_text_repel(aes(label=ifelse(is_outlier, as.character(index) ,'')), size=4,
+				nudge_y=nudge_y, show.legend=FALSE)
 	}
-	plt <- plt + geom_point(show.legend = FALSE) +
+	plt <- plt + geom_point(show.legend=FALSE) +
 	scale_color_manual(values=c('grey','black','black','black')) +
-	scale_fill_manual(values=cols) +
-	geom_hline(yintercept=cutoffs, linetype='dashed') +
+	scale_fill_manual(values=cols, labels=colnames(outliers), drop=FALSE) +
+	geom_hline(yintercept=cutoffs, linetype='dashed', color='gray') +
 	labs(x=xlab, y=ylab, fill='Outlier Level') +
-	coord_cartesian(xlim = c(0, max(d$index)), ylim = c(0, ylim_max)) +
+	coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)),
+		ylim=c(0, ylim_max*1.2)) +
 	theme_classic() +
+	theme(legend.position=legend.position, panel.spacing.y=unit(1.5, 'lines')) +
 	scale_x_continuous(expand=c(0,0)) +
 	scale_y_continuous(expand=c(0,0)) +
-	ggtitle(main, subtitle=sub)
+	ggtitle(main, subtitle=sub) #+ geom_rug(sides='l', col=rgb(.5,0,0,alpha=.2))
 
 	if(method %in% c('robdist','robdist_subset')){
 		plt <- plt + facet_grid(inMCD~.)
@@ -118,7 +133,5 @@ plot.clever <- function(clev, ...){
 	if('type' %in% names(args)){
 		if(args$type == 'n'){ return(plt) }
 	}
-
-	print(plt)
 	return(plt)
 }
