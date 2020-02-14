@@ -11,7 +11,7 @@ vignette: >
 
 ```{r}
 library(knitr)
-opts_chunk$set(cache=TRUE, autodep=TRUE)
+opts_chunk$set(autodep = TRUE)
 ```
 
 ## Overview
@@ -165,10 +165,12 @@ Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
 ```
 
 ```{r}
-Mask1 = readNIfTI('../data/Dat1_mask.nii.gz') #Pitt_0050048 (full of artifacts)
+fname = system.file("extdata", "Dat1_mask.nii.gz", package = "clever")
+Mask1 = readNIfTI(fname) #Pitt_0050048 (full of artifacts)
 Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
 
-Mask2 = readNIfTI('../data/Dat2_mask.nii.gz')
+fname = system.file("extdata", "Dat2_mask.nii.gz", package = "clever")
+Mask2 = readNIfTI(fname)
 Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 ```
 

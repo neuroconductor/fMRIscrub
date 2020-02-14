@@ -9,3 +9,4 @@
 ^.*_clever.png$
 ^\.travis\.yml$
 ^appveyor\.yml$
+^data-raw$

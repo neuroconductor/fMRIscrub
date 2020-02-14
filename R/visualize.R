@@ -10,28 +10,30 @@
 #' If the outlyingness measure is robust distance, observations within the MCD are plotted
 #'  separately from those outside the MCD. Also, the y-axes will be log10-scaled.
 #'
-#' @param clev A clever object.
+#' @param x A clever object.
 #' @return The clever ggplot.
 #'
 #' @import ggplot2
 #' @import ggrepel
 #' @export
-plot.clever <- function(clev, ...){
-	choosePCs <- clev$params$choosePCs
+plot.clever <- function(x, ...){
+  xmax = ymax = ymin = xmin = NULL
+  rm(list= c("xmax", "ymax", "ymin", "xmin"))
+	choosePCs <- x$params$choosePCs
 	choosePCs_formatted <- switch(choosePCs,
 		mean='Mean',
 		kurtosis='Kurtosis')
-	method <- clev$params$method
+	method <- x$params$method
 	method_formatted <- switch(method,
 		leverage='Leverage',
 		robdist='Robust Distance',
 		robdist_subset='Robust Distance Subset')
 	measure <- switch(method,
-		leverage=clev$leverage,
-		robdist=clev$robdist,
-		robdist_subset=clev$robdist)
-	outliers <- clev$outliers
-	cutoffs <- clev$cutoffs
+		leverage=x$leverage,
+		robdist=x$robdist,
+		robdist_subset=x$robdist)
+	outliers <- x$outliers
+	cutoffs <- x$cutoffs
 	args <- list(...)
 
 	#Log the y-axis if the measurement is robust distance.
@@ -47,7 +49,7 @@ plot.clever <- function(clev, ...){
 	outlier_level <- factor(outlier_level_names[outlier_level_num + 1], levels=outlier_level_names)
 	d <- data.frame(index, measure, outlier_level)
 	if(method %in% c('robdist','robdist_subset')){
-	  d$inMCD <- ifelse(clev$inMCD, 'In MCD', 'Not In MCD')
+	  d$inMCD <- ifelse(x$inMCD, 'In MCD', 'Not In MCD')
 	}
 
 	# The plot will have lines extending downward from outliers
