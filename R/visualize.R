@@ -22,8 +22,8 @@ plot.clever <- function(x, ...){
   rm(list= c("xmax", "ymax", "ymin", "xmin"))
 	choosePCs <- x$params$choosePCs
 	choosePCs_formatted <- switch(choosePCs,
-		mean='Mean',
-		kurtosis='Kurtosis')
+		kurtosis='Kurtosis',
+		variance='Variance',)
 	method <- x$params$method
 	method_formatted <- switch(method,
 		leverage='Leverage',

@@ -68,26 +68,26 @@ dim(Dat2)
 We next run clever on both datasets using all possible combinations of parameters.
 
 ```{r}
-clever.Dat1.mean.lev = clever(Dat1)
-clever.Dat2.mean.lev = clever(Dat2)
+clever.Dat1.kurt.lev = clever(Dat1)
+clever.Dat2.kurt.lev = clever(Dat2)
 ```
 
 ```{r, warning = FALSE, message = FALSE}
-clever.Dat1.kurt.lev = clever(Dat1, choosePCs = 'kurtosis')
-clever.Dat1.mean.rds = clever(Dat1, method = 'robdist_subset')
-clever.Dat1.kurt.rds = clever(Dat1, choosePCs = 'kurtosis', method = 'robdist_subset')
-clever.Dat1.mean.rbd = clever(Dat1, method = 'robdist')
-clever.Dat1.kurt.rbd = clever(Dat1, choosePCs = 'kurtosis', method = 'robdist')
+clever.Dat1.vari.lev = clever(Dat1, choosePCs = 'variance')
+clever.Dat1.kurt.rds = clever(Dat1, method = 'robdist_subset')
+clever.Dat1.vari.rds = clever(Dat1, choosePCs = 'variance', method = 'robdist_subset')
+clever.Dat1.kurt.rbd = clever(Dat1, method = 'robdist')
+clever.Dat1.vari.rbd = clever(Dat1, choosePCs = 'variance', method = 'robdist')
 
-clever.Dat2.kurt.lev = clever(Dat2, choosePCs = 'kurtosis')
-clever.Dat2.mean.rds = clever(Dat2, method = 'robdist_subset')
-clever.Dat2.kurt.rds = clever(Dat2, choosePCs = 'kurtosis', method = 'robdist_subset')
-clever.Dat2.mean.rbd = clever(Dat2, method = 'robdist')
-clever.Dat2.kurt.rbd = clever(Dat2, choosePCs = 'kurtosis', method = 'robdist')
+clever.Dat2.vari.lev = clever(Dat2, choosePCs = 'variance')
+clever.Dat2.kurt.rds = clever(Dat2, method = 'robdist_subset')
+clever.Dat2.vari.rds = clever(Dat2, choosePCs = 'variance', method = 'robdist_subset')
+clever.Dat2.kurt.rbd = clever(Dat2, method = 'robdist')
+clever.Dat2.vari.rbd = clever(Dat2, choosePCs = 'variance', method = 'robdist')
 
-clevers.Dat1 = list(clever.Dat1.mean.lev, clever.Dat1.kurt.lev, clever.Dat1.mean.rds, clever.Dat1.kurt.rds, clever.Dat1.mean.rbd, clever.Dat1.kurt.rbd)
+clevers.Dat1 = list(clever.Dat1.kurt.lev, clever.Dat1.vari.lev, clever.Dat1.kurt.rds, clever.Dat1.vari.rds, clever.Dat1.kurt.rbd, clever.Dat1.vari.rbd)
 
-clevers.Dat2 = list(clever.Dat2.mean.lev, clever.Dat2.kurt.lev, clever.Dat2.mean.rds, clever.Dat2.kurt.rds, clever.Dat2.mean.rbd, clever.Dat2.kurt.rbd)
+clevers.Dat2 = list(clever.Dat2.kurt.lev, clever.Dat2.vari.lev, clever.Dat2.kurt.rds, clever.Dat2.vari.rds, clever.Dat2.kurt.rbd, clever.Dat2.vari.rbd)
 ```
 
 Here are the outliers for the first dataset:
