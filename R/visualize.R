@@ -11,6 +11,7 @@
 #'  separately from those outside the MCD. Also, the y-axes will be log10-scaled.
 #'
 #' @param x A clever object.
+#' @param ... additional arguments to pass to \code{\link{plot}}
 #' @return The clever ggplot.
 #'
 #' @import ggplot2

@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{A clever object.}
+
+\item{...}{additional arguments to pass to \code{\link{plot}}}
 }
 \value{
 The clever ggplot.
