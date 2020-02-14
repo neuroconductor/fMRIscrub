@@ -42,5 +42,7 @@ Suggests:
     ggpubr,
     neurobase,
     oro.nifti,
-    gridExtra
+    gridExtra,
+    testthat (>= 2.1.0),
+    covr
 VignetteBuilder: knitr
