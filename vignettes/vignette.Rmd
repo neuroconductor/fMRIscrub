@@ -93,11 +93,9 @@ clevers.Dat2 = list(clever.Dat2.mean.lev, clever.Dat2.kurt.lev, clever.Dat2.mean
 Here are the outliers for the first dataset:
 
 ```{r warning=FALSE, message=FALSE}
-library(gridExtra)
 library(ggpubr)
-if (requireNamespace("ggpubr", quietly = TRUE)) {
-  ggplot2::theme_set(ggpubr::theme_pubr())
-}
+library(gridExtra)
+ggplot2::theme_set(ggpubr::theme_pubr())
 ```
 
 ```{r fig.height=12, fig.width=8}

@@ -1,6 +1,5 @@
 #' Selects the principle components of sufficient variance from a SVD.
 #'
-
 #' PCs with above-average variance are retained, but the total number kept is
 #' constrained by the \code{max_keep} and \code{min_keep} arguments.
 #'
