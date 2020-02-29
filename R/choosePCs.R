@@ -11,7 +11,7 @@
 #'
 #' @return The subsetted u matrix with only the chosen columns (PCs).
 #' @export
-choosePCs_variance <- function(svd, max_keep=NULL, min_keep=NULL){
+choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 	U <- svd$u
 	var <- svd$d
 
@@ -77,7 +77,6 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
 	if(m < 1000){
 		if(kurt_quantile_cut == .9){
 			# Use precomputed empirical quantile.
-			# cut <- clever:::kurt_90_quant[m]
 		  cut <- kurt_90_quant[m]
 		} else {
 			# Simulate and compute the empirical quantile.

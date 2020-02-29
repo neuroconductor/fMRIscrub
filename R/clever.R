@@ -59,6 +59,8 @@ clever = function(
 
 	# Perform dimension reduction.
 	XXt <- (x %*% t(x))
+	rm(x)
+	gc()
 	SVDi <- svd(XXt)
 
 	# Choose which PCs to retain.

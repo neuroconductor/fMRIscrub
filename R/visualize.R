@@ -23,7 +23,7 @@ plot.clever <- function(x, ...){
 	choosePCs <- x$params$choosePCs
 	choosePCs_formatted <- switch(choosePCs,
 		kurtosis='Kurtosis',
-		variance='Variance',)
+		variance='Variance')
 	method <- x$params$method
 	method_formatted <- switch(method,
 		leverage='Leverage',
