@@ -34,7 +34,8 @@ clever = function(
 	kurt_quantile_cut = .9,
 	kurt_detrend = TRUE,
 	method = c('leverage','robdist_subset','robdist'),
-	id_out = TRUE) {
+	id_out = TRUE,
+	input_covar = FALSE) {
 
 	choosePCs <- match.arg(choosePCs)  # return error if choosePCs arg not one of the acceptable options
 	method <- match.arg(method)  # return error if method arg not one of the acceptable options
@@ -48,25 +49,29 @@ clever = function(
 		}
 	}
 
-	x <- as.matrix(x)
-	p <- ncol(x)
-	n <- nrow(x)
-	if(p < n) warning('Data matrix has more rows than columns.
-		Check that observations are in rows and variables are in columns.')
+	if(!input_covar){
+		x <- as.matrix(x)
+		if(p < n) warning('Data matrix has more rows than columns.
+			Check that observations are in rows and variables are in columns.')
 
-	# Center and scale robustly.
-	x <- scale_med(x)
+		# Center and scale robustly.
+		x <- scale_med(x)
 
-	print('Temporary check:')
-	print('Computing covariance matrix.')
+		print('Temporary check:')
+		print('Computing covariance matrix.')
 
-	# Perform dimension reduction.
-	XXt <- (x %*% t(x))
-	rm(x)
-	print('Temporary check:')
-	print('Done computing covariance matrix.')
-	print(gc(verbose=TRUE))
-	SVDi <- svd(XXt)
+		# Perform dimension reduction.
+		XXt <- (x %*% t(x))
+		rm(x)
+		print('Temporary check:')
+		print('Done computing covariance matrix.')
+		print(gc(verbose=TRUE))
+		SVDi <- svd(XXt)
+		rm(XXt)
+	} else {
+		SVDi <- svd(x)
+		rm(x)
+	}
 
 	# Choose which PCs to retain.
 	choosePCs_kwargs <- list(svd=SVDi)
