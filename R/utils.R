@@ -33,6 +33,7 @@ scale_med <- function(mat){
 	print('Temporary check:')
 	print('Before scaling:')
 	print(gc(verbose=TRUE))
+	print(ls())
 
 	# Scale.
 	scale_col <- function(col, v){ return(ifelse(v != 0, col/v, 0)) }
