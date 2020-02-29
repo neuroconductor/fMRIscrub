@@ -57,10 +57,15 @@ clever = function(
 	# Center and scale robustly.
 	x <- scale_med(x)
 
+	print('Temporary check:')
+	print('Computing covariance matrix.')
+
 	# Perform dimension reduction.
 	XXt <- (x %*% t(x))
 	rm(x)
-	gc()
+	print('Temporary check:')
+	print('Done computing covariance matrix.')
+	print(gc(verbose=TRUE))
 	SVDi <- svd(XXt)
 
 	# Choose which PCs to retain.

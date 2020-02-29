@@ -30,9 +30,18 @@ scale_med <- function(mat){
 		}
 	}
 
+	print('Temporary check:')
+	print('Before scaling:')
+	print(gc(verbose=TRUE))
+
 	# Scale.
 	scale_col <- function(col, v){ return(ifelse(v != 0, col/v, 0)) }
 	mat <- sweep(mat, 2, mad, scale_col)
+
+	print('Temporary check:')
+	print('After scaling:')
+	print(gc(verbose=TRUE))
+
 	return(mat)
 }
 
