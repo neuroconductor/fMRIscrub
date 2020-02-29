@@ -32,8 +32,8 @@ scale_med <- function(mat){
 
 	# Scale.
 	scale_col <- function(col, v){ return(ifelse(v != 0, col/v, 0)) }
-	mat_scaled <- sweep(mat, 2, mad, scale_col)
-	return(mat_scaled)
+	mat <- sweep(mat, 2, mad, scale_col)
+	return(mat)
 }
 
 #' Computes the log likelihood of a sample of values from an F distribution.
