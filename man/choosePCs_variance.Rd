@@ -4,7 +4,7 @@
 \alias{choosePCs_variance}
 \title{Selects the principle components of sufficient variance from a SVD.}
 \usage{
-choosePCs_variance(svd, max_keep = NULL, min_keep = NULL)
+choosePCs_variance(svd, max_keep = NULL, min_keep = 1)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}

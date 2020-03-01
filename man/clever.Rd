@@ -10,7 +10,8 @@ clever(
   kurt_quantile_cut = 0.9,
   kurt_detrend = TRUE,
   method = c("leverage", "robdist_subset", "robdist"),
-  id_out = TRUE
+  id_out = TRUE,
+  input_covar = FALSE
 )
 }
 \arguments{

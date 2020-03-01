@@ -8,7 +8,7 @@
 #'
 #' @return The input matrix centered and scaled.
 #'
-#' @importFrom miscTools colMedians
+#' @importFrom miscTools rowMedians
 scale_med <- function(mat){
 	mat <- t(mat)
 
