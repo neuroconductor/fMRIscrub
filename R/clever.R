@@ -50,7 +50,11 @@ clever = function(
 	}
 
 	if(!input_covar){
-		x <- as.matrix(x)
+		p <- ncol(x)
+		n <- nrow(x)
+
+		if(!is.matrix(x)){ x <- as.matrix(x) }
+
 		if(p < n) warning('Data matrix has more rows than columns.
 			Check that observations are in rows and variables are in columns.')
 
