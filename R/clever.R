@@ -57,13 +57,11 @@ clever = function(
 		# Center and scale robustly.
 		x <- scale_med(x)
 
-		print('Temporary check:')
 		print('Computing covariance matrix.')
 
 		# Perform dimension reduction.
-		XXt <- (x %*% t(x))
+		XXt <- crossprod(x)
 		rm(x)
-		print('Temporary check:')
 		print('Done computing covariance matrix.')
 		print(gc(verbose=TRUE))
 		SVDi <- svd(XXt)

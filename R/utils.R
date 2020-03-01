@@ -10,39 +10,27 @@
 #'
 #' @importFrom miscTools colMedians
 scale_med <- function(mat){
-	# mat is nxp; we want to scale the columns.
-	n <- nrow(mat)
-	p <- ncol(mat)
+	mat <- t(mat)
 
 	# Center.
-	mat <- sweep(mat, 2, colMedians(mat, na.rm=TRUE), '-')
+	mat <- mat - c(rowMedians(mat, na.rm=TRUE))
 
-	# Compute MAD and check for zero-variance voxels.
-	mad <- 1.4826 * colMedians(abs(mat), na.rm=TRUE)
-	zero_mad <- mad == 0
+	# Scale.
+	mad <- 1.4826 * rowMedians(abs(mat), na.rm=TRUE)
+	zero_mad <- mad < 1e-8
 	if(any(zero_mad)){
 		if(all(zero_mad)){
-		stop("All voxels are zero-variance.\n")
+			stop("All voxels are zero-variance.\n")
 		} else {
 			warning(cat("Warning: ", sum(zero_mad),
 				" zero-variance voxels (out of ", length(zero_mad),
 				"). These will be set to zero for estimation of the covariance.\n", sep=""))
-		}
+			}
+			mad[zero_mad] <- 1
 	}
-
-	print('Temporary check:')
-	print('Before scaling:')
-	print(gc(verbose=TRUE))
-	print(ls())
-
-	# Scale.
-	scale_col <- function(col, v){ return(ifelse(v != 0, col/v, 0)) }
-	mat <- sweep(mat, 2, mad, scale_col)
-
-	print('Temporary check:')
-	print('After scaling:')
-	print(gc(verbose=TRUE))
-
+	mat <- mat/c(mad)
+	mat[zero_mad,] <- 0
+	mat <- t(mat)
 	return(mat)
 }
 
