@@ -20,7 +20,6 @@
 #' @export
 #'
 #' @import stats
-#' @importFrom robustbase covMcd
 #'
 #' @examples
 #' n_voxels = 1e4
