@@ -63,7 +63,7 @@ clever = function(
 		print('Computing covariance matrix.')
 
 		# Perform dimension reduction.
-		XXt <- crossprod(x)
+		XXt <- tcrossprod(x)
 		rm(x)
 		print('Done computing covariance matrix.')
 		print(gc(verbose=TRUE))
