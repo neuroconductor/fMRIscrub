@@ -6,10 +6,12 @@
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param max_keep If specified, the total number kept will be at most this
 #' value.
-#' @param min_keep If specified, the total number kept will be at least this
-#' value.
+#' @param min_keep The total number kept will be at least this
+#' value. The default value is 1.
 #'
-#' @return The subsetted u matrix with only the chosen columns (PCs).
+#' @return A list with the subsetted u matrix with only the chosen columns (PCs),
+#' and the original indices of the PCs which were retained.
+#'
 #' @export
 choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 	U <- svd$u
@@ -44,8 +46,8 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 #' 	TRUE. Recommended if observations represent a time series.
 #' @param max_keep If specified, the total number kept will be at most this
 #' value.
-#' @param min_keep If specified, the total number kept will be at least this
-#' value.  Default 1.
+#' @param min_keep The total number kept will be at least this
+#' value. The default value is 1.
 #' @param n_sim The number of simulation data to use for estimating the sampling
 #' distribution of kurtosis.
 #'
