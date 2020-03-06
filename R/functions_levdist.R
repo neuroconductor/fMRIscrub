@@ -28,6 +28,9 @@ PCleverage <- function(U){
 #'	\item{inMCD}{A vector of length n indicating if each observation is within the MCD subset.}
 #'	\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
 #' }
+#'
+#' @importFrom robustbase covMcd
+#'
 #' @export
 PCrobdist_subset <- function(U){
 
@@ -94,6 +97,9 @@ PCrobdist_subset <- function(U){
 #'	\item{inMCD}{A vector of length n indicating if each observation is within the MCD subset.}
 #'	\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
 #' }
+#'
+#' @importFrom robustbase covMcd
+#'
 #' @export
 PCrobdist <- function(U){
 

@@ -20,7 +20,6 @@
 #' @export
 #'
 #' @import stats
-#' @importFrom robustbase covMcd
 #'
 #' @examples
 #' n_voxels = 1e4
@@ -34,7 +33,10 @@ clever = function(
 	kurt_quantile_cut = .9,
 	kurt_detrend = TRUE,
 	method = c('leverage','robdist_subset','robdist'),
-	id_out = TRUE) {
+	id_out = TRUE,
+	input_covar = FALSE,
+	show_outlier_image = TRUE,
+	verbose = FALSE) {
 
 	choosePCs <- match.arg(choosePCs)  # return error if choosePCs arg not one of the acceptable options
 	method <- match.arg(method)  # return error if method arg not one of the acceptable options
@@ -48,19 +50,33 @@ clever = function(
 		}
 	}
 
-	x <- as.matrix(x)
-	p <- ncol(x)
-	n <- nrow(x)
-	if(p < n) warning('Data matrix has more rows than columns.
-		Check that observations are in rows and variables are in columns.')
+	if(!input_covar){
+		p <- ncol(x)
+		n <- nrow(x)
 
-	# Center and scale robustly.
-	x <- scale_med(x)
+		if(!is.matrix(x)){ x <- as.matrix(x) }
 
-	# Perform dimension reduction.
-	XXt <- (x %*% t(x))
-	SVDi <- svd(XXt)
+		if(p < n) warning('Data matrix has more rows than columns.
+			Check that observations are in rows and variables are in columns.')
 
+		if(verbose){ print('Centering and scaling.') }
+		# Center and scale robustly.
+		x <- scale_med(x)
+
+		if(verbose){ print('Computing covariance matrix.') }
+		# Perform dimension reduction.
+		XXt <- tcrossprod(x)
+		SVDi <- svd(XXt)
+		rm(XXt)
+		gc()
+
+	} else {
+		SVDi <- svd(x)
+		rm(x)
+		gc()
+	}
+
+	if(verbose){ print('Choosing PCs.') }
 	# Choose which PCs to retain.
 	choosePCs_kwargs <- list(svd=SVDi)
 	choosePCs_fun <- switch(choosePCs, variance=choosePCs_variance, kurtosis=choosePCs_kurtosis)
@@ -86,10 +102,18 @@ clever = function(
 	chosen_PCs <- do.call(choosePCs_fun, choosePCs_kwargs)
 	Q <- ncol(chosen_PCs$U)
 
+	if(verbose){ print('Computing outlyingness.') }
 	# Compute PCA leverage or robust distance.
 	method_fun <- switch(method, leverage=PCleverage,
 		robdist_subset=PCrobdist_subset, robdist=PCrobdist)
 	measure <- method_fun(chosen_PCs$U)
+
+	if(show_outlier_image){
+		out_img = diag(SVDi$d[chosen_PCs$indices]^(-1)) %*% t(chosen_PCs$U) %*% x
+	}
+	
+	rm(x)
+	gc()
 
 	# Organize the output.
 	if(method %in% c('robdist_subset','robdist')){
