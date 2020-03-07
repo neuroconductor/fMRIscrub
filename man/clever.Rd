@@ -40,7 +40,8 @@ observations represent a time series.}
 leverage or distance. Default is \code{TRUE}.}
 
 \item{solve_directions}{Should the principal directions be solved for? These
-are needed to display the leverage images for outlying observations.}
+are needed to display the leverage images for outlying observations. Default
+is \code{TRUE}.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }

@@ -18,7 +18,8 @@
 #' @param id_out If \code{TRUE} (default), will label outliers based on
 #'	leverage or distance. Default is \code{TRUE}.
 #' @param solve_directions Should the principal directions be solved for? These
-#'	are needed to display the leverage images for outlying observations.
+#'	are needed to display the leverage images for outlying observations. Default
+#'	is \code{TRUE}.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @return A clever object, i.e. a list with components
@@ -52,6 +53,8 @@ clever = function(
 	id_out = TRUE,
 	solve_directions = TRUE,
 	verbose = FALSE) {
+
+	TOL <- 1e-8 # cutoff for zero variance/MAD detection
 
 	# Return errors if args are not one of the acceptable options.
 	choosePCs <- match.arg(choosePCs)
@@ -94,7 +97,7 @@ clever = function(
 	X <- X - c(rowMedians(X, na.rm=TRUE))
 	## Scale.
 	mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
-	zero_mad <- mad < 1e-8
+	zero_mad <- mad < TOL
 	if(any(zero_mad)){
 		if(all(zero_mad)){
 			stop("All voxels are zero-variance.\n")
@@ -117,6 +120,15 @@ clever = function(
 															solve_directions=solve_directions),
 															trend_filtering.kwargs))
 		rm(X)
+		# Remove constant PCs.
+		zero_var <- apply(X.svd$u, 2, var) < TOL
+		if(any(zero_var)){
+			print(paste0('PCATF returned ', sum(zero_var),
+				' zero-variance PCs. Removing these.'))
+			X.svd$u <- X.svd$u[,!zero_var]
+			X.svd$d <- X.svd$d[!zero_var]
+			X.svd$v <- X.svd$v[,!zero_var]
+		}
 	} else {
 		if(solve_directions){
 			X.svd <- svd(X)

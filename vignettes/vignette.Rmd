@@ -145,8 +145,16 @@ For the first dataset, clever identifies 59-61 and 150-151 consistently across a
 New to version 1.5 is an option to use the scores from PCATF instead of regular PCA (citation). Notice how the leverage trends are "filtered" to have flat lines in local neighborhoods. This result not only is easier to analyze visually, but also aligns with the idea that outliers shold occur in clusters if the artifact-causing phenomenon occurs over a period longer than the T_R.  
 
 ```{r}
-clever.Dat1.PCATF = clever(Dat1, trend_filtering=TRUE)
-clever.Dat2.PCATF = clever(Dat2, trend_filtering=TRUE)
+clever.Dat1.PCATF.lev = clever(Dat1, trend_filtering=TRUE)
+#clever.Dat1.PCATF.rbd = clever(Dat1, trend_filtering=TRUE, 
+#                               method='robdist')
+#clever.Dat1.PCATF.rbs = clever(Dat1, trend_filtering=TRUE, 
+                               method='robdist_subset')
+clever.Dat2.PCATF.lev = clever(Dat2, trend_filtering=TRUE)
+#clever.Dat2.PCATF.rbd = clever(Dat2, trend_filtering=TRUE, 
+#                               method='robdist')
+#clever.Dat2.PCATF.rbs = clever(Dat2, trend_filtering=TRUE, 
+#                               method='robdist_subset')
 
 grid.arrange(grobs=list(
   D1=plot(clever.Dat1.PCATF)+ggtitle('Dat1'), 
@@ -155,37 +163,25 @@ grid.arrange(grobs=list(
 
 ### Image reconstruction
 
-We can reconstruct the original fMRI images with the mask used for vectorizing.
+We can reconstruct the original fMRI images with the mask used for vectorizing the data. See `Matrix_to_VolumeTimeSeries` in `clever/R/visualize.R` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
 library(neurobase)
-```
 
-```{r}
-Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
-  in.mask = mask > 0
-  t = nrow(mat)
-             
-  if(length(dim(mask)) == 3){
-    dims = c(dim(mask), t)
-  } else if(length(dim(mask)) == 2) {
-    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
-    dims = switch(sliced.dim,
-                  c(1, dim(mask), t),
-                  c(dim(mask)[1], 1, dim(mask)[2], t),
-                  c(dim(mask), 1, t)
-    )
-  } else {
-    stop('Not Implemented: mask must be 2D or 3D.')
-  }
-
-  vts = array(0, dim=dims)
-  for(i in 1:t){
-    vts[,,,i][in.mask] = mat[i,]
-  }
-
-  return(vts)
+#'  Selects a timepoint from a volume time series, and returns it after adding
+#'  the NIfTI header from the mask onto it.
+#' @param VolumeTimeSeries A 4D matrix. Time is on the 4th dimension.
+#' @param time The timepoint to select.
+#' @param mask The corresponding mask.
+#'
+#' @return The 3D volume with the NIfTI header from the mask.
+#'
+#' @export
+Volume_to_NIfTI <- function(VolumeTimeSeries, time, mask){
+  vol <- VolumeTimeSeries[,,,time]
+  vol <- copyNIfTIHeader(img=mask, arr=vol)
+  return(vol)
 }
 ```
 
@@ -201,14 +197,6 @@ Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 
 Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the kurtosis and leverage parameter settings.
 
-```{r}
-Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
-  vol = VolumeTimeSeries[,,,time]
-  vol = copyNIfTIHeader(img=mask, arr=vol)
-  return(vol)
-}
-```
-
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
 levs = clever.Dat1.kurt.lev$leverage
@@ -220,3 +208,22 @@ image(Img1[,,,t_max], main=paste0('Maximum leverage (T = ', t_max, ')'))
 ```
 
 The median time point appears normal, whereas the most outlying time point clearly has banding artifacts.
+
+### leverage images
+
+New to 1.5, clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at the 60th timepoint for the first dataset.
+
+```{r}
+Lev_Img1 = leverage_images(clever.Dat1.kurt.lev, outlier_level=1)
+row.names(Lev_Img1$mean)
+
+```
+
+
+```{r}
+Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
+Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
+
+image(Lev_Img1.mean[,,,1], main=paste0('Leverage image, mean direction (T = 60)'))
+image(Lev_Img1.top[,,,1], main=paste0('Leverage image, top direction (T = 60)'))
+```

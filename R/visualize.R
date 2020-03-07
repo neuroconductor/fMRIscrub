@@ -144,3 +144,99 @@ plot.clever <- function(x, ...){
 	}
 	return(plt)
 }
+
+#'  Calculate the leverage images for each outlier that meets the
+#'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
+#'	and 1 being the lowest.
+#'
+#' @param x A clever object.
+#' @param outlier_level The outlier threshold for the images, with 3 (default)
+#'  being the highest/strictest. If no outliers at or above this threshold
+#'  exist, no images will be made.
+#'
+#' @return A list of three: the mean leverage images for each outlier meeting
+#'  the thresold, the top leverage images, and the indices of the top leverage
+#'  images.
+#'
+#' @export
+leverage_images <- function(x, outlier_level=3){
+  svd <- x$PCs$svd
+  if(is.null(svd$v)){
+    stop('This clever object did not solve for the PC directions. Run clever
+      again with `solve_directions=TRUE` to visualize the leverage images.')
+  }
+  N_ <- nrow(svd$v)
+
+  outliers <- x$outliers
+  if(is.null(outliers)){
+    stop('This clever object did not label outliers. Run clever again with
+      `id_out=TRUE` to visualize the results. ')
+  }
+  if((outlier_level < 1)|(outlier_level > 3)){
+    stop('The outlier level should be 1, 2, or 3.')
+  }
+
+	lev_img_idxs <- which(outliers[,outlier_level])
+  n_imgs <- length(lev_img_idxs)
+  if(n_imgs == 0){
+    print(paste0('This clever object did not find any outliers at level ',
+      outlier_level, '.'))
+    return(NULL)
+  }
+
+	lev_imgs <- list()
+	lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
+	lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
+  lev_imgs$top_dir <- vector(mode='numeric', length=n_imgs)
+	for(i in 1:n_imgs){
+		idx <- lev_img_idxs[i]
+    mean_img <- svd$u[idx,] %*% t(svd$v)
+
+    u_row <- svd$u[idx,]
+		lev_imgs$mean[i,] <- u_row %*% t(svd$v)
+    lev_imgs$top_dir[i] <- which.max(u_row)[1]
+		lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
+	}
+
+  row.names(lev_imgs$mean) <- lev_img_idxs
+  row.names(lev_imgs$top) <- lev_img_idxs
+  names(lev_imgs$top_dir) <- lev_img_idxs
+  return(lev_imgs)
+}
+
+#'  Applies a 2D/3D mask to a matrix to get an volume time series.
+#' @param mat A matrix whose rows are observations at different times, and
+#'  columns are pixels/voxels.
+#' @param mask A corresponding binary mask, with 1's representing regions
+#'  within the area of interest and 0's representing regions to mask out.
+#' @param sliced.dim If the mask is 2D, which dimension does it represent?
+#'  Will default to the 3rd dimension (axial).
+#'
+#' @return A 4D array representing the volume time series. Time is on the 4th
+#'  dimension.
+#'
+#' @export
+Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced.dim = NA){
+  in.mask <- mask > 0
+  t <- nrow(mat)
+
+  if(length(dim(mask)) == 3){
+    dims <- c(dim(mask), t)
+  } else if(length(dim(mask)) == 2) {
+    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
+    dims <- switch(sliced.dim,
+                   c(1, dim(mask), t),
+                   c(dim(mask)[1], 1, dim(mask)[2], t),
+                   c(dim(mask), 1, t)
+    )
+  } else {
+    stop('Not Implemented: mask must be 2D or 3D.')
+  }
+
+  vts <- array(0, dim=dims)
+  for(i in 1:t){
+    vts[,,,i][in.mask] <- mat[i,]
+  }
+
+  return(vts)
+}
