@@ -24,8 +24,8 @@ TRUE. Recommended if observations represent a time series.}
 \item{max_keep}{If specified, the total number kept will be at most this
 value.}
 
-\item{min_keep}{If specified, the total number kept will be at least this
-value.  Default 1.}
+\item{min_keep}{The total number kept will be at least this
+value. The default value is 1.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis.}

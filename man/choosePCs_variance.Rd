@@ -2,7 +2,7 @@
 % Please edit documentation in R/choosePCs.R
 \name{choosePCs_variance}
 \alias{choosePCs_variance}
-\title{Selects the principle components of sufficient variance from a SVD.}
+\title{Selects the principle components of above-average variance from a SVD.}
 \usage{
 choosePCs_variance(svd, max_keep = NULL, min_keep = 1)
 }
@@ -12,11 +12,12 @@ choosePCs_variance(svd, max_keep = NULL, min_keep = 1)
 \item{max_keep}{If specified, the total number kept will be at most this
 value.}
 
-\item{min_keep}{If specified, the total number kept will be at least this
-value.}
+\item{min_keep}{The total number kept will be at least this
+value. The default value is 1.}
 }
 \value{
-The subsetted u matrix with only the chosen columns (PCs).
+A list with the subsetted u matrix with only the chosen columns (PCs),
+and the original indices of the PCs which were retained.
 }
 \description{
 PCs with above-average variance are retained, but the total number kept is

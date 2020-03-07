@@ -5,28 +5,44 @@
 \title{Calculates PCA leverage or robust distance and identifies outliers.}
 \usage{
 clever(
-  x,
-  choosePCs = c("kurtosis", "variance"),
+  X,
+  trend_filtering = TRUE,
+  trend_filtering.kwargs = NULL,
+  choosePCs = c("variance", "kurtosis"),
   kurt_quantile_cut = 0.9,
   kurt_detrend = TRUE,
   method = c("leverage", "robdist_subset", "robdist"),
   id_out = TRUE,
-  input_covar = FALSE
+  solve_directions = TRUE,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{x}{A wide (obs x vars) data matrix of values.}
+\item{X}{A wide (observations x variables) numerical data matrix.}
 
-\item{choosePCs}{The method to use for choosing which PCs to retain. Default is kurtosis.}
+\item{trend_filtering.kwargs}{Options for \code{PCATF}, including the trend
+filtering parameter \code{lambda}.}
 
-\item{kurt_quantile_cut}{The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.}
+\item{choosePCs}{The method to use for choosing which PCs to retain:
+\code{variance} or \code{kurtosis}. Default is \code{kurtosis}.}
 
-\item{kurt_detrend}{If \code{choosePCs} is \code{kurtosis}, should PCs be detrended before measuring kurtosis?
-Default is TRUE. Recommended if observations represent a time series.}
+\item{kurt_quantile_cut}{The cutoff quantile to use if \code{choosePCs} is
+\code{kurtosis}. Default is .9.}
 
-\item{method}{The method to use to measure outlyingness. Default is leverage.}
+\item{kurt_detrend}{If \code{choosePCs} is \code{kurtosis}, should PCs be
+detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
+observations represent a time series.}
 
-\item{id_out}{If TRUE (default), will label outliers based on leverage or distance.}
+\item{method}{The method to use to measure outlyingness: \code{leverage},
+\code{robdist}, or \code{robdist_subset}. Default is \code{leverage}.}
+
+\item{id_out}{If \code{TRUE} (default), will label outliers based on
+leverage or distance. Default is \code{TRUE}.}
+
+\item{solve_directions}{Should the principal directions be solved for? These
+are needed to display the leverage images for outlying observations.}
+
+\item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
 \value{
 A clever object, i.e. a list with components
@@ -36,7 +52,7 @@ A clever object, i.e. a list with components
  \item{leverage}{The leverage of each observation. NULL if \code{method} is not PCA leverage.}
  \item{robdist}{The robust distance of each observation. NULL if \code{method} is not robust distance (subset).}
  \item{inMCD}{Whether each observation is within the MCD subset. NULL if \code{method} is not robust distance (subset).}
- \item{outliers}{An n x 3 data.frame indicating if each observation is an outlier at each of the three levels.}
+ \item{outliers}{An n X 3 data.frame indicating if each observation is an outlier at each of the three levels.}
 }
 }
 \description{
@@ -45,7 +61,7 @@ Calculates PCA leverage or robust distance and identifies outliers.
 \examples{
 n_voxels = 1e4
 n_timepoints = 100
-x = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
+X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 
-lev = clever(x)
+clev = clever(X)
 }
