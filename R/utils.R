@@ -95,3 +95,29 @@ est_trend <- function(ts, robust=TRUE){
 
   return(trend)
 }
+
+#' Converts a vectorized matrix back to a volume time series.
+Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
+  in.mask = mask > 0
+  t = nrow(mat)
+
+  if(length(dim(mask)) == 3){
+    dims = c(dim(mask), t)
+  } else if(length(dim(mask)) == 2) {
+    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
+    dims = switch(sliced.dim,
+                  c(1, dim(mask), t),
+                  c(dim(mask)[1], 1, dim(mask)[2], t),
+                  c(dim(mask), 1, t)
+    )
+  } else {
+    stop('Not Implemented: mask must be 2D or 3D.')
+  }
+
+  vts = array(0, dim=dims)
+  for(i in 1:t){
+    vts[,,,i][in.mask] = mat[i,]
+  }
+
+  return(vts)
+}

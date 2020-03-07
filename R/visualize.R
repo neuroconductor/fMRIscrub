@@ -37,6 +37,11 @@ plot.clever <- function(x, ...){
 	cutoffs <- x$cutoffs
 	args <- list(...)
 
+  if(is.null(outliers)){
+    stop('This clever object did not label outliers. Run clever again with 
+      `id_out`=TRUE to visualize the results. ')
+  }
+
 	#Log the y-axis if the measurement is robust distance.
 	log_measure <- switch(method,
 		leverage=FALSE,
@@ -137,4 +142,26 @@ plot.clever <- function(x, ...){
 		if(args$type == 'n'){ return(plt) }
 	}
 	return(plt)
+}
+
+#'  A number from 0 to 3. If > 0, The leverage images will be
+#'	calculated for each outlier that meets the threshold, with 1 (default) being
+#'	the lowest threshold and 3 being the highest/strictest. If 0, no images are
+#'	calculated and clever can reduce memory usage. This argument is ignored if
+#'	\code{id_out} is \code{FALSE}.
+levereage_images <- function(clever, outlier_level){
+  print('abc')
+  svd <- clever$PCs
+	lev_img_idxs <- which(clever$outliers[,outlier_level])
+	lev_imgs <- list()
+	lev_imgs$mean <- matrix(NA, nrow=length(lev_img_idxs), ncol=N_)
+	lev_imgs$top <- matrix(NA, nrow=length(lev_img_idxs), ncol=N_)
+	for(i in 1:length(lev_img_idxs)){
+		# fix these...
+		idx <- lev_img_idxs[i]
+		lev_imgs$mean[i,] <- apply(svd$u[idx,], 2, mean)
+		top_PC <- argmax(svd$u[idx,])
+		lev_imgs$top[i,] <- svd$v[idx, top_PC]
+	}
+  return(lev_imgs)
 }

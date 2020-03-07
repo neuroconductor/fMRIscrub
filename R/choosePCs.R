@@ -1,4 +1,4 @@
-#' Selects the principle components of sufficient variance from a SVD.
+#' Selects the principle components of above-average variance from a SVD.
 #'
 #' PCs with above-average variance are retained, but the total number kept is
 #' constrained by the \code{max_keep} and \code{min_keep} arguments.
@@ -14,8 +14,7 @@
 #'
 #' @export
 choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
-	U <- svd$u
-	var <- svd$d
+	var <- svd$d^2
 
 	# Identify how many PCs will be kept.
 	n_keep <- sum(var > mean(var))
@@ -25,9 +24,9 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
 	# PCs are already ordered by decreasing variance.
-	U <- U[,1:n_keep]
+	indices <- 1:n_keep
 
-	return(list(U=U, indices=1:n_keep))
+	return(indices)
 }
 
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
@@ -98,9 +97,8 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
 	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
 	# The PCs with greatest kurtosis are chosen.
-	to_keep <- order(-kurt)[1:n_keep]
-	to_keep <- to_keep[order(to_keep)]
-	U <- U[,to_keep]
+	indices <- order(-kurt)[1:n_keep]
+	indices <- indices[order(indices)]
 
-	return(list(U=U, indices=to_keep))
+	return(indices)
 }
