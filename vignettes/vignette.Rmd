@@ -75,6 +75,9 @@ clever.Dat2.kurt.lev = clever(Dat2, trend_filtering=FALSE)
 clever.Dat1.vari.lev = clever(Dat1, choosePCs = 'variance', trend_filtering=FALSE)
 clever.Dat1.kurt.rds = clever(Dat1, choosePCs='kurtosis', method = 'robdist_subset', 
                               trend_filtering=FALSE)
+```
+
+```{r}
 clever.Dat1.vari.rds = clever(Dat1, choosePCs = 'variance', method = 'robdist_subset', 
                               trend_filtering=FALSE)
 clever.Dat1.kurt.rbd = clever(Dat1, choosePCs='kurtosis', method = 'robdist', 
@@ -145,8 +148,9 @@ New to version 1.5 is an option to use the scores from PCATF instead of regular 
 clever.Dat1.PCATF = clever(Dat1, trend_filtering=TRUE)
 clever.Dat2.PCATF = clever(Dat2, trend_filtering=TRUE)
 
-grid.arrange(grobs=list(D1=plot(clever.Dat1.PCATF)+ggtitle('Dat1'), 
-                        D2=plot(clever.Dat2.PCATF)+ggtitle('Dat2')), ncol=2)
+grid.arrange(grobs=list(
+  D1=plot(clever.Dat1.PCATF)+ggtitle('Dat1'), 
+  D2=plot(clever.Dat2.PCATF)+ggtitle('Dat2')), ncol=2)
 ```
 
 ### Image reconstruction
