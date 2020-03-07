@@ -42,7 +42,7 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 library(devtools)
-devtools::install_github('mandymejia/clever', '1.4')
+devtools::install_github('mandymejia/clever', '1.5')
 ```
 
 ## Tutorial Data
@@ -69,22 +69,28 @@ dim(Dat2)
 We next run clever on both datasets using all possible combinations of parameters.
 
 ```{r}
-clever.Dat1.kurt.lev = clever(Dat1)
-clever.Dat2.kurt.lev = clever(Dat2)
-```
+clever.Dat1.kurt.lev = clever(Dat1, choosePCs='kurtosis', trend_filtering=FALSE)
+clever.Dat2.kurt.lev = clever(Dat2, trend_filtering=FALSE)
 
-```{r, warning = FALSE, message = FALSE}
-clever.Dat1.vari.lev = clever(Dat1, choosePCs = 'variance')
-clever.Dat1.kurt.rds = clever(Dat1, method = 'robdist_subset')
-clever.Dat1.vari.rds = clever(Dat1, choosePCs = 'variance', method = 'robdist_subset')
-clever.Dat1.kurt.rbd = clever(Dat1, method = 'robdist')
-clever.Dat1.vari.rbd = clever(Dat1, choosePCs = 'variance', method = 'robdist')
+clever.Dat1.vari.lev = clever(Dat1, choosePCs = 'variance', trend_filtering=FALSE)
+clever.Dat1.kurt.rds = clever(Dat1, choosePCs='kurtosis', method = 'robdist_subset', 
+                              trend_filtering=FALSE)
+clever.Dat1.vari.rds = clever(Dat1, choosePCs = 'variance', method = 'robdist_subset', 
+                              trend_filtering=FALSE)
+clever.Dat1.kurt.rbd = clever(Dat1, choosePCs='kurtosis', method = 'robdist', 
+                              trend_filtering=FALSE)
+clever.Dat1.vari.rbd = clever(Dat1, choosePCs = 'variance', method = 'robdist', 
+                              trend_filtering=FALSE)
 
-clever.Dat2.vari.lev = clever(Dat2, choosePCs = 'variance')
-clever.Dat2.kurt.rds = clever(Dat2, method = 'robdist_subset')
-clever.Dat2.vari.rds = clever(Dat2, choosePCs = 'variance', method = 'robdist_subset')
-clever.Dat2.kurt.rbd = clever(Dat2, method = 'robdist')
-clever.Dat2.vari.rbd = clever(Dat2, choosePCs = 'variance', method = 'robdist')
+clever.Dat2.vari.lev = clever(Dat2, choosePCs = 'variance', trend_filtering=FALSE)
+clever.Dat2.kurt.rds = clever(Dat2, choosePCs='kurtosis', method = 'robdist_subset', 
+                              trend_filtering=FALSE)
+clever.Dat2.vari.rds = clever(Dat2, choosePCs = 'variance', method = 'robdist_subset', 
+                              trend_filtering=FALSE)
+clever.Dat2.kurt.rbd = clever(Dat2, choosePCs='kurtosis', method = 'robdist', 
+                              trend_filtering=FALSE)
+clever.Dat2.vari.rbd = clever(Dat2, choosePCs = 'variance', method = 'robdist', 
+                              trend_filtering=FALSE)
 
 clevers.Dat1 = list(clever.Dat1.kurt.lev, clever.Dat1.vari.lev, clever.Dat1.kurt.rds, clever.Dat1.vari.rds, clever.Dat1.kurt.rbd, clever.Dat1.vari.rbd)
 
@@ -131,7 +137,21 @@ grid.arrange(grobs=plt_row, ncol=1)
 
 For the first dataset, clever identifies 59-61 and 150-151 consistently across all parameter settings. Other times are variously identified as well, with the mean method of choosing PCs tending to identify more outliers than the kurtosis method. For the second dataset, few or no outliers are identified. Overall, these results are consistent with our prior knowledge of both datasets. 
 
-In fact, We can reconstruct the original fMRI images with the mask used for vectorizing.
+### Trend filtering
+
+New to version 1.5 is an option to use the scores from PCATF instead of regular PCA (citation). Notice how the leverage trends are "filtered" to have flat lines in local neighborhoods. This result not only is easier to analyze visually, but also aligns with the idea that outliers shold occur in clusters if the artifact-causing phenomenon occurs over a period longer than the T_R.  
+
+```{r}
+clever.Dat1.PCATF = clever(Dat1, trend_filtering=TRUE)
+clever.Dat2.PCATF = clever(Dat2, trend_filtering=TRUE)
+
+grid.arrange(grobs=list(D1=plot(clever.Dat1.PCATF)+ggtitle('Dat1'), 
+                        D2=plot(clever.Dat2.PCATF)+ggtitle('Dat2')), ncol=2)
+```
+
+### Image reconstruction
+
+We can reconstruct the original fMRI images with the mask used for vectorizing.
 
 ```{r warning=FALSE}
 library(oro.nifti)
