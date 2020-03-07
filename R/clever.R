@@ -75,13 +75,13 @@ clever = function(
 
 	choosePCs.fun <- switch(choosePCs, kurtosis=choosePCs_kurtosis,
 																		 variance=choosePCs_variance,
-																	 	 PCATF=choosePCs_PCATF)
+																		 PCATF=choosePCs_PCATF)
 	method.fun <- switch(method, leverage=PCleverage,
 															 robdist=PCrobdist,
 															 robdist_subset=PCrobdist_subset)
 	id_out.fun <- switch(method, leverage=id_out.leverage,
 															 robdist=id_out.robdist,
-														 	 robdist_subset=id_out.robdist_subset)
+															 robdist_subset=id_out.robdist_subset)
 
 	if(!is.matrix(X)){ X <- as.matrix(X) }
 	N_ <- ncol(X)

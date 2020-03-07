@@ -35,41 +35,41 @@ PCATF <- function(X, solve_directions = TRUE, K=NULL, lambda=.5,
 		if(!is.integer(K)){ print('K argument to PCATF is not recognized.') }
 	}
 
-  U <- matrix(NA, nrow = T_, ncol = K)
-  D <- rep(NA, K)
+	U <- matrix(NA, nrow = T_, ncol = K)
+	D <- rep(NA, K)
 	if(solve_directions){ V <- matrix(NA, nrow = N_, ncol = K) }
 
-  for(k in 1:K){
+	for(k in 1:K){
 		# Get initial eigenvector from regular svd.
-    u <- X.svd_init$u[, k]
+		u <- X.svd_init$u[, k]
 		d <- X.svd_init$d[k]
 		v <- X.svd_init$v[, k]
 
 		# Iterate between trendfiltering u and orthonormalizing v.
-    for(i in 1:niter_max){
-      u.last <- u
+		for(i in 1:niter_max){
+			u.last <- u
 			tf.kwargs <- list(y = scale(X %*% v, center = FALSE, scale = d),
 												x = 1:T_, nlambda = 1, k = 0)
 			if(!is.null(lambda)){ tf.kwargs$lambda <- lambda }
-      u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
-      v <- far::orthonormalization(
+			u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
+			v <- far::orthonormalization(
 				crossprod(X, u), basis = FALSE, norm = TRUE)
-      diff <- sqrt(mean((u - u.last)^2))
-      if(diff < tol){
-        break
-      }
+			diff <- sqrt(mean((u - u.last)^2))
+			if(diff < tol){
+				break
+			}
 			if(verbose){
 				if(i == niter_max){ print(paste0('PC ', k, ' did not converge.')) }
 			}
-    }
+		}
 
-    d <- crossprod(u, X %*% v)[1, 1]
-    X <- X - d * tcrossprod(u, v)
-    U[, k] <- u
-    D[k] <- d
+		d <- crossprod(u, X %*% v)[1, 1]
+		X <- X - d * tcrossprod(u, v)
+		U[, k] <- u
+		D[k] <- d
 		if(solve_directions){ V[, k] <- v}
-  }
-  out <- list(d = D, u = U)
+	}
+	out <- list(d = D, u = U)
 	if(solve_directions){ out$v = V }
-  return(out)
+	return(out)
 }
