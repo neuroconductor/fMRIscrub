@@ -149,7 +149,7 @@ clever.Dat1.PCATF.lev = clever(Dat1, trend_filtering=TRUE)
 #clever.Dat1.PCATF.rbd = clever(Dat1, trend_filtering=TRUE, 
 #                               method='robdist')
 #clever.Dat1.PCATF.rbs = clever(Dat1, trend_filtering=TRUE, 
-                               method='robdist_subset')
+#                               method='robdist_subset')
 clever.Dat2.PCATF.lev = clever(Dat2, trend_filtering=TRUE)
 #clever.Dat2.PCATF.rbd = clever(Dat2, trend_filtering=TRUE, 
 #                               method='robdist')
@@ -157,8 +157,8 @@ clever.Dat2.PCATF.lev = clever(Dat2, trend_filtering=TRUE)
 #                               method='robdist_subset')
 
 grid.arrange(grobs=list(
-  D1=plot(clever.Dat1.PCATF)+ggtitle('Dat1'), 
-  D2=plot(clever.Dat2.PCATF)+ggtitle('Dat2')), ncol=2)
+  D1=plot(clever.Dat1.PCATF.lev)+ggtitle('Dat1'), 
+  D2=plot(clever.Dat2.PCATF.lev)+ggtitle('Dat2')), ncol=2)
 ```
 
 ### Image reconstruction
@@ -176,8 +176,6 @@ library(neurobase)
 #' @param mask The corresponding mask.
 #'
 #' @return The 3D volume with the NIfTI header from the mask.
-#'
-#' @export
 Volume_to_NIfTI <- function(VolumeTimeSeries, time, mask){
   vol <- VolumeTimeSeries[,,,time]
   vol <- copyNIfTIHeader(img=mask, arr=vol)
@@ -215,6 +213,7 @@ New to 1.5, clever can also display the "leverage images" for each outlying obse
 
 ```{r}
 Lev_Img1 = leverage_images(clever.Dat1.kurt.lev, outlier_level=1)
+print('The timepoints meeting the first outlier level threshold:')
 row.names(Lev_Img1$mean)
 
 ```
