@@ -20,6 +20,10 @@ clever(
 \arguments{
 \item{X}{A wide (observations x variables) numerical data matrix.}
 
+\item{PCA_trend_filtering}{Should PCA Trend Filtering (PCATF) be used in place
+of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
+must be \code{variance} and \code{method} must be \code{leverage}.}
+
 \item{PCA_trend_filtering.kwargs}{Named list of arguments for \code{PCATF}:
 the trend filtering parameter \code{lambda} (Default 0.5), the number of
 iterations \code{niter_max} (Default 1000), convergence tolerance \code{tol}
