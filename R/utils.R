@@ -10,28 +10,27 @@
 #'
 #' @importFrom robustbase rowMedians
 scale_med <- function(mat){
+	# Transpose to use vector recycling (will revert after).
 	mat <- t(mat)
-
-	# Center.
+	#	Center.
 	mat <- mat - c(rowMedians(mat, na.rm=TRUE))
-
 	# Scale.
 	mad <- 1.4826 * rowMedians(abs(mat), na.rm=TRUE)
-	zero_mad <- mad < 1e-8
+	zero_mad <- mad < TOL
 	if(any(zero_mad)){
 		if(all(zero_mad)){
 			stop("All voxels are zero-variance.\n")
 		} else {
-			warning(cat("Warning: ", sum(zero_mad),
+			warning(paste0("Warning: ", sum(zero_mad),
 				" zero-variance voxels (out of ", length(zero_mad),
-				"). These will be set to zero for estimation of the covariance.\n", sep=""))
-			}
-			mad[zero_mad] <- 1
+				" ). These will be set to zero for estimation of the covariance.\n"))
+		}
+		mad[zero_mad] <- 1
 	}
 	mat <- mat/c(mad)
 	mat[zero_mad,] <- 0
-	mat <- t(mat)
-	return(mat)
+	# Revert transpose.
+	mat <- t(X)
 }
 
 #' Computes the log likelihood of a sample of values from an F distribution.

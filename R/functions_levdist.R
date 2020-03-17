@@ -6,7 +6,7 @@
 #'
 #' @return A vector of length n with the leverage of each observation.
 #' @export
-PCleverage <- function(U){
+PC.leverage <- function(U){
 	return(diag(U %*% t(U)))
 }
 
@@ -32,7 +32,7 @@ PCleverage <- function(U){
 #' @importFrom robustbase covMcd
 #'
 #' @export
-PCrobdist_subset <- function(U){
+PC.robdist_subset <- function(U){
 
 	n <- nrow(U)
 	Q <- ncol(U)
@@ -101,7 +101,7 @@ PCrobdist_subset <- function(U){
 #' @importFrom robustbase covMcd
 #'
 #' @export
-PCrobdist <- function(U){
+PC.robdist <- function(U){
 
 	n <- nrow(U)
 	Q <- ncol(U)
