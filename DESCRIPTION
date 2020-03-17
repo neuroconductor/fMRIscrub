@@ -44,4 +44,6 @@ Suggests:
     gridExtra,
     testthat (>= 2.1.0),
     covr
+Remotes:
+    glmgen/glmgen/R_pkg/glmgen
 VignetteBuilder: knitr
