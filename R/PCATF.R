@@ -28,7 +28,7 @@ PCATF <- function(X, solve_directions = TRUE, K=NULL, lambda=.5,
 		K <- T_
 	} else if(is.character(K)){
 		if('mean var' %in% K){
-			K <- choosePCs_variance(X.svd_init, max_keep=NULL, min_keep=NULL)
+			K <- choose_PCs.variance(X.svd_init, max_keep=NULL, min_keep=NULL)
 			K <- K[length(K)]
 		}
 	} else {

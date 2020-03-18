@@ -46,6 +46,7 @@
 #' }
 #'
 #' @importFrom robustbase rowMedians
+#' @import stats
 #'
 #' @export
 #'

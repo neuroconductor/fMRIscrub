@@ -10,6 +10,7 @@
 #'
 #' @importFrom robustbase rowMedians
 scale_med <- function(mat){
+	TOL <- 1e-8
 	# Transpose to use vector recycling (will revert after).
 	mat <- t(mat)
 	#	Center.
@@ -30,7 +31,7 @@ scale_med <- function(mat){
 	mat <- mat/c(mad)
 	mat[zero_mad,] <- 0
 	# Revert transpose.
-	mat <- t(X)
+	mat <- t(mat)
 }
 
 #' Computes the log likelihood of a sample of values from an F distribution.

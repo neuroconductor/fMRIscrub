@@ -31,7 +31,8 @@ Imports:
     e1071,
     far,
     glmgen,
-    robustbase
+    robustbase,
+    stats
 RoxygenNote: 7.0.2
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
