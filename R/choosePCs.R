@@ -1,4 +1,4 @@
-#' Selects the principle components of sufficient variance from a SVD.
+#' Selects the principle components of above-average variance from a SVD.
 #'
 #' PCs with above-average variance are retained, but the total number kept is
 #' constrained by the \code{max_keep} and \code{min_keep} arguments.
@@ -13,9 +13,8 @@
 #' and the original indices of the PCs which were retained.
 #'
 #' @export
-choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
-	U <- svd$u
-	var <- svd$d
+choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
+	var <- svd$d^2
 
 	# Identify how many PCs will be kept.
 	n_keep <- sum(var > mean(var))
@@ -25,9 +24,9 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
 	# PCs are already ordered by decreasing variance.
-	U <- U[,1:n_keep]
+	indices <- 1:n_keep
 
-	return(list(U=U, indices=1:n_keep))
+	return(indices)
 }
 
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
@@ -41,7 +40,7 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 #' the \code{max_keep} and \code{min_keep} arguments.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
-#' @param kurt_quantile_cut PCs with kurtosis of at least this quantile are kept.
+#' @param kurt_quantile PCs with kurtosis of at least this quantile are kept.
 #' @param detrend Should PCs be detrended before measuring kurtosis? Default is
 #' 	TRUE. Recommended if observations represent a time series.
 #' @param max_keep If specified, the total number kept will be at most this
@@ -49,7 +48,9 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 #' @param min_keep The total number kept will be at least this
 #' value. The default value is 1.
 #' @param n_sim The number of simulation data to use for estimating the sampling
-#' distribution of kurtosis.
+#' distribution of kurtosis. Only used if a new simulation is performed. (If
+#'	n<1000 and the quantile is 90%, a pre-computed value is used. If n>1000,
+#'	the theoretical asymptotic distribution is used.
 #'
 #' @return A list with the subsetted u matrix with only the chosen columns (PCs),
 #' and the original indices of the PCs which were retained.
@@ -57,7 +58,7 @@ choosePCs_variance <- function(svd, max_keep=NULL, min_keep=1){
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
+choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
 	max_keep=NULL, min_keep=1, n_sim=5000){
 	U <- svd$u
 	m <- nrow(U)
@@ -77,17 +78,17 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
 
 	# Determine the quantile cutoff.
 	if(m < 1000){
-		if(kurt_quantile_cut == .9){
+		if(kurt_quantile == .9){
 			# Use precomputed empirical quantile.
-		  cut <- kurt_90_quant[m]
+			cut <- kurt_90_quant[m]
 		} else {
 			# Simulate and compute the empirical quantile.
 			sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
-			cut <- quantile(sim, kurt_quantile_cut)
+			cut <- quantile(sim, kurt_quantile)
 		}
 	} else {
 		# Use theoretical quantile.
-		cut <- qnorm(kurt_quantile_cut) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
+		cut <- qnorm(kurt_quantile) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
 	}
 
 	# Identify how many PCs will be kept.
@@ -98,9 +99,8 @@ choosePCs_kurtosis <- function(svd, kurt_quantile_cut=.9, detrend=TRUE,
 	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
 	# The PCs with greatest kurtosis are chosen.
-	to_keep <- order(-kurt)[1:n_keep]
-	to_keep <- to_keep[order(to_keep)]
-	U <- U[,to_keep]
+	indices <- order(-kurt)[1:n_keep]
+	indices <- indices[order(indices)]
 
-	return(list(U=U, indices=to_keep))
+	return(indices)
 }

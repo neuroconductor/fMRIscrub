@@ -11,7 +11,7 @@ vignette: >
 
 ```{r}
 library(knitr)
-opts_chunk$set(autodep = TRUE)
+opts_chunk$set(autodep = TRUE, cache = TRUE)
 ```
 
 ## Overview
@@ -42,7 +42,7 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 library(devtools)
-devtools::install_github('mandymejia/clever', '1.4')
+devtools::install_github('mandymejia/clever')
 ```
 
 ## Tutorial Data
@@ -69,22 +69,34 @@ dim(Dat2)
 We next run clever on both datasets using all possible combinations of parameters.
 
 ```{r}
-clever.Dat1.kurt.lev = clever(Dat1)
-clever.Dat2.kurt.lev = clever(Dat2)
+clever.Dat1.kurt.lev = clever(Dat1, choose_PCs='kurtosis', 
+                              PCA_trend_filtering=FALSE, verbose=TRUE)
+clever.Dat2.kurt.lev = clever(Dat2, choose_PCs='kurtosis', 
+                              PCA_trend_filtering=FALSE, verbose=TRUE)
 ```
 
-```{r, warning = FALSE, message = FALSE}
-clever.Dat1.vari.lev = clever(Dat1, choosePCs = 'variance')
-clever.Dat1.kurt.rds = clever(Dat1, method = 'robdist_subset')
-clever.Dat1.vari.rds = clever(Dat1, choosePCs = 'variance', method = 'robdist_subset')
-clever.Dat1.kurt.rbd = clever(Dat1, method = 'robdist')
-clever.Dat1.vari.rbd = clever(Dat1, choosePCs = 'variance', method = 'robdist')
+```{r}
+clever.Dat1.vari.lev = clever(Dat1, choose_PCs = 'variance', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat1.kurt.rds = clever(Dat1, choose_PCs='kurtosis', method = 'robdist_subset', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat1.vari.rds = clever(Dat1, choose_PCs = 'variance', method = 'robdist_subset', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat1.kurt.rbd = clever(Dat1, choose_PCs='kurtosis', method = 'robdist', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat1.vari.rbd = clever(Dat1, choose_PCs = 'variance', method = 'robdist', 
+                              PCA_trend_filtering=FALSE)
 
-clever.Dat2.vari.lev = clever(Dat2, choosePCs = 'variance')
-clever.Dat2.kurt.rds = clever(Dat2, method = 'robdist_subset')
-clever.Dat2.vari.rds = clever(Dat2, choosePCs = 'variance', method = 'robdist_subset')
-clever.Dat2.kurt.rbd = clever(Dat2, method = 'robdist')
-clever.Dat2.vari.rbd = clever(Dat2, choosePCs = 'variance', method = 'robdist')
+clever.Dat2.vari.lev = clever(Dat2, choose_PCs = 'variance', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat2.kurt.rds = clever(Dat2, choose_PCs='kurtosis', method = 'robdist_subset', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat2.vari.rds = clever(Dat2, choose_PCs = 'variance', method = 'robdist_subset', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat2.kurt.rbd = clever(Dat2, choose_PCs='kurtosis', method = 'robdist', 
+                              PCA_trend_filtering=FALSE)
+clever.Dat2.vari.rbd = clever(Dat2, choose_PCs = 'variance', method = 'robdist', 
+                              PCA_trend_filtering=FALSE)
 
 clevers.Dat1 = list(clever.Dat1.kurt.lev, clever.Dat1.vari.lev, clever.Dat1.kurt.rds, clever.Dat1.vari.rds, clever.Dat1.kurt.rbd, clever.Dat1.vari.rbd)
 
@@ -99,7 +111,7 @@ library(gridExtra)
 ggplot2::theme_set(ggpubr::theme_pubr())
 ```
 
-```{r fig.height=12, fig.width=8}
+```{r fig.height=12, fig.width=7}
 plt_cell = vector('list', length=6)
 plt_row = vector('list', length=3)
 for(j in 0:2){
@@ -115,7 +127,7 @@ grid.arrange(grobs=plt_row, ncol=1)
 
 And for the second:
 
-```{r fig.height=12, fig.width=8}
+```{r fig.height=12, fig.width=7}
 plt_cell = vector('list', length=6)
 plt_row = vector('list', length=3)
 for(j in 0:2){
@@ -131,37 +143,48 @@ grid.arrange(grobs=plt_row, ncol=1)
 
 For the first dataset, clever identifies 59-61 and 150-151 consistently across all parameter settings. Other times are variously identified as well, with the mean method of choosing PCs tending to identify more outliers than the kurtosis method. For the second dataset, few or no outliers are identified. Overall, these results are consistent with our prior knowledge of both datasets. 
 
-In fact, We can reconstruct the original fMRI images with the mask used for vectorizing.
+### Trend filtering
+
+New to version 1.5 is an option to use the scores from PCATF instead of regular PCA (citation forthcoming: Dr. Daniel McDonald and Lei Ding). Notice how the leverage trends are "filtered" to have flat lines in local neighborhoods. This result not only is easier to analyze visually, but also aligns with the idea that outliers shold occur in clusters if the artifact-causing phenomenon occurs over a period longer than the T_R.  
+
+```{r}
+clever.Dat1.PCATF.lev = clever(Dat1, PCA_trend_filtering=TRUE)
+#clever.Dat1.PCATF.rbd = clever(Dat1, PCA_trend_filtering=TRUE, 
+#                               method='robdist')
+#clever.Dat1.PCATF.rbs = clever(Dat1, PCA_trend_filtering=TRUE, 
+#                               method='robdist_subset')
+clever.Dat2.PCATF.lev = clever(Dat2, PCA_trend_filtering=TRUE)
+#clever.Dat2.PCATF.rbd = clever(Dat2, PCA_trend_filtering=TRUE, 
+#                               method='robdist')
+#clever.Dat2.PCATF.rbs = clever(Dat2, PCA_trend_filtering=TRUE, 
+#                               method='robdist_subset')
+```
+
+```{r fig.height=4, fig.width=7}
+grid.arrange(grobs=list(
+  D1=plot(clever.Dat1.PCATF.lev)+ggtitle('Dat1, PCATF'), 
+  D2=plot(clever.Dat2.PCATF.lev)+ggtitle('Dat2, PCATF')), ncol=2)
+```
+
+### Image reconstruction
+
+We can reconstruct the original fMRI images with the mask used for vectorizing the data. See `Matrix_to_VolumeTimeSeries` in `clever/R/visualize.R` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
 library(neurobase)
-```
 
-```{r}
-Matrix_to_VolumeTimeSeries = function(mat, mask, sliced.dim = NA){
-  in.mask = mask > 0
-  t = nrow(mat)
-             
-  if(length(dim(mask)) == 3){
-    dims = c(dim(mask), t)
-  } else if(length(dim(mask)) == 2) {
-    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
-    dims = switch(sliced.dim,
-                  c(1, dim(mask), t),
-                  c(dim(mask)[1], 1, dim(mask)[2], t),
-                  c(dim(mask), 1, t)
-    )
-  } else {
-    stop('Not Implemented: mask must be 2D or 3D.')
-  }
-
-  vts = array(0, dim=dims)
-  for(i in 1:t){
-    vts[,,,i][in.mask] = mat[i,]
-  }
-
-  return(vts)
+#'  Selects a timepoint from a volume time series, and returns it after adding
+#'  the NIfTI header from the mask onto it.
+#' @param VolumeTimeSeries A 4D matrix. Time is on the 4th dimension.
+#' @param time The timepoint to select.
+#' @param mask The corresponding mask.
+#'
+#' @return The 3D volume with the NIfTI header from the mask.
+Volume_to_NIfTI <- function(VolumeTimeSeries, time, mask){
+  vol <- VolumeTimeSeries[,,,time]
+  vol <- copyNIfTIHeader(img=mask, arr=vol)
+  return(vol)
 }
 ```
 
@@ -177,14 +200,6 @@ Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 
 Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the kurtosis and leverage parameter settings.
 
-```{r}
-Volume_to_NIfTI = function(VolumeTimeSeries, time, mask){
-  vol = VolumeTimeSeries[,,,time]
-  vol = copyNIfTIHeader(img=mask, arr=vol)
-  return(vol)
-}
-```
-
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
 levs = clever.Dat1.kurt.lev$leverage
@@ -196,3 +211,25 @@ image(Img1[,,,t_max], main=paste0('Maximum leverage (T = ', t_max, ')'))
 ```
 
 The median time point appears normal, whereas the most outlying time point clearly has banding artifacts.
+
+### Leverage images
+
+New to 1.5, clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at the 60th timepoint for the first dataset.
+
+```{r}
+Lev_Img1 = leverage_images(clever.Dat1.kurt.lev, outlier_level=1)
+print('The timepoints meeting the first outlier level threshold:')
+row.names(Lev_Img1$mean)
+
+```
+
+
+```{r, fig.width=7, fig.height=4}
+par(mfrow=c(1,2))
+
+Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
+Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
+
+image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=60)'))
+image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=60)'))
+```
