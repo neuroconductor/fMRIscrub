@@ -16,6 +16,8 @@
 #'
 #' @import ggplot2
 #' @import ggrepel
+#'
+#' @method plot clever
 #' @export
 plot.clever <- function(x, ...){
 	xmax = ymax = ymin = xmin = NULL
