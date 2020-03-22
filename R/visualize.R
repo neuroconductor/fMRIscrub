@@ -22,6 +22,8 @@
 plot.clever <- function(x, ...){
 	xmax = ymax = ymin = xmin = NULL
 	rm(list= c("xmax", "ymax", "ymin", "xmin"))
+	PCA_trend_filtering <- x$params$PCA_trend_filtering
+	PCATF.formatted <- ifelse(PCA_trend_filtering, 'PCATF', 'PCA')
 	choose_PCs <- x$params$choose_PCs
 	choose_PCs.formatted <- switch(choose_PCs,
 		kurtosis="Kurtosis",
@@ -41,7 +43,7 @@ plot.clever <- function(x, ...){
 	args <- list(...)
 
 	if(is.null(outliers)){
-		stop("This clever object did not label outliers. Run clever again with
+		stop("clever did not label outliers. Run clever again with
 			`id_out`=TRUE to visualize the results. ")
 	}
 
@@ -64,7 +66,7 @@ plot.clever <- function(x, ...){
 	# The plot will have lines extending downward from outliers
 	#  to the x-axis.
 	is_outlier <- d$outlier_level != "not an outlier"
-	any_outliers <- any(is_outlier)
+	any_outliers <- any(is_outlier, na.rm=TRUE) #temporary na.rm
 	if(any_outliers){
 		# Obtain the coordinates of the outliers' lines' vertices.
 		drop_line <- d[is_outlier,]
@@ -101,7 +103,7 @@ plot.clever <- function(x, ...){
 		paste0("Outlier Distribution",
 			ifelse(any_outliers, "", " (None Identified)")))
 	sub <- ifelse("sub" %in% names(args), args$sub,
-		paste0(choose_PCs.formatted,", ",method.formatted))
+		paste0(PCATF.formatted, ", ", choose_PCs.formatted, ", ", method.formatted))
 	xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
 	ylab <- ifelse("ylab" %in% names(args), args$ylab, method.formatted)
 	legend.position <- ifelse("show.legend" %in% names(args),
@@ -164,14 +166,14 @@ plot.clever <- function(x, ...){
 leverage_images <- function(x, outlier_level=3){
 	svd <- x$PCs$svd
 	if(is.null(svd$v)){
-		stop("This clever object did not solve for the PC directions. Run clever
+		stop("clever did not solve for the PC directions. Run clever
 			again with `solve_directions=TRUE` to visualize the leverage images.")
 	}
 	N_ <- nrow(svd$v)
 
 	outliers <- x$outliers
 	if(is.null(outliers)){
-		stop("This clever object did not label outliers. Run clever again with
+		stop("clever did not label outliers. Run clever again with
 			`id_out=TRUE` to visualize the results. ")
 	}
 	if((outlier_level < 1)|(outlier_level > 3)){
@@ -181,8 +183,8 @@ leverage_images <- function(x, outlier_level=3){
 	lev_img_idxs <- which(outliers[,outlier_level])
 	n_imgs <- length(lev_img_idxs)
 	if(n_imgs == 0){
-		print(paste0("This clever object did not find any outliers at level ",
-			outlier_level, "."))
+		print(paste0("clever did not find any outliers at level ",
+			outlier_level, " (", colnames(outliers)[outlier_level], ")."))
 		return(NULL)
 	}
 
