@@ -20,7 +20,7 @@
 #'	or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
 #'	is being used, this must be \code{leverage}.
 #' @param id_out Should the outliers be identified? Default is \code{TRUE}.
-#' @param lev_imgs An integer between 0 and 3. We can use the selected PCs to
+#' @param lev_img_lvl An integer between 0 and 3. We can use the selected PCs to
 #'	visualize artifact signals at each outlying time point as "leverage images."
 #'	Options 1-3 will return the leverage images for time points meeting each
 #'	respective threshold, with 1 being the lowest and 3 being the strictest
@@ -46,7 +46,7 @@
 #'  \item{outliers}{An n X 3 data.frame indicating if each observation is an
 #'		outlier at each of the three levels.}
 #'  \item{cutoffs}{Outlier cutoff values.}
-#'  \item{lev_imgs}{
+#'  \item{lev_img_lvl}{
 #'		\describe{
 #'			\item{mean}{The average of the PC directions, weighted by the unscaled
 #'				PC scores at each outlying time point (U[i,] * V^T). Row names are
@@ -79,7 +79,7 @@ clever = function(
 	kurt_detrend = TRUE,
 	method = c("leverage","robdist_subset","robdist"),
 	id_out = TRUE,
-	lev_imgs = 1,
+	lev_img_lvl = 1,
 	verbose = FALSE) {
 
 	TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
@@ -115,10 +115,10 @@ clever = function(
 	if(!is.logical(id_out)){
 		stop("Invalid argument: id_out must be TRUE or FALSE.\n")
 	}
-	if(!(lev_imgs %in% c(0,1,2,3))){
-		stop("Invalid argument: lev_imgs must be 0, 1, 2, or 3.\n")
+	if(!(lev_img_lvl %in% c(0,1,2,3))){
+		stop("Invalid argument: lev_img_lvl must be 0, 1, 2, or 3.\n")
 	}
-	if((lev_imgs > 0) & (!id_out)){
+	if((lev_img_lvl > 0) & (!id_out)){
 		stop("is_out must be TRUE to choose which leverage images to compute.")
 	}
 	if(!is.logical(verbose)){
@@ -166,7 +166,7 @@ clever = function(
 	rm(mad, zero_mad)
 
 	# Compute the PC scores.
-	solve_directions <- lev_imgs > 0
+	solve_directions <- lev_img_lvl > 0
 	if(verbose){
 		print(paste0("Computing the",
 								 ifelse(PCA_trend_filtering, " trend-filtered", ""),
@@ -271,12 +271,12 @@ clever = function(
 	}
 
 	# Make leverage images.
-	if(lev_imgs > 0){
-		lev_imgs <- leverage_images(X.svd, out$outliers, outlier_level=lev_imgs)
+	if(lev_img_lvl > 0){
+		lev_imgs <- leverage_images(X.svd, which(out$outliers[,lev_img_lvl]))
 		if(is.null(lev_imgs$mean)){
 			if(verbose){
 				print(paste0("clever did not find any outliers at level ",
-										 lev_imgs, " (", colnames(out$outliers)[lev_imgs], ")."))
+										 lev_img_lvl, " (", colnames(out$outliers)[lev_img_lvl], ")."))
 			}
 		}
 	}
@@ -284,7 +284,7 @@ clever = function(
 	# Organize the output.
 	result <- list(params=NULL, PCs=NULL,
 								 leverage=NULL, robdist=NULL, inMCD=NULL,
-								 outliers=NULL, cutoffs=NULL, lev_imgs=NULL)
+								 outliers=NULL, cutoffs=NULL, lev_img_lvl=NULL)
 	result$params <- list(PCA_trend_filtering=PCA_trend_filtering,
 								 				PCA_trend_filtering.kwargs=PCA_trend_filtering.kwargs,
 												choose_PCs=choose_PCs,
@@ -302,7 +302,7 @@ clever = function(
 	if(id_out){
 		result$outliers <- out$outliers
 		result$cutoffs <- out$cutoffs
-		result$lev_imgs <- lev_imgs
+		result$lev_img_lvl <- lev_imgs
 	}
 	class(result) <- c("clever", class(result))
 

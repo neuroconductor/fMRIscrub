@@ -153,42 +153,25 @@ plot.clever <- function(x, ...){
 #'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 #'	and 1 being the lowest.
 #'
-#' @param x A clever object.
-#' @param outlier_level The outlier threshold for the images, with 1 (default)
-#'  being the lowest/least strict. If no outliers at or above this threshold
-#'  exist, no images will be made.
+#' @param svd A singular value decomposition (list with u, v, and d).
+#' @param timepoints The times for which to compute leverage images (rows of U).
 #'
-#' @return A list of three: the mean leverage images for each outlier meeting
-#'  the thresold, the top leverage images, and the indices of the top leverage
-#'  images.
+#' @return A list of three: the mean leverage image for each outlier meeting
+#'  the thresold, the top leverage image for each outlier, and the indices of
+#'	the top leverage images.
 #'
 #' @export
-leverage_images <- function(svd, outliers, outlier_level=1){
-	if(is.null(svd$v)){
-		stop("clever did not solve for the PC directions. Run clever
-			again with `solve_directions=TRUE` to visualize the leverage images.")
-	}
+leverage_images <- function(svd, timepoints){
 	N_ <- nrow(svd$v)
-
-	if(is.null(outliers)){
-		stop("clever did not label outliers. Run clever again with
-			`id_out=TRUE` to visualize the results. ")
-	}
-	if((outlier_level < 1)|(outlier_level > 3)){
-		stop("The outlier level should be 1, 2, or 3.")
-	}
-
-	lev_img_idxs <- which(outliers[,outlier_level])
-	n_imgs <- length(lev_img_idxs)
-	if(n_imgs == 0){
-		lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
-	} else {
+	n_imgs <- length(timepoints)
+	lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
+	if(n_imgs > 0){
 		lev_imgs <- list()
 		lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
 		lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
 		lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
 		for(i in 1:n_imgs){
-			idx <- lev_img_idxs[i]
+			idx <- timepoints[i]
 			mean_img <- svd$u[idx,] %*% t(svd$v)
 
 			u_row <- svd$u[idx,]
@@ -196,9 +179,9 @@ leverage_images <- function(svd, outliers, outlier_level=1){
 			lev_imgs$top_dir[i] <- which.max(u_row)[1]
 			lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
 		}
-		row.names(lev_imgs$mean) <- lev_img_idxs
-		row.names(lev_imgs$top) <- lev_img_idxs
-		names(lev_imgs$top_dir) <- lev_img_idxs
+		row.names(lev_imgs$mean) <- timepoints
+		row.names(lev_imgs$top) <- timepoints
+		names(lev_imgs$top_dir) <- timepoints
 	}
 	return(lev_imgs)
 }
