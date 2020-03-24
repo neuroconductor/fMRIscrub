@@ -6,14 +6,14 @@
  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 and 1 being the lowest.}
 \usage{
-leverage_images(x, outlier_level = 3)
+leverage_images(svd, outliers, outlier_level = 1)
 }
 \arguments{
-\item{x}{A clever object.}
-
-\item{outlier_level}{The outlier threshold for the images, with 3 (default)
-being the highest/strictest. If no outliers at or above this threshold
+\item{outlier_level}{The outlier threshold for the images, with 1 (default)
+being the lowest/least strict. If no outliers at or above this threshold
 exist, no images will be made.}
+
+\item{x}{A clever object.}
 }
 \value{
 A list of three: the mean leverage images for each outlier meeting

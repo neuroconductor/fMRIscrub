@@ -154,8 +154,8 @@ plot.clever <- function(x, ...){
 #'	and 1 being the lowest.
 #'
 #' @param x A clever object.
-#' @param outlier_level The outlier threshold for the images, with 3 (default)
-#'  being the highest/strictest. If no outliers at or above this threshold
+#' @param outlier_level The outlier threshold for the images, with 1 (default)
+#'  being the lowest/least strict. If no outliers at or above this threshold
 #'  exist, no images will be made.
 #'
 #' @return A list of three: the mean leverage images for each outlier meeting
@@ -163,15 +163,13 @@ plot.clever <- function(x, ...){
 #'  images.
 #'
 #' @export
-leverage_images <- function(x, outlier_level=3){
-	svd <- x$PCs$svd
+leverage_images <- function(svd, outliers, outlier_level=1){
 	if(is.null(svd$v)){
 		stop("clever did not solve for the PC directions. Run clever
 			again with `solve_directions=TRUE` to visualize the leverage images.")
 	}
 	N_ <- nrow(svd$v)
 
-	outliers <- x$outliers
 	if(is.null(outliers)){
 		stop("clever did not label outliers. Run clever again with
 			`id_out=TRUE` to visualize the results. ")
@@ -183,32 +181,29 @@ leverage_images <- function(x, outlier_level=3){
 	lev_img_idxs <- which(outliers[,outlier_level])
 	n_imgs <- length(lev_img_idxs)
 	if(n_imgs == 0){
-		print(paste0("clever did not find any outliers at level ",
-			outlier_level, " (", colnames(outliers)[outlier_level], ")."))
-		return(NULL)
+		lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
+	} else {
+		lev_imgs <- list()
+		lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
+		lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
+		lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
+		for(i in 1:n_imgs){
+			idx <- lev_img_idxs[i]
+			mean_img <- svd$u[idx,] %*% t(svd$v)
+
+			u_row <- svd$u[idx,]
+			lev_imgs$mean[i,] <- u_row %*% t(svd$v)
+			lev_imgs$top_dir[i] <- which.max(u_row)[1]
+			lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
+		}
+		row.names(lev_imgs$mean) <- lev_img_idxs
+		row.names(lev_imgs$top) <- lev_img_idxs
+		names(lev_imgs$top_dir) <- lev_img_idxs
 	}
-
-	lev_imgs <- list()
-	lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
-	lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
-	lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
-	for(i in 1:n_imgs){
-		idx <- lev_img_idxs[i]
-		mean_img <- svd$u[idx,] %*% t(svd$v)
-
-		u_row <- svd$u[idx,]
-		lev_imgs$mean[i,] <- u_row %*% t(svd$v)
-		lev_imgs$top_dir[i] <- which.max(u_row)[1]
-		lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
-	}
-
-	row.names(lev_imgs$mean) <- lev_img_idxs
-	row.names(lev_imgs$top) <- lev_img_idxs
-	names(lev_imgs$top_dir) <- lev_img_idxs
 	return(lev_imgs)
 }
 
-#'  Applies a 2D/3D mask to a matrix to get an volume time series.
+#'  Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
 #' @param mat A matrix whose rows are observations at different times, and
 #'  columns are pixels/voxels.
 #' @param mask A corresponding binary mask, with 1's representing regions

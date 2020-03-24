@@ -20,10 +20,12 @@
 #'	or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
 #'	is being used, this must be \code{leverage}.
 #' @param id_out Should the outliers be identified? Default is \code{TRUE}.
-#' @param solve_directions Should the principal directions be solved for? These
-#'	are needed to display the leverage images for outlying observations. Default
-#'	is \code{TRUE}. If the leverage images are not needed, this can be
-#'	\code{FALSE} to reduce memory use.
+#' @param lev_imgs An integer between 0 and 3. We can use the selected PCs to
+#'	visualize artifact signals at each outlying time point as "leverage images."
+#'	Options 1-3 will return the leverage images for time points meeting each
+#'	respective threshold, with 1 being the lowest and 3 being the strictest
+#'	threshold. They require \code{id_out == TRUE}. Option 0 will not compute the
+#'	leverage images, conserving memory.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @return A clever object, i.e. a list with components
@@ -43,6 +45,18 @@
 #'		\code{method} is not robust distance (subset).}
 #'  \item{outliers}{An n X 3 data.frame indicating if each observation is an
 #'		outlier at each of the three levels.}
+#'  \item{cutoffs}{Outlier cutoff values.}
+#'  \item{lev_imgs}{
+#'		\describe{
+#'			\item{mean}{The average of the PC directions, weighted by the unscaled
+#'				PC scores at each outlying time point (U[i,] * V^T). Row names are
+#'				the corresponding time points.'}
+#'			\item{top}{The PC direction with the highest PC score at each outlying
+#'				time point. Row names are the corresponding time points.}
+#'			\item{top_dir}{The index of the PC direction with the highest PC score
+#'				at each outlying time point. Named by timepoint.}
+#'		}
+#'	}
 #' }
 #'
 #' @importFrom robustbase rowMedians
@@ -65,7 +79,7 @@ clever = function(
 	kurt_detrend = TRUE,
 	method = c("leverage","robdist_subset","robdist"),
 	id_out = TRUE,
-	solve_directions = TRUE,
+	lev_imgs = 1,
 	verbose = FALSE) {
 
 	TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
@@ -101,8 +115,11 @@ clever = function(
 	if(!is.logical(id_out)){
 		stop("Invalid argument: id_out must be TRUE or FALSE.\n")
 	}
-	if(!is.logical(solve_directions)){
-		stop("Invalid argument: solve_directions must be TRUE or FALSE.\n")
+	if(!(lev_imgs %in% c(0,1,2,3))){
+		stop("Invalid argument: lev_imgs must be 0, 1, 2, or 3.\n")
+	}
+	if((lev_imgs > 0) & (!id_out)){
+		stop("is_out must be TRUE to choose which leverage images to compute.")
 	}
 	if(!is.logical(verbose)){
 		stop("Invalid argument: verbose must be TRUE or FALSE.\n")
@@ -149,6 +166,7 @@ clever = function(
 	rm(mad, zero_mad)
 
 	# Compute the PC scores.
+	solve_directions <- lev_imgs > 0
 	if(verbose){
 		print(paste0("Computing the",
 								 ifelse(PCA_trend_filtering, " trend-filtered", ""),
@@ -223,6 +241,7 @@ clever = function(
 		}
 	} else {
 		chosen_PCs <- do.call(choose_PCs.fun, choose_PCs.kwargs)
+		chosen_PCs <- chosen_PCs[order(chosen_PCs)]
 	}
 	X.svd$u <- X.svd$u[,chosen_PCs]
 	X.svd$d <- X.svd$d[chosen_PCs]
@@ -251,10 +270,21 @@ clever = function(
 		out <- do.call(id_out.fun, id_out.kwargs)
 	}
 
+	# Make leverage images.
+	if(lev_imgs > 0){
+		lev_imgs <- leverage_images(X.svd, out$outliers, outlier_level=lev_imgs)
+		if(is.null(lev_imgs$mean)){
+			if(verbose){
+				print(paste0("clever did not find any outliers at level ",
+										 lev_imgs, " (", colnames(out$outliers)[lev_imgs], ")."))
+			}
+		}
+	}
+
 	# Organize the output.
 	result <- list(params=NULL, PCs=NULL,
 								 leverage=NULL, robdist=NULL, inMCD=NULL,
-								 outliers=NULL, cutoffs=NULL)
+								 outliers=NULL, cutoffs=NULL, lev_imgs=NULL)
 	result$params <- list(PCA_trend_filtering=PCA_trend_filtering,
 								 				PCA_trend_filtering.kwargs=PCA_trend_filtering.kwargs,
 												choose_PCs=choose_PCs,
@@ -272,6 +302,7 @@ clever = function(
 	if(id_out){
 		result$outliers <- out$outliers
 		result$cutoffs <- out$cutoffs
+		result$lev_imgs <- lev_imgs
 	}
 	class(result) <- c("clever", class(result))
 

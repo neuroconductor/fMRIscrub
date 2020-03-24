@@ -65,8 +65,10 @@ choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
 
 	# First remove components that explain less than 90% of variation.
 	cumvarexp <- cumsum(svd$d/sum(svd$d))
-	n <- min(which((cumvarexp > .90)))
+	n <- max(min(which((cumvarexp > .90))), min_keep)
+	n <- max(n, min_keep)
 	U <- U[,1:n]
+	if(n==1){U <- matrix(U, ncol=1)}
 
 	# Compute the kurtosis of the remaining PCs, detrending if applicable.
 	if(detrend){
@@ -100,7 +102,6 @@ choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
 
 	# The PCs with greatest kurtosis are chosen.
 	indices <- order(-kurt)[1:n_keep]
-	indices <- indices[order(indices)]
 
 	return(indices)
 }

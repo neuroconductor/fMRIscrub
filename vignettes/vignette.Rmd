@@ -149,15 +149,7 @@ New to version 1.5 is an option to use the scores from PCATF instead of regular 
 
 ```{r}
 clever.Dat1.PCATF.lev = clever(Dat1, PCA_trend_filtering=TRUE)
-#clever.Dat1.PCATF.rbd = clever(Dat1, PCA_trend_filtering=TRUE, 
-#                               method='robdist')
-#clever.Dat1.PCATF.rbs = clever(Dat1, PCA_trend_filtering=TRUE, 
-#                               method='robdist_subset')
 clever.Dat2.PCATF.lev = clever(Dat2, PCA_trend_filtering=TRUE)
-#clever.Dat2.PCATF.rbd = clever(Dat2, PCA_trend_filtering=TRUE, 
-#                               method='robdist')
-#clever.Dat2.PCATF.rbs = clever(Dat2, PCA_trend_filtering=TRUE, 
-#                               method='robdist_subset')
 ```
 
 ```{r fig.height=4, fig.width=7}
@@ -217,7 +209,7 @@ The median time point appears normal, whereas the most outlying time point clear
 New to 1.5, clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at the 60th timepoint for the first dataset.
 
 ```{r}
-Lev_Img1 = leverage_images(clever.Dat1.kurt.lev, outlier_level=1)
+Lev_Img1 = clever.Dat1.kurt.lev$lev_imgs
 print('The timepoints meeting the first outlier level threshold:')
 row.names(Lev_Img1$mean)
 
