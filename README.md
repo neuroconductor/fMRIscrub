@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![Travis build
-status](https://travis-ci.com/mandymejia/clever.svg?branch=master)](https://travis-ci.com/mandymejia/clever)
+status](https://travis-ci.org/mandymejia/clever.svg?branch=master)](https://travis-ci.org/github/mandymejia/clever)
 [![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/mandymejia/clever?branch=master&svg=true)](https://ci.appveyor.com/project/mandymejia/clever)
 [![Coveralls test

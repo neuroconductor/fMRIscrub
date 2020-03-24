@@ -22,6 +22,8 @@
 plot.clever <- function(x, ...){
 	xmax = ymax = ymin = xmin = NULL
 	rm(list= c("xmax", "ymax", "ymin", "xmin"))
+	PCA_trend_filtering <- x$params$PCA_trend_filtering
+	PCATF.formatted <- ifelse(PCA_trend_filtering, 'PCATF', 'PCA')
 	choose_PCs <- x$params$choose_PCs
 	choose_PCs.formatted <- switch(choose_PCs,
 		kurtosis="Kurtosis",
@@ -41,7 +43,7 @@ plot.clever <- function(x, ...){
 	args <- list(...)
 
 	if(is.null(outliers)){
-		stop("This clever object did not label outliers. Run clever again with
+		stop("clever did not label outliers. Run clever again with
 			`id_out`=TRUE to visualize the results. ")
 	}
 
@@ -64,7 +66,7 @@ plot.clever <- function(x, ...){
 	# The plot will have lines extending downward from outliers
 	#  to the x-axis.
 	is_outlier <- d$outlier_level != "not an outlier"
-	any_outliers <- any(is_outlier)
+	any_outliers <- any(is_outlier, na.rm=TRUE) #temporary na.rm
 	if(any_outliers){
 		# Obtain the coordinates of the outliers' lines' vertices.
 		drop_line <- d[is_outlier,]
@@ -101,7 +103,7 @@ plot.clever <- function(x, ...){
 		paste0("Outlier Distribution",
 			ifelse(any_outliers, "", " (None Identified)")))
 	sub <- ifelse("sub" %in% names(args), args$sub,
-		paste0(choose_PCs.formatted,", ",method.formatted))
+		paste0(PCATF.formatted, ", ", choose_PCs.formatted, ", ", method.formatted))
 	xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
 	ylab <- ifelse("ylab" %in% names(args), args$ylab, method.formatted)
 	legend.position <- ifelse("show.legend" %in% names(args),
@@ -151,62 +153,40 @@ plot.clever <- function(x, ...){
 #'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 #'	and 1 being the lowest.
 #'
-#' @param x A clever object.
-#' @param outlier_level The outlier threshold for the images, with 3 (default)
-#'  being the highest/strictest. If no outliers at or above this threshold
-#'  exist, no images will be made.
+#' @param svd A singular value decomposition (list with u, v, and d).
+#' @param timepoints The times for which to compute leverage images (rows of U).
 #'
-#' @return A list of three: the mean leverage images for each outlier meeting
-#'  the thresold, the top leverage images, and the indices of the top leverage
-#'  images.
+#' @return A list of three: the mean leverage image for each outlier meeting
+#'  the thresold, the top leverage image for each outlier, and the indices of
+#'	the top leverage images.
 #'
 #' @export
-leverage_images <- function(x, outlier_level=3){
-	svd <- x$PCs$svd
-	if(is.null(svd$v)){
-		stop("This clever object did not solve for the PC directions. Run clever
-			again with `solve_directions=TRUE` to visualize the leverage images.")
-	}
+leverage_images <- function(svd, timepoints){
 	N_ <- nrow(svd$v)
+	n_imgs <- length(timepoints)
+	lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
+	if(n_imgs > 0){
+		lev_imgs <- list()
+		lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
+		lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
+		lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
+		for(i in 1:n_imgs){
+			idx <- timepoints[i]
+			mean_img <- svd$u[idx,] %*% t(svd$v)
 
-	outliers <- x$outliers
-	if(is.null(outliers)){
-		stop("This clever object did not label outliers. Run clever again with
-			`id_out=TRUE` to visualize the results. ")
+			u_row <- svd$u[idx,]
+			lev_imgs$mean[i,] <- u_row %*% t(svd$v)
+			lev_imgs$top_dir[i] <- which.max(u_row)[1]
+			lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
+		}
+		row.names(lev_imgs$mean) <- timepoints
+		row.names(lev_imgs$top) <- timepoints
+		names(lev_imgs$top_dir) <- timepoints
 	}
-	if((outlier_level < 1)|(outlier_level > 3)){
-		stop("The outlier level should be 1, 2, or 3.")
-	}
-
-	lev_img_idxs <- which(outliers[,outlier_level])
-	n_imgs <- length(lev_img_idxs)
-	if(n_imgs == 0){
-		print(paste0("This clever object did not find any outliers at level ",
-			outlier_level, "."))
-		return(NULL)
-	}
-
-	lev_imgs <- list()
-	lev_imgs$mean <- matrix(NA, nrow=n_imgs, ncol=N_)
-	lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
-	lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
-	for(i in 1:n_imgs){
-		idx <- lev_img_idxs[i]
-		mean_img <- svd$u[idx,] %*% t(svd$v)
-
-		u_row <- svd$u[idx,]
-		lev_imgs$mean[i,] <- u_row %*% t(svd$v)
-		lev_imgs$top_dir[i] <- which.max(u_row)[1]
-		lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
-	}
-
-	row.names(lev_imgs$mean) <- lev_img_idxs
-	row.names(lev_imgs$top) <- lev_img_idxs
-	names(lev_imgs$top_dir) <- lev_img_idxs
 	return(lev_imgs)
 }
 
-#'  Applies a 2D/3D mask to a matrix to get an volume time series.
+#'  Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
 #' @param mat A matrix whose rows are observations at different times, and
 #'  columns are pixels/voxels.
 #' @param mask A corresponding binary mask, with 1's representing regions

@@ -13,7 +13,7 @@ clever(
   kurt_detrend = TRUE,
   method = c("leverage", "robdist_subset", "robdist"),
   id_out = TRUE,
-  solve_directions = TRUE,
+  lev_img_lvl = 1,
   verbose = FALSE
 )
 }
@@ -46,10 +46,12 @@ is being used, this must be \code{leverage}.}
 
 \item{id_out}{Should the outliers be identified? Default is \code{TRUE}.}
 
-\item{solve_directions}{Should the principal directions be solved for? These
-are needed to display the leverage images for outlying observations. Default
-is \code{TRUE}. If the leverage images are not needed, this can be
-\code{FALSE} to reduce memory use.}
+\item{lev_img_lvl}{An integer between 0 and 3. We can use the selected PCs to
+visualize artifact signals at each outlying time point as "leverage images."
+Options 1-3 will return the leverage images for time points meeting each
+respective threshold, with 1 being the lowest and 3 being the strictest
+threshold. They require \code{id_out == TRUE}. Option 0 will not compute the
+leverage images, conserving memory.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
@@ -71,6 +73,18 @@ A clever object, i.e. a list with components
 	\code{method} is not robust distance (subset).}
  \item{outliers}{An n X 3 data.frame indicating if each observation is an
 	outlier at each of the three levels.}
+ \item{cutoffs}{Outlier cutoff values.}
+ \item{lev_img_lvl}{
+	\describe{
+		\item{mean}{The average of the PC directions, weighted by the unscaled
+			PC scores at each outlying time point (U[i,] * V^T). Row names are
+			the corresponding time points.'}
+		\item{top}{The PC direction with the highest PC score at each outlying
+			time point. Row names are the corresponding time points.}
+		\item{top_dir}{The index of the PC direction with the highest PC score
+			at each outlying time point. Named by timepoint.}
+	}
+}
 }
 }
 \description{

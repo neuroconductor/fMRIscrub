@@ -6,19 +6,17 @@
  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 and 1 being the lowest.}
 \usage{
-leverage_images(x, outlier_level = 3)
+leverage_images(svd, timepoints)
 }
 \arguments{
-\item{x}{A clever object.}
+\item{svd}{A singular value decomposition (list with u, v, and d).}
 
-\item{outlier_level}{The outlier threshold for the images, with 3 (default)
-being the highest/strictest. If no outliers at or above this threshold
-exist, no images will be made.}
+\item{timepoints}{The times for which to compute leverage images (rows of U).}
 }
 \value{
-A list of three: the mean leverage images for each outlier meeting
- the thresold, the top leverage images, and the indices of the top leverage
- images.
+A list of three: the mean leverage image for each outlier meeting
+ the thresold, the top leverage image for each outlier, and the indices of
+the top leverage images.
 }
 \description{
 Calculate the leverage images for each outlier that meets the

@@ -25,5 +25,5 @@ A 4D array representing the volume time series. Time is on the 4th
 \description{
 Converts a vectorized matrix back to a volume time series.
 
-Applies a 2D/3D mask to a matrix to get an volume time series.
+Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
 }
