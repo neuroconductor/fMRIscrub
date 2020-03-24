@@ -284,7 +284,7 @@ clever = function(
 	# Organize the output.
 	result <- list(params=NULL, PCs=NULL,
 								 leverage=NULL, robdist=NULL, inMCD=NULL,
-								 outliers=NULL, cutoffs=NULL, lev_img_lvl=NULL)
+								 outliers=NULL, cutoffs=NULL, lev_imgs=NULL)
 	result$params <- list(PCA_trend_filtering=PCA_trend_filtering,
 								 				PCA_trend_filtering.kwargs=PCA_trend_filtering.kwargs,
 												choose_PCs=choose_PCs,
@@ -302,7 +302,7 @@ clever = function(
 	if(id_out){
 		result$outliers <- out$outliers
 		result$cutoffs <- out$cutoffs
-		result$lev_img_lvl <- lev_imgs
+		result$lev_imgs <- lev_imgs
 	}
 	class(result) <- c("clever", class(result))
 
