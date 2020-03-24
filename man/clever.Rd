@@ -13,7 +13,7 @@ clever(
   kurt_detrend = TRUE,
   method = c("leverage", "robdist_subset", "robdist"),
   id_out = TRUE,
-  lev_imgs = 1,
+  lev_img_lvl = 1,
   verbose = FALSE
 )
 }
@@ -46,7 +46,7 @@ is being used, this must be \code{leverage}.}
 
 \item{id_out}{Should the outliers be identified? Default is \code{TRUE}.}
 
-\item{lev_imgs}{An integer between 0 and 3. We can use the selected PCs to
+\item{lev_img_lvl}{An integer between 0 and 3. We can use the selected PCs to
 visualize artifact signals at each outlying time point as "leverage images."
 Options 1-3 will return the leverage images for time points meeting each
 respective threshold, with 1 being the lowest and 3 being the strictest
@@ -74,7 +74,7 @@ A clever object, i.e. a list with components
  \item{outliers}{An n X 3 data.frame indicating if each observation is an
 	outlier at each of the three levels.}
  \item{cutoffs}{Outlier cutoff values.}
- \item{lev_imgs}{
+ \item{lev_img_lvl}{
 	\describe{
 		\item{mean}{The average of the PC directions, weighted by the unscaled
 			PC scores at each outlying time point (U[i,] * V^T). Row names are
