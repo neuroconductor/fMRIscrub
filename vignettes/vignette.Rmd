@@ -225,3 +225,5 @@ Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
 image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=60)'))
 image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=60)'))
 ```
+
+Banding artifacts are clearly visible.
