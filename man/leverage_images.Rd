@@ -4,7 +4,7 @@
 \alias{leverage_images}
 \title{Calculate the leverage images for each outlier that meets the
  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
-and 1 being the lowest.}
+ and 1 being the lowest.}
 \usage{
 leverage_images(svd, timepoints)
 }
@@ -16,10 +16,10 @@ leverage_images(svd, timepoints)
 \value{
 A list of three: the mean leverage image for each outlier meeting
  the thresold, the top leverage image for each outlier, and the indices of
-the top leverage images.
+ the top leverage images.
 }
 \description{
 Calculate the leverage images for each outlier that meets the
  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
-and 1 being the lowest.
+ and 1 being the lowest.
 }

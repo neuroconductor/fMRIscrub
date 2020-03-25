@@ -58,33 +58,33 @@ leverage images, conserving memory.}
 \value{
 A clever object, i.e. a list with components
 \describe{
-	\item{params}{A list of all the arguments used.}
+  \item{params}{A list of all the arguments used.}
  \item{PCs}{
-	\describe{
-		\item{indices}{The indices of the selected PCs.}
-		\item{svd}{The selected subset of the SVD.}
-	}
-}
+   \describe{
+     \item{indices}{The indices of the selected PCs.}
+     \item{svd}{The selected subset of the SVD.}
+   }
+ }
  \item{leverage}{The leverage of each observation. NULL if \code{method} is
-	not PCA leverage.}
+   not PCA leverage.}
  \item{robdist}{The robust distance of each observation. NULL if
-	\code{method} is not robust distance (subset).}
+   \code{method} is not robust distance (subset).}
  \item{inMCD}{Whether each observation is within the MCD subset. NULL if
-	\code{method} is not robust distance (subset).}
+   \code{method} is not robust distance (subset).}
  \item{outliers}{An n X 3 data.frame indicating if each observation is an
-	outlier at each of the three levels.}
+   outlier at each of the three levels.}
  \item{cutoffs}{Outlier cutoff values.}
- \item{lev_img_lvl}{
-	\describe{
-		\item{mean}{The average of the PC directions, weighted by the unscaled
-			PC scores at each outlying time point (U[i,] * V^T). Row names are
-			the corresponding time points.'}
-		\item{top}{The PC direction with the highest PC score at each outlying
-			time point. Row names are the corresponding time points.}
-		\item{top_dir}{The index of the PC direction with the highest PC score
-			at each outlying time point. Named by timepoint.}
-	}
-}
+ \item{lev_imgs}{
+   \describe{
+     \item{mean}{The average of the PC directions, weighted by the unscaled
+       PC scores at each outlying time point (U[i,] * V^T). Row names are
+       the corresponding time points.'}
+     \item{top}{The PC direction with the highest PC score at each outlying
+       time point. Row names are the corresponding time points.}
+     \item{top_dir}{The index of the PC direction with the highest PC score
+       at each outlying time point. Named by timepoint.}
+   }
+ }
 }
 }
 \description{
