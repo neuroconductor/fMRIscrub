@@ -14,19 +14,19 @@
 #'
 #' @export
 choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
-	var <- svd$d^2
+  var <- svd$d^2
 
-	# Identify how many PCs will be kept.
-	n_keep <- sum(var > mean(var))
+  # Identify how many PCs will be kept.
+  n_keep <- sum(var > mean(var))
 
-	# Constrain this number kept between the minumum and maximum, if specified.
-	if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
-	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
+  # Constrain this number kept between the minumum and maximum, if specified.
+  if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
+  if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
-	# PCs are already ordered by decreasing variance.
-	indices <- 1:n_keep
+  # PCs are already ordered by decreasing variance.
+  indices <- 1:n_keep
 
-	return(indices)
+  return(indices)
 }
 
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
@@ -42,15 +42,15 @@ choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param kurt_quantile PCs with kurtosis of at least this quantile are kept.
 #' @param detrend Should PCs be detrended before measuring kurtosis? Default is
-#' 	TRUE. Recommended if observations represent a time series.
+#'   TRUE. Recommended if observations represent a time series.
 #' @param max_keep If specified, the total number kept will be at most this
 #' value.
 #' @param min_keep The total number kept will be at least this
 #' value. The default value is 1.
 #' @param n_sim The number of simulation data to use for estimating the sampling
 #' distribution of kurtosis. Only used if a new simulation is performed. (If
-#'	n<1000 and the quantile is 90%, a pre-computed value is used. If n>1000,
-#'	the theoretical asymptotic distribution is used.
+#'  n<1000 and the quantile is 90%, a pre-computed value is used. If n>1000,
+#'  the theoretical asymptotic distribution is used.
 #'
 #' @return A list with the subsetted u matrix with only the chosen columns (PCs),
 #' and the original indices of the PCs which were retained.
@@ -59,49 +59,49 @@ choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
 #' @importFrom MASS mvrnorm
 #' @export
 choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
-	max_keep=NULL, min_keep=1, n_sim=5000){
-	U <- svd$u
-	m <- nrow(U)
+  max_keep=NULL, min_keep=1, n_sim=5000){
+  U <- svd$u
+  m <- nrow(U)
 
-	# First remove components that explain less than 90% of variation.
-	cumvarexp <- cumsum(svd$d/sum(svd$d))
-	n <- max(min(which((cumvarexp > .90))), min_keep)
-	n <- max(n, min_keep)
-	U <- U[,1:n]
-	if(n==1){U <- matrix(U, ncol=1)}
+  # First remove components that explain less than 90% of variation.
+  cumvarexp <- cumsum(svd$d/sum(svd$d))
+  n <- max(min(which((cumvarexp > .90))), min_keep)
+  n <- max(n, min_keep)
+  U <- U[,1:n]
+  if(n==1){U <- matrix(U, ncol=1)}
 
-	# Compute the kurtosis of the remaining PCs, detrending if applicable.
-	if(detrend){
-		U.dt <- U - apply(U, 2, est_trend)
-		kurt <- apply(U.dt, 2, kurtosis, type=1)
-	} else {
-		kurt <- apply(U, 2, kurtosis, type=1)
-	}
+  # Compute the kurtosis of the remaining PCs, detrending if applicable.
+  if(detrend){
+    U.dt <- U - apply(U, 2, est_trend)
+    kurt <- apply(U.dt, 2, kurtosis, type=1)
+  } else {
+    kurt <- apply(U, 2, kurtosis, type=1)
+  }
 
-	# Determine the quantile cutoff.
-	if(m < 1000){
-		if(kurt_quantile == .9){
-			# Use precomputed empirical quantile.
-			cut <- kurt_90_quant[m]
-		} else {
-			# Simulate and compute the empirical quantile.
-			sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
-			cut <- quantile(sim, kurt_quantile)
-		}
-	} else {
-		# Use theoretical quantile.
-		cut <- qnorm(kurt_quantile) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
-	}
+  # Determine the quantile cutoff.
+  if(m < 1000){
+    if(kurt_quantile == .9){
+    # Use precomputed empirical quantile.
+      cut <- kurt_90_quant[m]
+    } else {
+    # Simulate and compute the empirical quantile.
+      sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
+      cut <- quantile(sim, kurt_quantile)
+    }
+  } else {
+    # Use theoretical quantile.
+    cut <- qnorm(kurt_quantile) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
+  }
 
-	# Identify how many PCs will be kept.
-	n_keep <- sum(kurt > cut)
+  # Identify how many PCs will be kept.
+  n_keep <- sum(kurt > cut)
 
-	# Constrain the number kept between the minumum and maximum, if specified.
-	if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
-	if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
+  # Constrain the number kept between the minumum and maximum, if specified.
+  if(!is.null(max_keep)){n_keep <- min(n_keep, max_keep)}
+  if(!is.null(min_keep)){n_keep <- max(n_keep, min_keep)}
 
-	# The PCs with greatest kurtosis are chosen.
-	indices <- order(-kurt)[1:n_keep]
+  # The PCs with greatest kurtosis are chosen.
+  indices <- order(-kurt)[1:n_keep]
 
-	return(indices)
+  return(indices)
 }
