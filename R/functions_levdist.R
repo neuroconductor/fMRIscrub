@@ -10,7 +10,8 @@ PC.leverage <- function(U){
   return(diag(U %*% t(U)))
 }
 
-#' Computes MCD distances based on subsetting the data to reduce autocorrelation.
+#' Computes MCD distances based on subsetting the data to reduce
+#'  autocorrelation.
 #'
 #' fMRI timeseries data is known to exhibit autocorrelation.  The distribution
 #'  of MCD distances assumes independent observations, so to minimize
@@ -86,8 +87,8 @@ PC.robdist_subset <- function(U){
 #'
 #' Computes robust minimum covariance determinant (MCD) distances across
 #'  the observations (rows).  The MCD method selects a subset of h observations
-#'  whose covariance matrix has minimum determinant across all subsets of size h.
-#'  The MCD distances are Mahalanobis distances using the estimates of
+#'  whose covariance matrix has minimum determinant across all subsets of size
+#'  h. The MCD distances are Mahalanobis distances using the estimates of
 #'  center (mean) and scale (covariance matrix) based on that subset.
 #'
 #'

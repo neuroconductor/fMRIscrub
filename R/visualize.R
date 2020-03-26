@@ -174,7 +174,6 @@ leverage_images <- function(svd, timepoints){
     for(i in 1:n_imgs){
       idx <- timepoints[i]
       mean_img <- svd$u[idx,] %*% t(svd$v)
-
       u_row <- svd$u[idx,]
       lev_imgs$mean[i,] <- u_row %*% t(svd$v)
       lev_imgs$top_dir[i] <- which.max(u_row)[1]
