@@ -95,36 +95,3 @@ est_trend <- function(ts, robust=TRUE){
 
   return(trend)
 }
-
-#' Converts a vectorized matrix back to a volume time series.
-#'
-#' @param mat The 2D matrix.
-#' @param mask The 2D or 3D mask.
-#' @param sliced_dim If the mask is 2D, this is the dimension of unit length.
-#'
-#' @return The 3D or 4D volume time series (time is the fourth dimension).
-#' @export
-Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA){
-  in_mask <- mask > 0
-  t <- nrow(mat)
-
-  if(length(dim(mask)) == 3){
-    dims <- c(dim(mask), t)
-  } else if(length(dim(mask)) == 2) {
-    if(is.na(sliced_dim)){ sliced_dim = 3 } #default to 3rd dim (axial)
-    dims <- switch(sliced_dim,
-                   c(1, dim(mask), t),
-                   c(dim(mask)[1], 1, dim(mask)[2], t),
-                   c(dim(mask), 1, t)
-                  )
-  } else {
-    stop('Not Implemented: mask must be 2D or 3D.')
-  }
-
-  vts <- array(0, dim=dims)
-  for(i in 1:t){
-    vts[,,,i][in_mask] <- mat[i,]
-  }
-
-  return(vts)
-}
