@@ -25,16 +25,17 @@ of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
 must be \code{variance} and \code{method} must be \code{leverage}.}
 
 \item{PCA_trend_filtering.kwargs}{Named list of arguments for \code{PCATF}:
-the trend filtering parameter \code{lambda} (Default 0.5), the number of
-iterations \code{niter_max} (Default 1000), convergence tolerance \code{tol}
-(Default 1e-8), and option to print updates \code{verbose} (Default FALSE).}
+the trend filtering parameter \code{lambda} (Default \code{0.5}), the number
+of iterations \code{niter_max} (Default \code{1000}), convergence tolerance
+\code{tol} (Default \code{1e-8}), and option to print updates \code{verbose}
+(Default \code{FALSE}).}
 
 \item{choose_PCs}{The criteria for choosing which PCs to retain:
 \code{variance} or \code{kurtosis}. Default is \code{variance}. If trend
 filtering is being used, this must be \code{variance}.}
 
 \item{kurt_quantile}{The cutoff quantile to use if \code{choose_PCs} is
-\code{kurtosis}. Default is 0.9.}
+\code{kurtosis}. Default is \code{0.9}.}
 
 \item{kurt_detrend}{If \code{choose_PCs} is \code{kurtosis}, should PCs be
 detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
@@ -46,12 +47,15 @@ is being used, this must be \code{leverage}.}
 
 \item{id_out}{Should the outliers be identified? Default is \code{TRUE}.}
 
-\item{lev_img_lvl}{An integer between 0 and 3. We can use the selected PCs to
-visualize artifact signals at each outlying time point as "leverage images."
-Options 1-3 will return the leverage images for time points meeting each
-respective threshold, with 1 being the lowest and 3 being the strictest
-threshold. They require \code{id_out == TRUE}. Option 0 will not compute the
-leverage images, conserving memory.}
+\item{lev_img_lvl}{An integer between \code{0} and \code{3}. We can use the
+selected PCs to visualize artifact signals ("leverage images") at each
+outlying time point. Options \code{1} to \code{3} will return the leverage
+images for time points meeting each respective threshold, with \code{1}
+being the lowest and \code{3} being the strictest threshold. They require
+\code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
+leverage images, conserving memory. Option \code{1} is the default.
+\code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
+\code{1}.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
@@ -61,8 +65,9 @@ A clever object, i.e. a list with components
   \item{params}{A list of all the arguments used.}
  \item{PCs}{
    \describe{
-     \item{indices}{The indices of the selected PCs.}
-     \item{svd}{The selected subset of the SVD.}
+     \item{indices}{The original indices of the selected PCs.}
+     \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
+       is witheld to conserve memory.}
    }
  }
  \item{leverage}{The leverage of each observation. NULL if \code{method} is

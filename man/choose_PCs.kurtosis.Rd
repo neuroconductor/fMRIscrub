@@ -19,29 +19,29 @@ choose_PCs.kurtosis(
 \item{kurt_quantile}{PCs with kurtosis of at least this quantile are kept.}
 
 \item{detrend}{Should PCs be detrended before measuring kurtosis? Default is
-TRUE. Recommended if observations represent a time series.}
+\code{TRUE}. Recommended if observations represent a time series.}
 
 \item{max_keep}{If specified, the total number kept will be at most this
 value.}
 
 \item{min_keep}{The total number kept will be at least this
-value. The default value is 1.}
+value. The default value is \code{1}.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis. Only used if a new simulation is performed. (If
-n<1000 and the quantile is 90%, a pre-computed value is used. If n>1000,
-the theoretical asymptotic distribution is used.}
+\eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
+If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)}
 }
 \value{
-A list with the subsetted u matrix with only the chosen columns (PCs),
-and the original indices of the PCs which were retained.
+The original indices of the PCs which were retained, in order of
+ decreasing kurtosis.
 }
 \description{
 First, the largest PCs which together explain 90% of the variance are
-retained, and smaller components are removed. Each PC is detrended. The
-kurtosis cutoff is then the 90% quantile of the sampling distribution of
-kurtosis for Normal data of the same length as the PCs; it is estimated by
-simulation or calculated from the theoretical asymptotic distribution if the
-time series is long enough. Finally, the total number kept is constrained by
-the \code{max_keep} and \code{min_keep} arguments.
+ retained, and smaller components are removed. Each PC is detrended (this can
+ be disabled). The kurtosis cutoff is then the 90% quantile of the sampling
+ distribution of kurtosis for Normal data of the same length as the PCs; it
+ is estimated by simulation or calculated from the theoretical asymptotic
+ distribution if the PCs are long enough. Finally, the total number kept is
+ constrained by the \code{max_keep} and \code{min_keep} arguments.
 }

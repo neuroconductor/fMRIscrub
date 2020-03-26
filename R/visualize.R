@@ -1,14 +1,15 @@
 #' Visualizes the outlier distribution of a clever object.
 #'
-#' Prints a dot plot of the observations (x-axis) against their outlyingness (y-axis), i.e.
-#'  their leverage or robust distance.
+#' Prints a dot plot of the observations (x-axis) against their outlyingness
+#'  (y-axis), i.e. their leverage or robust distance.
 #'
-#' Cutoffs for each outlier level are marked by horizontal dashed lines. Outliers are
-#'  highlighted by vertical lines which extend down to the x-axis; they are colored yellow,
-#'  orange and red in order of increasing outlyingness.
+#' Cutoffs for each outlier level are marked by horizontal dashed lines.
+#'  Outliers are highlighted by vertical lines which extend down to the x-axis;
+#'  they are colored yellow, orange and red in order of increasing outlyingness.
 #'
-#' If the outlyingness measure is robust distance, observations within the MCD are plotted
-#'  separately from those outside the MCD. Also, the y-axes will be log10-scaled.
+#' If the outlyingness measure is robust distance, observations within the MCD
+#'  are plotted separately from those outside the MCD. Also, the y-axes will be
+#'  log10-scaled.
 #'
 #' @param x A clever object.
 #' @param ... additional arguments to pass to \code{\link{plot}}
@@ -149,7 +150,7 @@ plot.clever <- function(x, ...){
   return(plt)
 }
 
-#'  Calculate the leverage images for each outlier that meets the
+#' Calculate the leverage images for each outlier that meets the
 #'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 #'  and 1 being the lowest.
 #'
@@ -173,7 +174,6 @@ leverage_images <- function(svd, timepoints){
     for(i in 1:n_imgs){
       idx <- timepoints[i]
       mean_img <- svd$u[idx,] %*% t(svd$v)
-
       u_row <- svd$u[idx,]
       lev_imgs$mean[i,] <- u_row %*% t(svd$v)
       lev_imgs$top_dir[i] <- which.max(u_row)[1]
@@ -186,27 +186,27 @@ leverage_images <- function(svd, timepoints){
   return(lev_imgs)
 }
 
-#'  Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
+#' Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
 #' @param mat A matrix whose rows are observations at different times, and
 #'  columns are pixels/voxels.
 #' @param mask A corresponding binary mask, with 1's representing regions
 #'  within the area of interest and 0's representing regions to mask out.
-#' @param sliced.dim If the mask is 2D, which dimension does it represent?
+#' @param sliced_dim If the mask is 2D, which dimension does it represent?
 #'  Will default to the 3rd dimension (axial).
 #'
 #' @return A 4D array representing the volume time series. Time is on the 4th
 #'  dimension.
 #'
 #' @export
-Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced.dim = NA){
-  in.mask <- mask > 0
+Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA){
+  in_mask <- mask > 0
   t <- nrow(mat)
 
   if(length(dim(mask)) == 3){
     dims <- c(dim(mask), t)
   } else if(length(dim(mask)) == 2) {
-    if(is.na(sliced.dim)){ sliced.dim=3 } #default to 3rd dim (axial)
-    dims <- switch(sliced.dim,
+    if(is.na(sliced_dim)){ sliced_dim=3 } #default to 3rd dim (axial)
+    dims <- switch(sliced_dim,
                    c(1, dim(mask), t),
                    c(dim(mask)[1], 1, dim(mask)[2], t),
                    c(dim(mask), 1, t)
@@ -217,7 +217,7 @@ Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced.dim = NA){
 
   vts <- array(0, dim=dims)
   for(i in 1:t){
-    vts[,,,i][in.mask] <- mat[i,]
+    vts[,,,i][in_mask] <- mat[i,]
   }
 
   return(vts)

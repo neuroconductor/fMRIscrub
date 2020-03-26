@@ -2,7 +2,8 @@
 % Please edit documentation in R/functions_levdist.R
 \name{PC.robdist_subset}
 \alias{PC.robdist_subset}
-\title{Computes MCD distances based on subsetting the data to reduce autocorrelation.}
+\title{Computes MCD distances based on subsetting the data to reduce
+ autocorrelation.}
 \usage{
 PC.robdist_subset(U)
 }
@@ -12,9 +13,12 @@ PC.robdist_subset(U)
 \value{
 A list with components
 \describe{
-	\item{robdist}{A vector of length n of with the robust distance estimate for each observation.}
-\item{inMCD}{A vector of length n indicating if each observation is within the MCD subset.}
-\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
+ \item{robdist}{A vector of length n of with the robust distance estimate
+   for each observation.}
+ \item{inMCD}{A vector of length n indicating if each observation is
+   within the MCD subset.}
+ \item{Fparam}{The estimated parameters of the F distribution of MCD
+   distances.}
 }
 }
 \description{

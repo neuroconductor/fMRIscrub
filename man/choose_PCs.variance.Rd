@@ -13,13 +13,13 @@ choose_PCs.variance(svd, max_keep = NULL, min_keep = 1)
 value.}
 
 \item{min_keep}{The total number kept will be at least this
-value. The default value is 1.}
+value. The default value is \code{1}.}
 }
 \value{
-A list with the subsetted u matrix with only the chosen columns (PCs),
-and the original indices of the PCs which were retained.
+The original indices of the PCs which were retained, in order of
+ decreasing variance (i.e. increasing index).
 }
 \description{
 PCs with above-average variance are retained, but the total number kept is
-constrained by the \code{max_keep} and \code{min_keep} arguments.
+ constrained by the \code{max_keep} and \code{min_keep} arguments.
 }
