@@ -186,7 +186,7 @@ leverage_images <- function(svd, timepoints){
   return(lev_imgs)
 }
 
-#'  Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
+#' Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
 #' @param mat A matrix whose rows are observations at different times, and
 #'  columns are pixels/voxels.
 #' @param mask A corresponding binary mask, with 1's representing regions

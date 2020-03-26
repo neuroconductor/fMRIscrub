@@ -2,7 +2,8 @@
 % Please edit documentation in R/functions_levdist.R
 \name{PC.robdist_subset}
 \alias{PC.robdist_subset}
-\title{Computes MCD distances based on subsetting the data to reduce autocorrelation.}
+\title{Computes MCD distances based on subsetting the data to reduce
+ autocorrelation.}
 \usage{
 PC.robdist_subset(U)
 }

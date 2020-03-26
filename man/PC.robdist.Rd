@@ -23,7 +23,7 @@ A list with components
 \description{
 Computes robust minimum covariance determinant (MCD) distances across
  the observations (rows).  The MCD method selects a subset of h observations
- whose covariance matrix has minimum determinant across all subsets of size h.
- The MCD distances are Mahalanobis distances using the estimates of
+ whose covariance matrix has minimum determinant across all subsets of size
+ h. The MCD distances are Mahalanobis distances using the estimates of
  center (mean) and scale (covariance matrix) based on that subset.
 }
