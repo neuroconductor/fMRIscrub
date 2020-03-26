@@ -5,14 +5,15 @@
 #'  of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
 #'  must be \code{variance} and \code{method} must be \code{leverage}.
 #' @param PCA_trend_filtering.kwargs Named list of arguments for \code{PCATF}:
-#'  the trend filtering parameter \code{lambda} (Default 0.5), the number of
-#'  iterations \code{niter_max} (Default 1000), convergence tolerance \code{tol}
-#'  (Default 1e-8), and option to print updates \code{verbose} (Default FALSE).
+#'  the trend filtering parameter \code{lambda} (Default \code{0.5}), the number
+#'  of iterations \code{niter_max} (Default \code{1000}), convergence tolerance
+#'  \code{tol} (Default \code{1e-8}), and option to print updates \code{verbose}
+#'  (Default \code{FALSE}).
 #' @param choose_PCs The criteria for choosing which PCs to retain:
 #'  \code{variance} or \code{kurtosis}. Default is \code{variance}. If trend
 #'  filtering is being used, this must be \code{variance}.
 #' @param kurt_quantile The cutoff quantile to use if \code{choose_PCs} is
-#'  \code{kurtosis}. Default is 0.9.
+#'  \code{kurtosis}. Default is \code{0.9}.
 #' @param kurt_detrend If \code{choose_PCs} is \code{kurtosis}, should PCs be
 #'  detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
 #'  observations represent a time series.
@@ -20,12 +21,15 @@
 #'  or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
 #'  is being used, this must be \code{leverage}.
 #' @param id_out Should the outliers be identified? Default is \code{TRUE}.
-#' @param lev_img_lvl An integer between 0 and 3. We can use the selected PCs to
-#'  visualize artifact signals at each outlying time point as "leverage images."
-#'  Options 1-3 will return the leverage images for time points meeting each
-#'  respective threshold, with 1 being the lowest and 3 being the strictest
-#'  threshold. They require \code{id_out == TRUE}. Option 0 will not compute the
-#'  leverage images, conserving memory.
+#' @param lev_img_lvl An integer between \code{0} and \code{3}. We can use the
+#'  selected PCs to visualize artifact signals ("leverage images") at each
+#'  outlying time point. Options \code{1} to \code{3} will return the leverage
+#'  images for time points meeting each respective threshold, with \code{1}
+#'  being the lowest and \code{3} being the strictest threshold. They require
+#'  \code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
+#'  leverage images, conserving memory. Option \code{1} is the default.
+#'  \code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
+#'  \code{1}.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @return A clever object, i.e. a list with components
@@ -33,8 +37,9 @@
 #'   \item{params}{A list of all the arguments used.}
 #'  \item{PCs}{
 #'    \describe{
-#'      \item{indices}{The indices of the selected PCs.}
-#'      \item{svd}{The selected subset of the SVD.}
+#'      \item{indices}{The original indices of the selected PCs.}
+#'      \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
+#'        is witheld to conserve memory.}
 #'    }
 #'  }
 #'  \item{leverage}{The leverage of each observation. NULL if \code{method} is
@@ -100,7 +105,6 @@ clever = function(
       stop("Invalid argument: Trend Filtering requires method==leverage.\n")
     }
   }
-  #    If `choose_PCs==kurtosis`, check related arguments.
   if(choose_PCs=="kurtosis"){
     if(!is.numeric(kurt_quantile)){
       stop("Invalid argument: kurt_quantile must be numeric.\n")
@@ -115,11 +119,12 @@ clever = function(
   if(!is.logical(id_out)){
     stop("Invalid argument: id_out must be TRUE or FALSE.\n")
   }
+  if(!is.numeric(lev_img_lvl)){ lev_img_lvl <- as.numeric(lev_img_lvl) }
   if(!(lev_img_lvl %in% c(0,1,2,3))){
     stop("Invalid argument: lev_img_lvl must be 0, 1, 2, or 3.\n")
   }
   if((lev_img_lvl > 0) & (!id_out)){
-    stop("is_out must be TRUE to choose which leverage images to compute.")
+    stop("Invalid argument: computing leverage images requires id_out==TRUE.\n")
   }
   if(!is.logical(verbose)){
     stop("Invalid argument: verbose must be TRUE or FALSE.\n")
@@ -165,7 +170,7 @@ clever = function(
   X <- t(X)
   rm(mad, zero_mad)
 
-  # Compute the PC scores.
+  # Compute the PC scores (and directions, if leverage images are desired).
   solve_directions <- lev_img_lvl > 0
   if(verbose){
     print(paste0("Computing the",
@@ -183,7 +188,7 @@ clever = function(
       X.svd <- svd(X)
       rm(X)
     } else {
-      # Avoid computing U.
+      # Avoid computing U matrix to conserve memory.
       XXt <- tcrossprod(X)
       rm(X)
       X.svd <- svd(XXt)
@@ -198,7 +203,7 @@ clever = function(
   zero_var <- apply(X.svd$u, 2, var) < TOL
   if(any(zero_var)){
     if(all(zero_var)){
-      stop("Error: PCs are zero-variance.\n")
+      stop("Error: All PCs are zero-variance.\n")
     }
     warning(paste0("Warning: ", sum(zero_var),
       " PCs are zero-variance. Removing these."))
@@ -241,7 +246,7 @@ clever = function(
     }
   } else {
     chosen_PCs <- do.call(choose_PCs.fun, choose_PCs.kwargs)
-    chosen_PCs <- chosen_PCs[order(chosen_PCs)]
+    chosen_PCs <- chosen_PCs[order(chosen_PCs)] # kurtosis order =/= index order
   }
   X.svd$u <- X.svd$u[,chosen_PCs]
   X.svd$d <- X.svd$d[chosen_PCs]
@@ -272,16 +277,26 @@ clever = function(
 
   # Make leverage images.
   if(lev_img_lvl > 0){
-    lev_imgs <- leverage_images(X.svd, which(out$outliers[,lev_img_lvl]))
-    if(is.null(lev_imgs$mean)){
+    if(sum(out$outliers[,lev_img_lvl]) > 0){
       if(verbose){
-        print(paste0("clever did not find any outliers at level ",
-                     lev_img_lvl, " (", colnames(out$outliers)[lev_img_lvl], ")."))
+        print(paste0(
+          "Outliers detected at level ", lev_img_lvl, " (",
+          colnames(out$outliers)[lev_img_lvl], "). Computing leverage images."))
       }
+      lev_imgs <- leverage_images(X.svd, which(out$outliers[,lev_img_lvl]))
+    } else {
+      if(verbose){
+        print(paste0(
+          "No leverage images: clever did not find any outliers at level ",
+          lev_img_lvl, " (", colnames(out$outliers)[lev_img_lvl], ")."))
+      }
+      lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
     }
   }
+  X.svd$v <- NULL # Conserve memory by witholding the PC directions from output.
 
   # Organize the output.
+  if(verbose){ print("Done! Organizing results.") }
   result <- list(params=NULL, PCs=NULL,
                  leverage=NULL, robdist=NULL, inMCD=NULL,
                  outliers=NULL, cutoffs=NULL, lev_imgs=NULL)
@@ -289,8 +304,8 @@ clever = function(
                         PCA_trend_filtering.kwargs=PCA_trend_filtering.kwargs,
                         choose_PCs=choose_PCs,
                         kurt_quantile=kurt_quantile, kurt_detrend=kurt_detrend,
-                        method=method, id_out=id_out,
-                        solve_directions=solve_directions, verbose=verbose)
+                        method=method, id_out=id_out, lev_img_lvl=lev_img_lvl,
+                        verbose=verbose)
   result$PCs <- list(indices = chosen_PCs, svd=X.svd)
   if(method == "leverage"){
     result$leverage <- measure

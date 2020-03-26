@@ -17,8 +17,12 @@ within the area of interest and 0's representing regions to mask out.}
 
 \item{sliced.dim}{If the mask is 2D, which dimension does it represent?
 Will default to the 3rd dimension (axial).}
+
+\item{sliced_dim}{If the mask is 2D, this is the dimension of unit length.}
 }
 \value{
+The 3D or 4D volume time series (time is the fourth dimension).
+
 A 4D array representing the volume time series. Time is on the 4th
  dimension.
 }

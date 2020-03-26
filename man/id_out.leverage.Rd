@@ -12,13 +12,15 @@ id_out.leverage(leverage)
 \value{
 A list with components
 \describe{
-	\item{outliers}{
-	An n x 3 data.frame indicating if each observation is an outlier at the
-	3*median, 4*median, and 5*median levels.
-}
-\item{cutoffs}{The leverage cutoff values: 3*median, 4*median, and 5*median.}
+  \item{outliers}{
+   An n x 3 data.frame indicating if each observation is an outlier at the
+   3*median, 4*median, and 5*median levels.
+ }
+ \item{cutoffs}{The leverage cutoff values: 3*median, 4*median, and
+   5*median.}
 }
 }
 \description{
-Observations with leverage greater than 3, 4, and 5 times the median are labeled as outliers.
+Observations with leverage greater than 3, 4, and 5 times the median are
+ labeled as outliers.
 }

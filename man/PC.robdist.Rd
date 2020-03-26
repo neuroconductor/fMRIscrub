@@ -12,9 +12,12 @@ PC.robdist(U)
 \value{
 A list with components
 \describe{
-	\item{robdist}{A vector of length n of with the robust distance estimate for each observation.}
-\item{inMCD}{A vector of length n indicating if each observation is within the MCD subset.}
-\item{Fparam}{The estimated parameters of the F distribution of MCD distances.}
+  \item{robdist}{A vector of length n of with the robust distance estimate
+   for each observation.}
+ \item{inMCD}{A vector of length n indicating if each observation is within
+   the MCD subset.}
+ \item{Fparam}{The estimated parameters of the F distribution of MCD
+   distances.}
 }
 }
 \description{

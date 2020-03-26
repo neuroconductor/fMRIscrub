@@ -2,9 +2,9 @@
 #'
 #' @param X A numerical data matrix (observations x variables).
 #' @param solve_directions Should the principal directions be solved for? These
-#'	are needed to display the leverage images for outlying observations.
+#'	will be needed to display the leverage images for outlying observations.
 #' @param K The number of PCs to solve for, or \code{"mean var"}, in which case
-#'	the number of PCs will be the amount of regular PCs whith variance above
+#'	the number of PCs will be the amount of regular PCs with variance above
 #'	the mean.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
 #'	Default is .5 . Can be NULL (lets algorithm decide).
@@ -12,7 +12,7 @@
 #' @param tol The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
 #'
-#' @return SVD The trend-filtered SVD decomposition of X.
+#' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 #'
 #' @importFrom glmgen trendfilter
 #' @importFrom far orthonormalization

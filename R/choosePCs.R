@@ -1,16 +1,16 @@
 #' Selects the principle components of above-average variance from a SVD.
 #'
 #' PCs with above-average variance are retained, but the total number kept is
-#' constrained by the \code{max_keep} and \code{min_keep} arguments.
+#'  constrained by the \code{max_keep} and \code{min_keep} arguments.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param max_keep If specified, the total number kept will be at most this
-#' value.
+#'  value.
 #' @param min_keep The total number kept will be at least this
-#' value. The default value is 1.
+#'  value. The default value is \code{1}.
 #'
-#' @return A list with the subsetted u matrix with only the chosen columns (PCs),
-#' and the original indices of the PCs which were retained.
+#' @return The original indices of the PCs which were retained, in order of
+#'  decreasing variance (i.e. increasing index).
 #'
 #' @export
 choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
@@ -32,28 +32,28 @@ choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
 #'
 #' First, the largest PCs which together explain 90% of the variance are
-#' retained, and smaller components are removed. Each PC is detrended. The
-#' kurtosis cutoff is then the 90% quantile of the sampling distribution of
-#' kurtosis for Normal data of the same length as the PCs; it is estimated by
-#' simulation or calculated from the theoretical asymptotic distribution if the
-#' time series is long enough. Finally, the total number kept is constrained by
-#' the \code{max_keep} and \code{min_keep} arguments.
+#'  retained, and smaller components are removed. Each PC is detrended (this can
+#'  be disabled). The kurtosis cutoff is then the 90% quantile of the sampling
+#'  distribution of kurtosis for Normal data of the same length as the PCs; it
+#'  is estimated by simulation or calculated from the theoretical asymptotic
+#'  distribution if the PCs are long enough. Finally, the total number kept is
+#'  constrained by the \code{max_keep} and \code{min_keep} arguments.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
 #' @param kurt_quantile PCs with kurtosis of at least this quantile are kept.
 #' @param detrend Should PCs be detrended before measuring kurtosis? Default is
-#'   TRUE. Recommended if observations represent a time series.
+#'  \code{TRUE}. Recommended if observations represent a time series.
 #' @param max_keep If specified, the total number kept will be at most this
-#' value.
+#'  value.
 #' @param min_keep The total number kept will be at least this
-#' value. The default value is 1.
+#'  value. The default value is \code{1}.
 #' @param n_sim The number of simulation data to use for estimating the sampling
-#' distribution of kurtosis. Only used if a new simulation is performed. (If
-#'  n<1000 and the quantile is 90%, a pre-computed value is used. If n>1000,
-#'  the theoretical asymptotic distribution is used.
+#'  distribution of kurtosis. Only used if a new simulation is performed. (If
+#'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
+#'  If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)
 #'
-#' @return A list with the subsetted u matrix with only the chosen columns (PCs),
-#' and the original indices of the PCs which were retained.
+#' @return The original indices of the PCs which were retained, in order of
+#'  decreasing kurtosis.
 #'
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm

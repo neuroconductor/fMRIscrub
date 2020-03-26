@@ -1,14 +1,15 @@
 #' Visualizes the outlier distribution of a clever object.
 #'
-#' Prints a dot plot of the observations (x-axis) against their outlyingness (y-axis), i.e.
-#'  their leverage or robust distance.
+#' Prints a dot plot of the observations (x-axis) against their outlyingness
+#'  (y-axis), i.e. their leverage or robust distance.
 #'
-#' Cutoffs for each outlier level are marked by horizontal dashed lines. Outliers are
-#'  highlighted by vertical lines which extend down to the x-axis; they are colored yellow,
-#'  orange and red in order of increasing outlyingness.
+#' Cutoffs for each outlier level are marked by horizontal dashed lines.
+#'  Outliers are highlighted by vertical lines which extend down to the x-axis;
+#'  they are colored yellow, orange and red in order of increasing outlyingness.
 #'
-#' If the outlyingness measure is robust distance, observations within the MCD are plotted
-#'  separately from those outside the MCD. Also, the y-axes will be log10-scaled.
+#' If the outlyingness measure is robust distance, observations within the MCD
+#'  are plotted separately from those outside the MCD. Also, the y-axes will be
+#'  log10-scaled.
 #'
 #' @param x A clever object.
 #' @param ... additional arguments to pass to \code{\link{plot}}
@@ -149,7 +150,7 @@ plot.clever <- function(x, ...){
   return(plt)
 }
 
-#'  Calculate the leverage images for each outlier that meets the
+#' Calculate the leverage images for each outlier that meets the
 #'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 #'  and 1 being the lowest.
 #'

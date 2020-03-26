@@ -1,6 +1,7 @@
 #' Identifies outliers based on leverage.
 #'
-#' Observations with leverage greater than 3, 4, and 5 times the median are labeled as outliers.
+#' Observations with leverage greater than 3, 4, and 5 times the median are
+#'  labeled as outliers.
 #'
 #' @param leverage A vector of length n with the leverage of each observation.
 #'
@@ -10,7 +11,8 @@
 #'    An n x 3 data.frame indicating if each observation is an outlier at the
 #'    3*median, 4*median, and 5*median levels.
 #'  }
-#'  \item{cutoffs}{The leverage cutoff values: 3*median, 4*median, and 5*median.}
+#'  \item{cutoffs}{The leverage cutoff values: 3*median, 4*median, and
+#'    5*median.}
 #' }
 #' @export
 id_out.leverage <- function(leverage){
@@ -26,14 +28,18 @@ id_out.leverage <- function(leverage){
   return(result)
 }
 
-#' Identifies outliers based on robust distance, with adjustment for the subset method.
+#' Identifies outliers based on robust distance, with adjustment for the subset
+#'  method.
 #'
 #' Observations whose robust distance lies in the top 1e-2, 1e-3, and 1e-4
 #'  quantiles of the estimated F distribution are labeled as outliers.
 #'
-#' @param distance A vector of length n with the robust distance estimate of each observation.
-#' @param inMCD A vector of length n indicating if each observation is within the MCD subset.
-#' @param Fparam The estimated parameters of the F distribution of MCD distances.
+#' @param distance A vector of length n with the robust distance estimate of
+#'  each observation.
+#' @param inMCD A vector of length n indicating if each observation is within
+#'  the MCD subset.
+#' @param Fparam The estimated parameters of the F distribution of MCD
+#'  distances.
 #'
 #' @return A list with components
 #' \describe{
@@ -41,7 +47,8 @@ id_out.leverage <- function(leverage){
 #'    An n x 3 data.frame indicating if each observation is an outlier at the
 #'    1e-2, 1e-3, and 1e-4 quantile levels.
 #'  }
-#'  \item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and 1e-4th quantiles}
+#'  \item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and
+#'    1e-4th quantiles}
 #' }
 #' @export
 id_out.robdist_subset <- function(distance, inMCD, Fparam){
@@ -73,9 +80,12 @@ id_out.robdist_subset <- function(distance, inMCD, Fparam){
 #' Observations whose robust distance lies in the top 1e-2, 1e-3, and 1e-4
 #'  quantiles of the estimated F distribution are labeled as outliers.
 #'
-#' @param distance A vector of length n with the robust distance estimate of each observation.
-#' @param inMCD A vector of length n indicating if each observation is within the MCD subset.
-#' @param Fparam The estimated parameters of the F distribution of MCD distances.
+#' @param distance A vector of length n with the robust distance estimate of
+#'  each observation.
+#' @param inMCD A vector of length n indicating if each observation is within
+#'  the MCD subset.
+#' @param Fparam The estimated parameters of the F distribution of MCD
+#'  distances.
 #'
 #' @return A list with components
 #' \describe{
@@ -83,7 +93,8 @@ id_out.robdist_subset <- function(distance, inMCD, Fparam){
 #'    An n x 3 data.frame indicating if each observation is an outlier at the
 #'    1e-2, 1e-3, and 1e-4 quantile levels.
 #'  }
-#'  \item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and 1e-4th quantiles}
+#'  \item{cutoffs}{The robust distance cutoff values: the 1e-2, 1e-3, and
+#'    1e-4th quantiles}
 #' }
 #' @export
 id_out.robdist <- function(distance, inMCD, Fparam){

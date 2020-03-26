@@ -1,12 +1,13 @@
 #' Estimates the parameters of the F distribution of MCD distances.
 #'
 #' This estimates the parameters c and m required to determine the distribution
-#'  of robust MCD distances as derived by Hardin and Rocke (2005), The Distribution
-#'  of Robust Distances.
+#'  of robust MCD distances as derived by Hardin and Rocke (2005), The
+#'  Distribution of Robust Distances.
 #'
 #' @param Q The number of variables in dataset used to compute MCD distances.
 #' @param n The total number of observations.
-#' @param h The number of observations included in estimation of MCD center and scale.
+#' @param h The number of observations included in estimation of MCD center and
+#'  scale.
 #'
 #' @return A list containing the estimated F distribution's c, m, and df.
 #' @export
