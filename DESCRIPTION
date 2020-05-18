@@ -1,7 +1,7 @@
 Package: clever
 Type: Package
 Title: Calculate Leverage of Component Models
-Version: 0.1.4
+Version: 0.1.5
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -27,12 +27,12 @@ LazyData: true
 Imports:
     ggplot2,
     ggrepel,
-    stats,
-    e1071,
     MASS,
-    miscTools,
+    e1071,
+    far,
+    glmgen,
     robustbase,
-    grDevices
+    stats
 RoxygenNote: 7.0.2
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
@@ -45,4 +45,6 @@ Suggests:
     gridExtra,
     testthat (>= 2.1.0),
     covr
+Remotes:
+    glmgen/glmgen/R_pkg/glmgen
 VignetteBuilder: knitr

@@ -4,33 +4,92 @@
 \alias{clever}
 \title{Calculates PCA leverage or robust distance and identifies outliers.}
 \usage{
-clever(x, choosePCs = c("kurtosis", "variance"),
-  kurt_quantile_cut = 0.9, kurt_detrend = TRUE,
-  method = c("leverage", "robdist_subset", "robdist"), id_out = TRUE)
+clever(
+  X,
+  PCA_trend_filtering = TRUE,
+  PCA_trend_filtering.kwargs = NULL,
+  choose_PCs = c("variance", "kurtosis"),
+  kurt_quantile = 0.9,
+  kurt_detrend = TRUE,
+  method = c("leverage", "robdist_subset", "robdist"),
+  id_out = TRUE,
+  lev_img_lvl = 1,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{x}{A wide (obs x vars) data matrix of values.}
+\item{X}{A wide (observations x variables) numerical data matrix.}
 
-\item{choosePCs}{The method to use for choosing which PCs to retain. Default is kurtosis.}
+\item{PCA_trend_filtering}{Should PCA Trend Filtering (PCATF) be used in place
+of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
+must be \code{variance} and \code{method} must be \code{leverage}.}
 
-\item{kurt_quantile_cut}{The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.}
+\item{PCA_trend_filtering.kwargs}{Named list of arguments for \code{PCATF}:
+the trend filtering parameter \code{lambda} (Default \code{0.5}), the number
+of iterations \code{niter_max} (Default \code{1000}), convergence tolerance
+\code{tol} (Default \code{1e-8}), and option to print updates \code{verbose}
+(Default \code{FALSE}).}
 
-\item{kurt_detrend}{If \code{choosePCs} is \code{kurtosis}, should PCs be detrended before measuring kurtosis?
-Default is TRUE. Recommended if observations represent a time series.}
+\item{choose_PCs}{The criteria for choosing which PCs to retain:
+\code{variance} or \code{kurtosis}. Default is \code{variance}. If trend
+filtering is being used, this must be \code{variance}.}
 
-\item{method}{The method to use to measure outlyingness. Default is leverage.}
+\item{kurt_quantile}{The cutoff quantile to use if \code{choose_PCs} is
+\code{kurtosis}. Default is \code{0.9}.}
 
-\item{id_out}{If TRUE (default), will label outliers based on leverage or distance.}
+\item{kurt_detrend}{If \code{choose_PCs} is \code{kurtosis}, should PCs be
+detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
+observations represent a time series.}
+
+\item{method}{The outlier measurement: \code{leverage}, \code{robdist},
+or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
+is being used, this must be \code{leverage}.}
+
+\item{id_out}{Should the outliers be identified? Default is \code{TRUE}.}
+
+\item{lev_img_lvl}{An integer between \code{0} and \code{3}. We can use the
+selected PCs to visualize artifact signals ("leverage images") at each
+outlying time point. Options \code{1} to \code{3} will return the leverage
+images for time points meeting each respective threshold, with \code{1}
+being the lowest and \code{3} being the strictest threshold. They require
+\code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
+leverage images, conserving memory. Option \code{1} is the default.
+\code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
+\code{1}.}
+
+\item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
 \value{
 A clever object, i.e. a list with components
 \describe{
-	\item{params}{A list with the \code{choosePCs}, \code{kurt_quantile_cut}, and \code{method} arguments used.}
- \item{PCs}{The PCs selected by \code{choosePCs}, i.e. the subsetted U matrix from the SVD.}
- \item{leverage}{The leverage of each observation. NULL if \code{method} is not PCA leverage.}
- \item{robdist}{The robust distance of each observation. NULL if \code{method} is not robust distance (subset).}
- \item{inMCD}{Whether each observation is within the MCD subset. NULL if \code{method} is not robust distance (subset).}
- \item{outliers}{An n x 3 data.frame indicating if each observation is an outlier at each of the three levels.}
+  \item{params}{A list of all the arguments used.}
+ \item{PCs}{
+   \describe{
+     \item{indices}{The original indices of the selected PCs.}
+     \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
+       is witheld to conserve memory.}
+   }
+ }
+ \item{leverage}{The leverage of each observation. NULL if \code{method} is
+   not PCA leverage.}
+ \item{robdist}{The robust distance of each observation. NULL if
+   \code{method} is not robust distance (subset).}
+ \item{inMCD}{Whether each observation is within the MCD subset. NULL if
+   \code{method} is not robust distance (subset).}
+ \item{outliers}{An n X 3 data.frame indicating if each observation is an
+   outlier at each of the three levels.}
+ \item{cutoffs}{Outlier cutoff values.}
+ \item{lev_imgs}{
+   \describe{
+     \item{mean}{The average of the PC directions, weighted by the unscaled
+       PC scores at each outlying time point (U[i,] * V^T). Row names are
+       the corresponding time points.'}
+     \item{top}{The PC direction with the highest PC score at each outlying
+       time point. Row names are the corresponding time points.}
+     \item{top_dir}{The index of the PC direction with the highest PC score
+       at each outlying time point. Named by timepoint.}
+   }
+ }
 }
 }
 \description{
@@ -39,7 +98,7 @@ Calculates PCA leverage or robust distance and identifies outliers.
 \examples{
 n_voxels = 1e4
 n_timepoints = 100
-x = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
+X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 
-lev = clever(x)
+clev = clever(X)
 }

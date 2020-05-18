@@ -1,119 +1,325 @@
 #' Calculates PCA leverage or robust distance and identifies outliers.
 #'
-#' @param x A wide (obs x vars) data matrix of values.
-#' @param choosePCs The method to use for choosing which PCs to retain. Default is kurtosis.
-#' @param kurt_quantile_cut The cutoff quantile to use if \code{choosePCs} is \code{kurtosis}. Default is .9.
-#' @param kurt_detrend If \code{choosePCs} is \code{kurtosis}, should PCs be detrended before measuring kurtosis?
-#' 	Default is TRUE. Recommended if observations represent a time series.
-#' @param method The method to use to measure outlyingness. Default is leverage.
-#' @param id_out If TRUE (default), will label outliers based on leverage or distance.
+#' @param X A wide (observations x variables) numerical data matrix.
+#' @param PCA_trend_filtering Should PCA Trend Filtering (PCATF) be used in place
+#'  of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
+#'  must be \code{variance} and \code{method} must be \code{leverage}.
+#' @param PCA_trend_filtering.kwargs Named list of arguments for \code{PCATF}:
+#'  the trend filtering parameter \code{lambda} (Default \code{0.5}), the number
+#'  of iterations \code{niter_max} (Default \code{1000}), convergence tolerance
+#'  \code{tol} (Default \code{1e-8}), and option to print updates \code{verbose}
+#'  (Default \code{FALSE}).
+#' @param choose_PCs The criteria for choosing which PCs to retain:
+#'  \code{variance} or \code{kurtosis}. Default is \code{variance}. If trend
+#'  filtering is being used, this must be \code{variance}.
+#' @param kurt_quantile The cutoff quantile to use if \code{choose_PCs} is
+#'  \code{kurtosis}. Default is \code{0.9}.
+#' @param kurt_detrend If \code{choose_PCs} is \code{kurtosis}, should PCs be
+#'  detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
+#'  observations represent a time series.
+#' @param method The outlier measurement: \code{leverage}, \code{robdist},
+#'  or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
+#'  is being used, this must be \code{leverage}.
+#' @param id_out Should the outliers be identified? Default is \code{TRUE}.
+#' @param lev_img_lvl An integer between \code{0} and \code{3}. We can use the
+#'  selected PCs to visualize artifact signals ("leverage images") at each
+#'  outlying time point. Options \code{1} to \code{3} will return the leverage
+#'  images for time points meeting each respective threshold, with \code{1}
+#'  being the lowest and \code{3} being the strictest threshold. They require
+#'  \code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
+#'  leverage images, conserving memory. Option \code{1} is the default.
+#'  \code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
+#'  \code{1}.
+#' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @return A clever object, i.e. a list with components
 #' \describe{
-#' 	\item{params}{A list with the \code{choosePCs}, \code{kurt_quantile_cut}, and \code{method} arguments used.}
-#'  \item{PCs}{The PCs selected by \code{choosePCs}, i.e. the subsetted U matrix from the SVD.}
-#'  \item{leverage}{The leverage of each observation. NULL if \code{method} is not PCA leverage.}
-#'  \item{robdist}{The robust distance of each observation. NULL if \code{method} is not robust distance (subset).}
-#'  \item{inMCD}{Whether each observation is within the MCD subset. NULL if \code{method} is not robust distance (subset).}
-#'  \item{outliers}{An n x 3 data.frame indicating if each observation is an outlier at each of the three levels.}
+#'   \item{params}{A list of all the arguments used.}
+#'  \item{PCs}{
+#'    \describe{
+#'      \item{indices}{The original indices of the selected PCs.}
+#'      \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
+#'        is witheld to conserve memory.}
+#'    }
+#'  }
+#'  \item{leverage}{The leverage of each observation. NULL if \code{method} is
+#'    not PCA leverage.}
+#'  \item{robdist}{The robust distance of each observation. NULL if
+#'    \code{method} is not robust distance (subset).}
+#'  \item{inMCD}{Whether each observation is within the MCD subset. NULL if
+#'    \code{method} is not robust distance (subset).}
+#'  \item{outliers}{An n X 3 data.frame indicating if each observation is an
+#'    outlier at each of the three levels.}
+#'  \item{cutoffs}{Outlier cutoff values.}
+#'  \item{lev_imgs}{
+#'    \describe{
+#'      \item{mean}{The average of the PC directions, weighted by the unscaled
+#'        PC scores at each outlying time point (U[i,] * V^T). Row names are
+#'        the corresponding time points.'}
+#'      \item{top}{The PC direction with the highest PC score at each outlying
+#'        time point. Row names are the corresponding time points.}
+#'      \item{top_dir}{The index of the PC direction with the highest PC score
+#'        at each outlying time point. Named by timepoint.}
+#'    }
+#'  }
 #' }
-#' @export
 #'
+#' @importFrom robustbase rowMedians
 #' @import stats
-#' @importFrom robustbase covMcd
+#'
+#' @export
 #'
 #' @examples
 #' n_voxels = 1e4
 #' n_timepoints = 100
-#' x = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
+#' X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 #'
-#' lev = clever(x)
+#' clev = clever(X)
 clever = function(
-	x,
-	choosePCs = c('kurtosis', 'variance'),
-	kurt_quantile_cut = .9,
-	kurt_detrend = TRUE,
-	method = c('leverage','robdist_subset','robdist'),
-	id_out = TRUE) {
+  X,
+  PCA_trend_filtering = TRUE,
+  PCA_trend_filtering.kwargs = NULL,
+  choose_PCs = c("variance", "kurtosis"),
+  kurt_quantile = .9,
+  kurt_detrend = TRUE,
+  method = c("leverage","robdist_subset","robdist"),
+  id_out = TRUE,
+  lev_img_lvl = 1,
+  verbose = FALSE) {
 
-	choosePCs <- match.arg(choosePCs)  # return error if choosePCs arg not one of the acceptable options
-	method <- match.arg(method)  # return error if method arg not one of the acceptable options
+  TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
 
-	if(choosePCs=='kurtosis'){
-		if(!is.numeric(kurt_quantile_cut)){
-			stop('kurt_quantile_cut must be a number between 0 and 1.')
-		}
-		if((kurt_quantile_cut > 1) | (kurt_quantile_cut < 0)){
-			stop('kurt_quantile_cut must be a number between 0 and 1.')
-		}
-	}
+  # Argument Checks:
+  choose_PCs <- match.arg(choose_PCs)
+  method <- match.arg(method)
+  if(!is.matrix(X)){ X <- as.matrix(X) }
+  if(!is.logical(PCA_trend_filtering)){
+    stop("Invalid argument: PCA_trend_filtering must be TRUE or FALSE.\n")
+  }
+  #   If `PCA_trend_filtering`, check for variance cutoff and leverage method.
+  if(PCA_trend_filtering){
+    if(choose_PCs != "variance"){
+      stop("Invalid argument: Trend Filtering requires choose_PCs==variance.\n")
+    }
+    if(method != "leverage"){
+      stop("Invalid argument: Trend Filtering requires method==leverage.\n")
+    }
+  }
+  if(choose_PCs=="kurtosis"){
+    if(!is.numeric(kurt_quantile)){
+      stop("Invalid argument: kurt_quantile must be numeric.\n")
+    }
+    if((kurt_quantile > 1) | (kurt_quantile < 0)){
+      stop("Invalid argument: kurt_quantile must be between 0 and 1.\n")
+    }
+    if(!is.logical(kurt_detrend)){
+      stop("Invalid argument: kurt_detrend must be TRUE or FALSE.\n")
+    }
+  }
+  if(!is.logical(id_out)){
+    stop("Invalid argument: id_out must be TRUE or FALSE.\n")
+  }
+  if(!is.numeric(lev_img_lvl)){ lev_img_lvl <- as.numeric(lev_img_lvl) }
+  if(!(lev_img_lvl %in% c(0,1,2,3))){
+    stop("Invalid argument: lev_img_lvl must be 0, 1, 2, or 3.\n")
+  }
+  if((lev_img_lvl > 0) & (!id_out)){
+    stop("Invalid argument: computing leverage images requires id_out==TRUE.\n")
+  }
+  if(!is.logical(verbose)){
+    stop("Invalid argument: verbose must be TRUE or FALSE.\n")
+  }
 
-	x <- as.matrix(x)
-	p <- ncol(x)
-	n <- nrow(x)
-	if(p < n) warning('Data matrix has more rows than columns.
-		Check that observations are in rows and variables are in columns.')
+  choose_PCs.fun <- switch(choose_PCs, kurtosis=choose_PCs.kurtosis,
+                                       variance=choose_PCs.variance)
+  method.fun <- switch(method, leverage=PC.leverage,
+                               robdist=PC.robdist,
+                               robdist_subset=PC.robdist_subset)
+  id_out.fun <- switch(method, leverage=id_out.leverage,
+                               robdist=id_out.robdist,
+                               robdist_subset=id_out.robdist_subset)
 
-	# Center and scale robustly.
-	x <- scale_med(x)
+  N_ <- ncol(X)
+  T_ <- nrow(X)
+  if(N_ < T_){
+    warning("Data matrix has more rows than columns. Check that observations
+      are in rows and variables are in columns.\n")
+  }
 
-	# Perform dimension reduction.
-	XXt <- (x %*% t(x))
-	SVDi <- svd(XXt)
+  # Center and scale robustly.
+  # Do it here instead of calling scale_med to save memory.
+  if(verbose){ print("Centering and scaling the data matrix.") }
+  X <- t(X)
+  # Center.
+  X <- X - c(rowMedians(X, na.rm=TRUE))
+  # Scale.
+  mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
+  zero_mad <- mad < TOL
+  if(any(zero_mad)){
+    if(all(zero_mad)){
+      stop("Error: All voxels are zero-variance. \n")
+    } else {
+      warning(paste0("Warning: ", sum(zero_mad),
+        " zero-variance voxels (out of ", length(zero_mad),
+        "). These will be set to zero for estimation of the covariance.\n"))
+    }
+    mad[zero_mad] <- 1
+  }
+  X <- X/c(mad)
+  X[zero_mad,] <- 0
+  X <- t(X)
+  rm(mad, zero_mad)
 
-	# Choose which PCs to retain.
-	choosePCs_kwargs <- list(svd=SVDi)
-	choosePCs_fun <- switch(choosePCs, variance=choosePCs_variance, kurtosis=choosePCs_kurtosis)
-	if((id_out == TRUE) & (method %in% c('robdist','robdist_subset'))){
-		# Let q = n_PCs/n_timepoints (ncol(U)/nrow(U)). robustbase::covMcd()
-		#  requires q <= approx. 1/2 for computation of the MCD covariance estimate.
-		#  Higher q will use more components for estimation, thus retaining a
-		#  higher resolution of information. Lower q will have higher breakdown
-		#  points, thus being more resistant to outliers. (The maximal breakdown
-		#  value is (n_PCs - n_timepoints + 2)/2.) Here, we select q = 1/3 to yield
-		#  a breakdown value of approx. 1/3. Since the subset method splits
-		#  n_timepoints into thirds, it must further reduce n_PCs by 1/3.
-		q <- 1/3
-		max_keep <- max(1, floor(switch(method,
-			robdist=nrow(SVDi$u)*q,
-			robdist_subset=nrow(SVDi$u)*q/3)))
-		choosePCs_kwargs$max_keep <- max_keep
-	}
-	if(choosePCs == 'kurtosis'){
-		choosePCs_kwargs$kurt_quantile_cut = kurt_quantile_cut
-		choosePCs_kwargs$detrend = kurt_detrend
-	}
-	chosen_PCs <- do.call(choosePCs_fun, choosePCs_kwargs)
-	Q <- ncol(chosen_PCs$U)
+  # Compute the PC scores (and directions, if leverage images are desired).
+  solve_directions <- lev_img_lvl > 0
+  if(verbose){
+    print(paste0("Computing the",
+                 ifelse(PCA_trend_filtering, " trend-filtered", ""),
+                 " PC scores",
+                  ifelse(solve_directions, " and directions", ""), "."))
+  }
+  if(PCA_trend_filtering){
+    X.svd <- do.call(PCATF, c(list(X=X, K="mean var",
+                                   solve_directions=solve_directions),
+                              PCA_trend_filtering.kwargs))
+    rm(X)
+  } else {
+    if(solve_directions){
+      X.svd <- svd(X)
+      rm(X)
+    } else {
+      # Avoid computing U matrix to conserve memory.
+      XXt <- tcrossprod(X)
+      rm(X)
+      X.svd <- svd(XXt)
+      rm(XXt)
+      X.svd$d <- sqrt(X.svd$d)
+      X.svd$v <- NULL
+    }
+  }
+  gc()
 
-	# Compute PCA leverage or robust distance.
-	method_fun <- switch(method, leverage=PCleverage,
-		robdist_subset=PCrobdist_subset, robdist=PCrobdist)
-	measure <- method_fun(chosen_PCs$U)
+  # Remove constant PCs (likely present if trend filtering is used).
+  zero_var <- apply(X.svd$u, 2, var) < TOL
+  if(any(zero_var)){
+    if(all(zero_var)){
+      stop("Error: All PCs are zero-variance.\n")
+    }
+    warning(paste0("Warning: ", sum(zero_var),
+      " PCs are zero-variance. Removing these."))
+    X.svd$u <- X.svd$u[,!zero_var]
+    X.svd$d <- X.svd$d[!zero_var]
+    X.svd$v <- X.svd$v[,!zero_var]
+  }
 
-	# Organize the output.
-	if(method %in% c('robdist_subset','robdist')){
-		inMCD <- measure$inMCD
-		Fparam <- measure$Fparam
-		measure <- measure$robdist
-	}
-	params <- list(choosePCs=choosePCs, method=method)
-	if(choosePCs == 'kurtosis'){ params$kurt_quantile_cut = kurt_quantile_cut }
-	if(method == 'leverage'){
-		result <- list(params=params, PCs=chosen_PCs,
-			leverage=measure, robdist=NULL, inMCD=NULL, outliers=NULL, cutoffs=NULL)
-	} else {
-		result <- list(params=params, PCs=chosen_PCs,
-			leverage=NULL, robdist=measure, inMCD=inMCD, outliers=NULL, cutoffs=NULL)
-	}
-	if(id_out){
-		if(method=='leverage') id_out <- id_out.leverage(measure)
-		if(method=='robdist_subset') id_out <- id_out.robdist_subset(measure, inMCD, Fparam)
-		if(method=='robdist') id_out <- id_out.robdist(measure, inMCD, Fparam)
-		result$outliers <- id_out$outliers
-		result$cutoffs <- id_out$cutoffs
-	}
-	class(result) <- c('clever', class(result))
+  # Choose which PCs to retain.
+  if(verbose){
+    print(paste0("Choosing PCs with high ", choose_PCs, "."))
+  }
+  #  First, get the keyword arguments...
+  choose_PCs.kwargs <- list(svd=X.svd)
+  if((id_out == TRUE) & (method %in% c("robdist","robdist_subset"))){
+    # Let q = N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()
+    #  requires q <= approx. 1/2 for computation of the MCD covariance estimate.
+    #  Higher q will use more components for estimation, thus retaining a
+    #  higher resolution of information. Lower q will have higher breakdown
+    #  points, thus being more resistant to outliers. (The maximal breakdown
+    #  value is (N_ - T_ + 2)/2.) Here, we select q = 1/3 to yield a breakdown
+    #  value of approx. 1/3. Since the subset method splits T_ into thirds, it
+    #  must further reduce N_ by 1/3.
+    q <- 1/3
+    choose_PCs.kwargs$max_keep <- max(1, floor(switch(method,
+      robdist=T_*q,
+      robdist_subset=T_*q/3)))
+  }
+  if(choose_PCs == "kurtosis"){
+    choose_PCs.kwargs$kurt_quantile <- kurt_quantile
+    choose_PCs.kwargs$detrend <- kurt_detrend
+  }
+  #  ...then call the respective function for PC selection.
+  if(PCA_trend_filtering){
+    # We have already computed the PCs we want.
+    if("max_keep" %in% names(choose_PCs.kwargs)){
+      chosen_PCs <- 1:min(ncol(X.svd$u), choose_PCs.kwargs$max_keep)
+    } else {
+      chosen_PCs <- 1:ncol(X.svd$u)
+    }
+  } else {
+    chosen_PCs <- do.call(choose_PCs.fun, choose_PCs.kwargs)
+    chosen_PCs <- chosen_PCs[order(chosen_PCs)] # kurtosis order =/= index order
+  }
+  X.svd$u <- X.svd$u[,chosen_PCs]
+  X.svd$d <- X.svd$d[chosen_PCs]
+  if(!is.null(X.svd$v)){ X.svd$v <- X.svd$v[,chosen_PCs] }
 
-	return(result)
+  # Compute PCA leverage or robust distance.
+  if(verbose){
+    print(paste0("Computing ", method, " (the outlyingness measurement)."))
+  }
+  measure <- method.fun(X.svd$u)
+  if(method %in% c("robdist_subset", "robdist")){
+    inMCD <- measure$inMCD
+    Fparam <- measure$Fparam
+    measure <- measure$robdist
+  }
+
+  # Identify outliers.
+  if(id_out){
+    if(verbose){ print("Identifying outliers.") }
+    if(method == "leverage"){
+      id_out.kwargs <- list(leverage=measure)
+    }
+    if(method %in% c("robdist_subset", "robdist")){
+      id_out.kwargs <- list(distance=measure, inMCD=inMCD, Fparam=Fparam)
+    }
+    out <- do.call(id_out.fun, id_out.kwargs)
+  }
+
+  # Make leverage images.
+  if(lev_img_lvl > 0){
+    if(sum(out$outliers[,lev_img_lvl]) > 0){
+      if(verbose){
+        print(paste0(
+          "Outliers detected at level ", lev_img_lvl, " (",
+          colnames(out$outliers)[lev_img_lvl], "). Computing leverage images."))
+      }
+      lev_imgs <- leverage_images(X.svd, which(out$outliers[,lev_img_lvl]))
+    } else {
+      if(verbose){
+        print(paste0(
+          "No leverage images: clever did not find any outliers at level ",
+          lev_img_lvl, " (", colnames(out$outliers)[lev_img_lvl], ")."))
+      }
+      lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
+    }
+  }
+  X.svd$v <- NULL # Conserve memory by witholding the PC directions from output.
+
+  # Organize the output.
+  if(verbose){ print("Done! Organizing results.") }
+  result <- list(params=NULL, PCs=NULL,
+                 leverage=NULL, robdist=NULL, inMCD=NULL,
+                 outliers=NULL, cutoffs=NULL, lev_imgs=NULL)
+  result$params <- list(PCA_trend_filtering=PCA_trend_filtering,
+                        PCA_trend_filtering.kwargs=PCA_trend_filtering.kwargs,
+                        choose_PCs=choose_PCs,
+                        kurt_quantile=kurt_quantile, kurt_detrend=kurt_detrend,
+                        method=method, id_out=id_out, lev_img_lvl=lev_img_lvl,
+                        verbose=verbose)
+  result$PCs <- list(indices = chosen_PCs, svd=X.svd)
+  if(method == "leverage"){
+    result$leverage <- measure
+  }
+  if(method %in% c("robdist_subset", "robdist")){
+    result$robdist <- measure
+    result$inMCD <- inMCD
+  }
+  if(id_out){
+    result$outliers <- out$outliers
+    result$cutoffs <- out$cutoffs
+    result$lev_imgs <- lev_imgs
+  }
+  class(result) <- c("clever", class(result))
+
+  return(result)
 }
