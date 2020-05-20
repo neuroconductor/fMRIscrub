@@ -1,11 +1,14 @@
 #' PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
 #'
 #' @param X A numerical data matrix (observations x variables).
+#' @param X.svd (Optional) The svd decomposition of X. Save time by providing
+#'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
 #'	will be needed to display the leverage images for outlying observations.
 #' @param K The number of PCs to solve for, or \code{"mean var"}, in which case
 #'	the number of PCs will be the amount of regular PCs with variance above
-#'	the mean.
+#'	the mean. The "mean var" option is deprecated, since clever now calculates this
+#'  value outside of this function and passes the value directly to K as an integer.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
 #'	Default is .5 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
@@ -17,18 +20,18 @@
 #' @importFrom glmgen trendfilter
 #' @importFrom far orthonormalization
 #' @export
-PCATF <- function(X, solve_directions = TRUE, K=NULL, lambda=.5,
+PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   niter_max = 1000, tol = 1e-8, verbose=FALSE){
 
   N_ <- ncol(X)
   T_ <- nrow(X)
-  X.svd_init <- svd(X)
+  if(is.null(X.svd)){ X.svd <- svd(X) }
 
   if(is.null(K)){
     K <- T_
   } else if(is.character(K)){
     if('mean var' %in% K){
-      K <- choose_PCs.variance(X.svd_init, max_keep=NULL, min_keep=NULL)
+      K <- choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL)
       K <- K[length(K)]
     }
   } else {
@@ -41,9 +44,9 @@ PCATF <- function(X, solve_directions = TRUE, K=NULL, lambda=.5,
 
   for(k in 1:K){
     # Get initial eigenvector from regular svd.
-    u <- X.svd_init$u[, k]
-    d <- X.svd_init$d[k]
-    v <- X.svd_init$v[, k]
+    u <- X.svd$u[, k]
+    d <- X.svd$d[k]
+    v <- X.svd$v[, k]
 
     # Iterate between trendfiltering u and orthonormalizing v.
     for(i in 1:niter_max){
