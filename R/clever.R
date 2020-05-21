@@ -40,38 +40,85 @@
 #'  recommended for time-series data, because trends can induce high kurtosis even
 #'  in the absence of outliers. It is highly advised against for non-time-series
 #'  data because the observations are not temporally related.
-#' @param id_out Should the outliers be identified? Default is \code{TRUE}.
-#' @param lev_img_level An integer between \code{0} and \code{3}. We can use the
-#'  selected PCs to visualize artifact signals ("leverage images") at each
-#'  outlying time point. Options \code{1} to \code{3} will return the leverage
-#'  images for time points meeting each respective threshold, with \code{1}
-#'  being the lowest and \code{3} being the strictest threshold. They require
-#'  \code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
-#'  leverage images, conserving memory. Option \code{1} is the default.
-#'  \code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
-#'  \code{1}.
+#' @param id_outliers Should the outliers be identified? Default is \code{TRUE}.
+#' @param lev_cutoff The outlier cutoff value for leverage, as a multiple of the median
+#'  leverage. Only used if 
+#'  \code{'leverage' %in% projection_methods} and \code{id_outliers}. Default is 
+#'  \code{5}, or \eqn{5 * median}.
+#' @param MCD_cutoff  The outlier cutoff quantile for MCD distance. Only used if 
+#'  \code{'robdist' %in% projection_methods | 'robdist_subset' %in% projection_methods} 
+#'  and \code{id_outliers}. Default is \code{0.99}, or the \eqn{0.99} quantile.
+#'  The quantile is computed from the estimated F distribution.
+#' @param lev_images Should leverage images be computed? If \code{FALSE} memory is
+#'  conserved. Default is \code{FALSE}.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @return A clever object, i.e. a list with components
 #' \describe{
 #'   \item{params}{A list of all the arguments used.}
-#'  \item{PCs}{
+#'  \item{projections}{
 #'    \describe{
-#'      \item{indices}{The original indices of the selected PCs.}
-#'      \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
-#'        is witheld to conserve memory.}
+#'      \item{PC_var}{
+#'        \describe{
+#'          \item{indices}{The indices retained from the original SVD decomposition 
+#'            to make the variance-based PC projection.} 
+#'          \item{PCs}{The subsetted SVD decomposition.}  
+#'        }
+#'      }
+#'      \item{PC_kurt}{
+#'        \describe{
+#'          \item{indices}{The indices retained from the original SVD decomposition 
+#'            to make the kurtosis-based PC projection. They are ordered from highest 
+#'            kurtosis to lowest kurtosis.}  
+#'          \item{PCs}{The subsetted SVD decomposition. PCs are ordered in the standard
+#'            way, from highest variance to lowest variance, instead of by kurtosis. }  
+#'        }
+#'      }
+#'      \item{PCATF}{
+#'        \describe{
+#'          \item{indices}{The indices of the trend-filtered PCs used to make the
+#'            projection.}  
+#'          \item{PCs}{The PCATF result.}  
+#'        }
+#'      }
 #'    }
 #'  }
-#'  \item{leverage}{The leverage of each observation. NULL if \code{method} is
-#'    not PCA leverage.}
-#'  \item{robdist}{The robust distance of each observation. NULL if
-#'    \code{method} is not robust distance (subset).}
+#'  \item{outlier_meas}{
+#'    \describe{
+#'      \item{PC_var__lev}{The leverage values for the PC_var projection.}
+#'      \item{PC_kurt__lev}{The leverage values for the PC_kurt projection.}
+#'      \item{PCATF__lev}{The leverage values for the PCATF projection.}
+#'      \item{PC_var__rbd}{The robust MCD distance values for the PC_var projection.}
+#'      \item{PC_var__rds}{The robust MCD distance values, using the subset method, 
+#'        for the PC_var projection.}
+#'      \item{DVARS_DPD}{The Delta percent DVARS values.}
+#'      \item{DVARS_ZD}{The DVARS z-scores.}
+#'    }
+#'  }
+#'  \item{outlier_cutoffs}{
+#'    \describe{
+#'      \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff*3}.}
+#'      \item{MCD}{The robust MCD (subset) cutoff for outlier detection: the 
+#'        \code{MCD_cutoff} quantile of the estimated F distribution.}
+#'      \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5%}
+#'      \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5% 
+#'        significance level with Bonferroni FWER correction.}
+#'    }
+#'  }
+#'  \item{outlier_flags}{
+#'    \describe{
+#'      \item{PC_var__lev}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{PC_kurt__lev}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{PCATF__lev}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{PC_var__rbd}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{PC_var__rds}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{DVARS_DPD}{Whether each observation surpasses the outlier cutoff.}
+#'      \item{DVARS_ZD}{Whether each observation surpasses the outlier cutoff.}
+#'    }
+#'  }
 #'  \item{inMCD}{Whether each observation is within the MCD subset. NULL if
 #'    \code{method} is not robust distance (subset).}
-#'  \item{outliers}{An n X 3 data.frame indicating if each observation is an
-#'    outlier at each of the three levels.}
-#'  \item{cutoffs}{Outlier cutoff values.}
-#'  \item{lev_imgs}{
+#'  \item{lev_images}{
 #'    \describe{
 #'      \item{mean}{The average of the PC directions, weighted by the unscaled
 #'        PC scores at each outlying time point (U[i,] * V^T). Row names are
@@ -103,8 +150,10 @@ clever = function(
   PCATF_kwargs = NULL,
   kurt_quantile = .9,
   kurt_detrend = TRUE,
-  id_out = TRUE,
-  lev_img_level = 1,
+  id_outliers = TRUE,
+  lev_cutoff = 5,
+  MCD_cutoff = 0.99,
+  lev_images = TRUE,
   verbose = FALSE) {
 
   ###################
@@ -112,11 +161,11 @@ clever = function(
   ###################
 
   # Define the projection and outlyingness methods, and their valid combos.
-  all_projection_methods = c("PCA_var", "PCA_kurt", "PCATF")
-  all_outlyingness_methods = c("leverage", "robdist", "robdist_subset")
-  all_valid_method_combos = c(
+  all_projection_methods <- c("PCA_var", "PCA_kurt", "PCATF")
+  all_outlyingness_methods <- c("leverage", "robdist", "robdist_subset")
+  all_valid_methods <- c(
     as.character(outer('PCA_var', all_outlyingness_methods, FUN=paste, sep='__')),
-    c("PCA_kurt", "leverage"), c("PCATF", "leverage")
+    c("PCA_kurt__leverage", "PCATF__leverage")
   )
 
   TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
@@ -142,88 +191,105 @@ clever = function(
       stop("Invalid argument: kurt_detrend must be TRUE or FALSE.\n")
     }
   }
-  if(!is.logical(id_out)){
-    stop("Invalid argument: id_out must be TRUE or FALSE.\n")
+  if(!is.logical(DVARS)){
+    stop("Invalid argument: DVARS must be TRUE or FALSE.\n")
   }
-  if(!is.numeric(lev_img_level)){ lev_img_level <- as.numeric(lev_img_level) }
-  if(!(lev_img_level %in% c(0,1,2,3))){
-    stop("Invalid argument: lev_img_level must be 0, 1, 2, or 3.\n")
+  if(!is.logical(id_outliers)){
+    warning("Invalid argument: id_outliers must be TRUE or FALSE. Using TRUE.\n")
+    id_outliers <- TRUE
   }
-  if((lev_img_level > 0) & (!id_out)){
-    stop("Invalid argument: computing leverage images requires id_out==TRUE.\n")
+  if((lev_images) & (!id_outliers)){
+    stop("Invalid argument: computing leverage images requires id_outliers==TRUE.\n")
   }
   if(!is.logical(verbose)){
-    stop("Invalid argument: verbose must be TRUE or FALSE.\n")
+    warning("Invalid argument: verbose must be TRUE or FALSE. Using TRUE.\n")
+    verbose <- TRUE
   }
 
-  method_combos = all_valid_method_combos[all_valid_method_combos %in% 
-    outer(all_projection_methods, all_outlyingness_methods, paste, '__')
+  methods <- all_valid_methods[all_valid_methods %in% 
+    outer(projection_methods, outlyingness_methods, paste, sep='__')
   ]
 
-  projection.fun <- switch(projection_method, 
-    kurtosis=choose_PCs.kurtosis,
-    variance=choose_PCs.variance)
-  outlyingness.fun <- switch(outlyingness_method, 
-    leverage=PC.leverage,
-    robdist=PC.robdist,
-    robdist_subset=PC.robdist_subset)
-  id_out.fun <- switch(outlyingness_method, 
-    leverage=id_out.leverage,
-    robdist=id_out.robdist,
-    robdist_subset=id_out.robdist_subset)
+  if(length(methods) < 1){
+    stop("No valid method combinations. Check that the projection and outlyingness methods are compatible.\n")
+  }
 
-  N_ <- ncol(X)
+  Npre_ <- ncol(X)
   T_ <- nrow(X)
-  if(N_ < T_){
+  if(Npre_ < T_){
     warning("Data matrix has more rows than columns. Check that observations
       are in rows and variables are in columns.\n")
   }
+
+  outlier_meas <- lev_images_out <- setNames(vector("list", length(methods)), methods)
+  if(id_outliers){
+    outlier_cutoffs <- outlier_flags <- setNames(vector("list", length(methods)), methods)
+  }
+  inMCD <- vector("list")
 
   # Center and scale the data robustly.
   # Do it here instead of calling scale_med to save memory.
   if(verbose){ print("Centering and scaling the data matrix.") }
   X <- t(X)
-  # Center.
+  #	Center.
   X <- X - c(rowMedians(X, na.rm=TRUE))
   # Scale.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
-  zero_mad <- mad < TOL
-  if(any(zero_mad)){
-    if(all(zero_mad)){
-      stop("Error: All voxels are zero-variance. \n")
+  const_mask <- mad < TOL
+  if(any(const_mask)){
+    if(all(const_mask)){
+    stop("All voxels are zero-variance.\n")
     } else {
-      warning(paste0("Warning: ", sum(zero_mad),
-        " zero-variance voxels (out of ", length(zero_mad),
-        "). These will be set to zero for estimation of the covariance.\n"))
+      warning(paste0("Warning: ", sum(const_mask),
+      " constant voxels (out of ", length(const_mask),
+      " ). These will be set to zero for estimation of the covariance.\n"))
     }
-    mad[zero_mad] <- 1
   }
+  mad <- mad[!const_mask]
+  X <- X[!const_mask,]
   X <- X/c(mad)
-  X[zero_mad,] <- 0
-  X <- t(X)
-  rm(mad, zero_mad)
 
+  # Revert transpose.
+  X <- t(X)
+  N_ <- ncol(X)
+  # Compute DVARS.
+  if(DVARS){
+    if(verbose){ print("Computing DVARS.") }
+    X_DVARS <- compute_DVARS(X, normalize=FALSE, norm_I=100, verbose=verbose)
+    
+    outlier_meas$DVARS_DPD <- X_DVARS$DPD
+    outlier_meas$DVARS_ZD <- X_DVARS$ZD
+
+    if(id_outliers){
+      outlier_cutoffs$DVARS_DPD <- qnorm(1-.05/T_)
+      outlier_cutoffs$DVARS_ZD <- 5
+      
+      outlier_flags$DVARS_DPD <- X_DVARS$DPD > qnorm(1-.05/T_)
+      outlier_flags$DVARS_ZD <- abs(X_DVARS$ZD) > 5
+      outlier_flags$DVARS_both <- outlier_flags$DVARS_DPD & outlier_flags$DVARS_ZD
+    }
+  }
   ##################
   # DATA PROJECTIONS
   ##################
 
   # Compute the PC scores (and directions, if leverage images or PCATF are desired).
-  solve_directions <- (lev_img_level > 0) | ("PCATF" %in% projection_methods)
+  solve_directions <- (lev_images) | ("PCATF" %in% projection_methods)
   if(verbose){
     print(paste0("Computing the",
-                 ifelse(("PCA_var" %in% projection_methods) | ("PCA_kurt" %in% projection_methods),
+                ifelse(("PCA_var" %in% projection_methods) | ("PCA_kurt" %in% projection_methods),
                   ifelse("PCATF" %in% projection_methods, " normal and trend-filtered", ""),
                   ifelse("PCATF" %in% projection_methods, " trend-filtered", "INTERNAL ERROR")),
-                 " PC scores",
+                " PC scores",
                   ifelse(solve_directions, " and directions", ""), "."))
   }
   if(solve_directions){
     X.svd <- svd(X)
-    rm(X)
+    if(!("PCATF" %in% projection_methods)){ rm(X) }
   } else {
     # Avoid computing U matrix to conserve memory.
     XXt <- tcrossprod(X)
-    rm(X)
+    if(!("PCATF" %in% projection_methods)){ rm(X) }
     X.svd <- svd(XXt)
     rm(XXt)
     X.svd$d <- sqrt(X.svd$d)
@@ -235,12 +301,12 @@ clever = function(
     X.svdtf <- do.call(
       PCATF, 
       c(list(X=X, X.svd=X.svd,
-             K=choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL),
-             solve_directions=solve_directions),
+            solve_directions=solve_directions,
+            K=length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))),
       PCATF_kwargs))
     # The PC directions were needed to compute PCATF. If leverage images 
     #   are not wanted, we can now delete the directions to save space.
-    if(lev_img_level > 0){ X.svd$v <- NULL }
+    if(!lev_images){ X.svd$v <- NULL }
   }
   gc()
 
@@ -255,22 +321,23 @@ clever = function(
         "scores are zero-variance. Removing these PCs."))
       the_svd$u <- the_svd$u[,!zero_var]
       the_svd$d <- the_svd$d[!zero_var]
-      the_svd$v <- the_svd$v[,!zero_var]
+      if(lev_images){ the_svd$v <- the_svd$v[,!zero_var] }
     }
+    return(the_svd)
   }
-  X.svd <- remove_const_PCs(X.svd, 'PC')
-  X.svdtf <- remove_const_PCs(X.svdtf, 'trend-filtered PC')
+  if(exists('X.svd')){ X.svd <- remove_const_PCs(X.svd, 'PC') }
+  if(exists('X.svdtf')){ X.svdtf <- remove_const_PCs(X.svdtf, 'trend-filtered PC') }
 
   # Choose which PCs to retain for each projection.
   projections <- setNames(vector("list", length(projection_methods)), projection_methods)
-  for(i in 1:length(projections_methods)){
-    projection_method = projections_methods[i]
+  for(i in 1:length(projection_methods)){
+    projection_method <- projection_methods[i]
 
     if(verbose){
       print(switch(projection_method,
-        "PCA_var" = "Identifying the PCs with high varaince.",
-        "PCA_kurt" = "Identifying the PCs with high kurtosis.",
-        "PCATF" = "Identifying the trend-filtered PCs with high varaince."
+        PCA_var = "Identifying the PCs with high varaince.",
+        PCA_kurt = "Identifying the PCs with high kurtosis.",
+        PCATF = "Identifying the trend-filtered PCs with high varaince."
       ))
     }
 
@@ -283,42 +350,48 @@ clever = function(
       }
     } else {
       choose_PCs_kwargs <- list(svd=X.svd)
-      if(choose_PCs == "kurtosis"){
-        choose_PCs_kwargs$kurt_quantile <- kurt_quantile
-        choose_PCs_kwargs$detrend <- kurt_detrend
+      if(projection_method == "PCA_var"){
+        chosen_PCs = choose_PCs.variance(
+          svd=X.svd)
+      }else if(projection_method == "PCA_kurt"){
+        chosen_PCs = choose_PCs.kurtosis(
+          svd=X.svd,
+          kurt_quantile=kurt_quantile, 
+          detrend=kurt_detrend)
       }
-      chosen_PCs <- do.call(choose_PCs.fun, choose_PCs_kwargs)
-      chosen_PCs <- chosen_PCs[order(chosen_PCs)] # kurtosis order =/= index order
     }
-
-    projections[projection_method] = list(
-      indices = chosen_PCs,
-      svd = ifelse(projection_method=="PCATF", X.svdtf, X.svd)
-    )
-    projections[projection_method]$svd$u <- projections[projection_method]$svd$u[,chosen_PCs]
-    projections[projection_method]$svd$d <- projections[projection_method]$svd$d[chosen_PCs]
+    chosen_PCs_ordered <- chosen_PCs[order(chosen_PCs)] # kurtosis order =/= index order
+    
+    out = list(indices = chosen_PCs)
+    if(projection_method=="PCATF"){
+      out$svd = X.svdtf
+    } else {
+      out$svd = X.svd
+    }
+    out$svd$u <- out$svd$u[,chosen_PCs_ordered]
+    out$svd$d <- out$svd$d[chosen_PCs_ordered]
+    if(lev_images){ out$svd$v <- out$svd$v[,chosen_PCs_ordered] }
+    projections[[projection_method]] = out
   }
-
   ##########################################
   # OUTLIER MEASUREMENTS AND LEVERAGE IMAGES
   ##########################################
 
   # Perform the rest of the steps for each method combination.
-  outlier_meas <- outlier_cutoffs <- outlier_flags <- inMCD <- lev_imgs <- setNames(
-    vector("list", length(method_combos)), method_combos)
-  for(i in 1:length(method_combos)){
+  for(i in 1:length(methods)){
+    method_combo <- methods[i]
+    method_split <- unlist(strsplit(method_combo, "__"))
+    projection_method <- method_split[1]
+    outlyingness_method <- method_split[2]
+    projection <- projections[[projection_method]]
+    
     if(verbose){
-      print(paste0("Method ", method_combos, ":"))
+      print(paste0("Method ", method_combo, ":"))
     }
-    method_combo = method_combos[i]
-    method_split = unlist(strsplit(method_combo, "__"))
-    projection_method = method_split[1]
-    outlyingness_method = method_split[2]
-    projection = projections[projection_method]
 
     # Adjust PC number if using robust distance (subset).
     if(outlyingness_method %in% c("robdist", "robdist_subset")){
-      # Let q = N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()
+      # Let q <- N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()
       #  requires q <= approx. 1/2 for computation of the MCD covariance estimate.
       #  Higher q will use more components for estimation, thus retaining a
       #  higher resolution of information. Lower q will have higher breakdown
@@ -328,87 +401,98 @@ clever = function(
       #  must further reduce N_ by 1/3.
       q <- 1/3
       max_keep = ifelse(outlyingness_method=="robdist", T_*q, T_*q/3)
-      if(max_keep > length(projection$indices)){
-        projection$indices = projection$indices[1:max_keep]
-        projection$svd$u = projection$svd$u[,1:max_keep]
-        projection$svd$d = projection$svd$u[1:max_keep]
+      max_keep = ceiling(max_keep)
+      if(max_keep < length(projection$indices)){
+        projection$indices <- projection$indices[1:max_keep]
+        projection$svd$u <- projection$svd$u[,1:max_keep]
+        projection$svd$d <- projection$svd$d[1:max_keep]
         if(solve_directions){
-          projection$svd$v = projection$svd$v[,1:max_keep]
+          projection$svd$v <- projection$svd$v[,1:max_keep]
         }
       }
     }
 
     # Compute outlyingness measure.
-    outlyingness_method.fun <- switch(
-      "leverage" = id_out.leverage,
-      "robdist" = id_out.robdist,
-      "robdist_subset" = id_out.robdist_subset,
+    outlyingness_method.fun <- switch(outlyingness_method,
+      leverage = PC.leverage,
+      robdist = PC.robdist,
+      robdist_subset = PC.robdist_subset
     )
     measure <- outlyingness_method.fun(projection$svd$u)
     if(outlyingness_method %in% c("robdist_subset", "robdist")){
-      inMCD <- measure$inMCD
+      this_inMCD <- measure$inMCD
       Fparam <- measure$Fparam
       measure <- measure$robdist
     }
-    outlier_meas[method_combo] <- measure
+    outlier_meas[[method_combo]] <- measure
     
     if(outlyingness_method %in% c("robdist_subset", "robdist")){
-      inMCD[method_combo] <- inMCD
+      inMCD[[method_combo]] <- this_inMCD
     }
     
     # Identify outliers.
-    if(id_out){
+    if(id_outliers){
       if(verbose){ print("...identifying outliers.") }
       if(outlyingness_method == "leverage"){
-        id_out_kwargs <- list(leverage=measure)
+        out_cutoff <- lev_cutoff * median(measure)
+        out_flag <- measure > out_cutoff
+      } else if(outlyingness_method == "robdist"){
+        out_cutoff <- qf(p = MCD_cutoff, df1=Fparam$df[1], df2=Fparam$df[2])
+        out_flag <- rep(FALSE, length(measure))
+        out[!this_inMCD] <- measure[!this_inMCD] > out_cutoff
+      } else if(outlyingness_method == "robdist_subset"){
+        out_cutoff <- qf(p = MCD_cutoff, df1=Fparam$df[1], df2=Fparam$df[2])
+        out_flag <- rep(FALSE, length(measure))
+        out_flag[!this_inMCD] <- measure[!this_inMCD] > out_cutoff
+      } else {
+        stop("INTERNAL ERROR: outlyingness_method not recognized.")
       }
-      if(outlyingness_method %in% c("robdist_subset", "robdist")){
-        id_out_kwargs <- list(distance=measure, inMCD=inMCD, Fparam=Fparam)
-      }
-      out <- do.call(id_out.fun, id_out_kwargs)
-      outlier_cutoffs[method_combo] <- out$cutoffs
-      outlier_flags[method_combo] <- out$outliers
+      outlier_cutoffs[[method_combo]] <- out_cutoff
+      outlier_flags[[method_combo]] <- out_flag
     }
 
     # Make leverage images.
-    if(lev_img_level > 0){
-      if(sum(out$outliers[,lev_img_level]) > 0){
+    if(lev_images){
+      if(sum(out_flag) > 0){
         if(verbose){
           print(paste0(
-            "...outliers detected at level ", lev_img_level, " (",
-            colnames(out$outliers)[lev_img_level], "). Computing leverage images."))
+            "...outliers detected. Computing leverage images."))
         }
-        lev_imgs[method_combo] <- leverage_images(projection$svd, which(out$outliers[,lev_img_level]))
+        lev_images_out[[method_combo]] <- get_leverage_images(
+          projection$svd, which(out_flag), const_mask)
       } else {
         if(verbose){
           print(paste0(
-            "...no leverage images: clever did not find any outliers at level ",
-            lev_img_level, " (", colnames(out$outliers)[lev_img_level], ")."))
+            "...no outliers detected. Skipping leverage images."))
         }
-        lev_imgs[method_combo] <- list(mean=NULL, top=NULL, top_dir=NULL)
+        lev_images_out[[method_combo]] <- list(mean=NULL, top=NULL, top_dir=NULL)
       }
     }
   }
 
-  #######################
-  # DVARS & FORMAT OUTPUT
-  #######################
+  ###############
+  # FORMAT OUTPUT
+  ###############
 
   # Conserve memory.
-  projections <- NULL
   gc()
 
-  if(DVARS){
-    DVARS <- compute_DVARS(X)
-  } else {
-    DVARS <- NULL
-  }
+  if(length(inMCD) < 1){inMCD <- NULL}
 
   # Organize the output.
   if(verbose){ print("Done! Organizing results.") }
-  result <- list(params=NULL, projections=projections, DVARS=DVARS,
-                 outlier_meas=outlier_meas, outlier_cutoffs=outlier_cutoffs,
-                 outlier_flags=outlier_flags, inMCD=inMCD, lev_imgs=lev_imgs)
+  result <- list(
+    params = NULL, 
+    projections = projections, 
+    outlier_meas = outlier_meas)
+  if(any(c("robdist", "robdist_subset") %in% outlyingness_methods)){
+    result$inMCD <- inMCD
+  }
+  if(id_outliers){
+    result$outlier_cutoffs <- outlier_cutoffs
+    result$outlier_flags <- outlier_flags
+  }
+  if(lev_images){ result$lev_images_out <- lev_images_out }
   result$params <- list(
     projection_methods = projection_methods,
     outlyingness_methods = outlyingness_methods,
@@ -416,10 +500,10 @@ clever = function(
     PCATF_kwargs = PCATF_kwargs,
     kurt_quantile = kurt_quantile,
     kurt_detrend = kurt_detrend,
-    id_out = id_out,
-    lev_img_level = lev_img_level)
+    id_outliers = id_outliers,
+    lev_cutoff = lev_cutoff,
+    MCD_cutoff = MCD_cutoff,
+    lev_images = lev_images)
 
   class(result) <- c("clever", class(result))
-
-  return(result)
 }

@@ -154,16 +154,18 @@ plot.clever <- function(x, ...){
 #'  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
 #'  and 1 being the lowest.
 #'
-#' @param svd A singular value decomposition (list with u, v, and d).
+#' @param X_svd A singular value decomposition (list with u, v, and d).
 #' @param timepoints The times for which to compute leverage images (rows of U).
+#' @param const_mask Mask for the voxels that were removed.
 #'
 #' @return A list of three: the mean leverage image for each outlier meeting
 #'  the thresold, the top leverage image for each outlier, and the indices of
 #'  the top leverage images.
 #'
 #' @export
-leverage_images <- function(svd, timepoints){
-  N_ <- nrow(svd$v)
+get_leverage_images <- function(X_svd, timepoints, const_mask=NULL){
+  if(is.null(const_mask)){ const_mask = rep(FALSE, nrow(X_svd$v)) }
+  N_ <- length(const_mask)
   n_imgs <- length(timepoints)
   lev_imgs <- list(mean=NULL, top=NULL, top_dir=NULL)
   if(n_imgs > 0){
@@ -173,11 +175,11 @@ leverage_images <- function(svd, timepoints){
     lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
     for(i in 1:n_imgs){
       idx <- timepoints[i]
-      mean_img <- svd$u[idx,] %*% t(svd$v)
-      u_row <- svd$u[idx,]
-      lev_imgs$mean[i,] <- u_row %*% t(svd$v)
+      mean_img <- X_svd$u[idx,] %*% t(X_svd$v)
+      u_row <- X_svd$u[idx,]
+      lev_imgs$mean[i,!const_mask] <- u_row %*% t(X_svd$v)
       lev_imgs$top_dir[i] <- which.max(u_row)[1]
-      lev_imgs$top[i,] <- svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
+      lev_imgs$top[i,!const_mask] <- X_svd$v[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
     }
     row.names(lev_imgs$mean) <- timepoints
     row.names(lev_imgs$top) <- timepoints

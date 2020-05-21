@@ -17,21 +17,24 @@ scale_med <- function(mat){
   mat <- mat - c(rowMedians(mat, na.rm=TRUE))
   # Scale.
   mad <- 1.4826 * rowMedians(abs(mat), na.rm=TRUE)
-  zero_mad <- mad < TOL
-  if(any(zero_mad)){
-    if(all(zero_mad)){
+  const_mask <- mad < TOL
+  if(any(const_mask)){
+    if(all(const_mask)){
     stop("All voxels are zero-variance.\n")
-  } else {
-    warning(paste0("Warning: ", sum(zero_mad),
-    " zero-variance voxels (out of ", length(zero_mad),
-    " ). These will be set to zero for estimation of the covariance.\n"))
+    } else {
+      warning(paste0("Warning: ", sum(const_mask),
+      " constant voxels (out of ", length(const_mask),
+      " ). These will be set to zero for estimation of the covariance.\n"))
+    }
   }
-  mad[zero_mad] <- 1
-  }
+  mad <- mad[const_mask]
   mat <- mat/c(mad)
-  mat[zero_mad,] <- 0
+  
   # Revert transpose.
   mat <- t(mat)
+
+  out <- list(mat=mat, const_mask=const_mask)
+  return(out)
 }
 
 #' Computes the log likelihood of a sample of values from an F distribution.
