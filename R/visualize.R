@@ -1,153 +1,215 @@
-#' Visualizes the outlier distribution of a clever object.
-#'
-#' Prints a dot plot of the observations (x-axis) against their outlyingness
-#'  (y-axis), i.e. their leverage or robust distance.
-#'
-#' Cutoffs for each outlier level are marked by horizontal dashed lines.
-#'  Outliers are highlighted by vertical lines which extend down to the x-axis;
-#'  they are colored yellow, orange and red in order of increasing outlyingness.
-#'
-#' If the outlyingness measure is robust distance, observations within the MCD
-#'  are plotted separately from those outside the MCD. Also, the y-axes will be
-#'  log10-scaled.
-#'
-#' @param x A clever object.
-#' @param ... additional arguments to pass to \code{\link{plot}}
-#' @return The clever ggplot.
-#'
-#' @import ggplot2
-#' @import ggrepel
-#'
-#' @method plot clever
-#' @export
-plot.clever <- function(x, ...){
-  xmax = ymax = ymin = xmin = NULL
-  rm(list= c("xmax", "ymax", "ymin", "xmin"))
-  PCA_trend_filtering <- x$params$PCA_trend_filtering
-  PCATF.formatted <- ifelse(PCA_trend_filtering, 'PCATF', 'PCA')
-  choose_PCs <- x$params$choose_PCs
-  choose_PCs.formatted <- switch(choose_PCs,
-    kurtosis="Kurtosis",
-    variance="Variance")
-  method <- x$params$method
-  method.formatted <- switch(method,
-    leverage="Leverage",
-    robdist="Robust Distance",
-    robdist_subset="Robust Distance Subset")
-  measure <- switch(method,
-    leverage=x$leverage,
-    robdist=x$robdist,
-    robdist_subset=x$robdist)
-  outliers <- x$outliers
-  cutoffs <- x$cutoffs
-  PCA_trend_filtering <- x$params$PCA_trend_filtering
+clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   args <- list(...)
+  
+  # Extra colors:
+  ## "#E78AC3"
+  ## "#FFD92F"
+  colors <- list(
+    PCA_var__leverage = "#8DA0CB",
+    PCA_kurt__leverage = "#FC8D62", 
+    PCATF__leverage = "#A6D854", #or grey
+    PCA_var__robdist = "#8DA0CB", 
+    PCA_kurt__robdist = "#FC8D62",
+    PCA_var__robdist_subset = "#8DA0CB",
+    PCA_kurt__robdist_subset = "#FC8D62", 
+    DVARS_DPD = "#66C2A5",
+    DVARS_ZD = "#E5C494"
+  )
+  name_formatted <- list(
+    PCA_var__leverage = "High-variance PCs",
+    PCA_kurt__leverage = "High-kurtosis PCs" ,
+    PCATF__leverage = "Trend-filtered PCs", #or grey
+    PCA_var__robdist = "High-variance PCs",
+    PCA_kurt__robdist = "High-kurtosis PCs",
+    PCA_var__robdist_subset = "High-variance PCs",
+    PCA_kurt__robdist_subset = "High-kurtosis PCs",
+    DVARS_DPD = "DVARS Delta % D",
+    DVARS_ZD = "DVARS z-score"
+  )
+  
+  T_ <- length(meas[[1]])
+  
+  id_outs <- !is.null(cuts)
+  
+  #xmax = ymax = ymin = xmin = NULL
+  #rm(list= c("xmax", "ymax", "ymin", "xmin"))
 
-  if(is.null(outliers)){
-    stop("clever did not label outliers. Run clever again with
-      `id_out`=TRUE to visualize the results. ")
-  }
-
-  #Log the y-axis if the measurement is robust distance.
-  log_measure <- switch(method,
-    leverage=FALSE,
-    robdist=TRUE,
-    robdist_subset=TRUE)
-
-  # Identify outliers and their levels of outlyingness.
-  index <- 1:length(measure)
-  outlier_level.num <- apply(outliers, 1, sum)  # get outlier levels as a single factor
-  outlier_level.names <- c("not an outlier", colnames(outliers))
-  outlier_level <- factor(outlier_level.names[outlier_level.num + 1], levels=outlier_level.names)
-  d <- data.frame(index, measure, outlier_level)
-  if(method %in% c("robdist","robdist_subset")){
-    d$inMCD <- ifelse(x$inMCD, "In MCD", "Not In MCD")
-  }
-
-  # The plot will have lines extending downward from outliers
-  #  to the x-axis.
-  is_outlier <- d$outlier_level != "not an outlier"
-  any_outliers <- any(is_outlier, na.rm=TRUE) #temporary na.rm
-  if(any_outliers){
-    # Obtain the coordinates of the outliers' lines' vertices.
-    drop_line <- d[is_outlier,]
-    drop_line$outlier_level <- factor(colnames(outliers)[outlier_level.num[is_outlier]], levels=colnames(outliers)) # remove 'not an outlier' level
-    drop_line$xmin <- drop_line$index - .5
-    drop_line$xmax <- drop_line$index + .5
-    drop_line$ymin <- 0
-    drop_line$ymax <- drop_line$measure
-    # ggplot will draw rows from top to bottom.
-    # Ordering by increasing outlier level ensures lines for the
-    #  most outlying observations are drawn last, i.e. on the top layer.
-    drop_line <- drop_line[order(drop_line$outlier_level),]
-  }
-
-  if(log_measure){
-    # Add 1 before log transforming to ensure a positive range.
-    method.formatted <- paste0("log10(", method.formatted, " + 1)")
-    d$measure <- log(d$measure + 1, base = 10)
-    if(any_outliers){
-      drop_line$ymax <- log(drop_line$ymax + 1, base = 10)
+  if(name == "DVARS"){ 
+    DVARS_names <- list(DVARS_DPD="DVARS Delta Pct. D", 
+                        DVARS_ZD="DVARS z-score")
+  }  
+  
+  mcd_meas <- c("RobDist", "RobDist Subset")
+  log_meas <- name %in% mcd_meas
+  if(log_meas){
+    for(i in 1:length(meas)){
+      n <- names(meas)[i]
+      meas[[n]] <- log(meas[[n]], base = 10)
     }
-    cutoffs <- log(cutoffs + 1, base = 10)
+    if(id_outs){ 
+      for(cut in cuts){ cut <- log(cut+1, base=10) }
+    }
   }
-
-  # The lowest, middle, and highest outlier levels are colored
-  #  yellow, orange, and red, respectively.
-  cols <- grDevices::hsv(h=c(.1,.05,1), s=c(.6,.8,1))
-  #if(any_outliers){
-  #  cols <- cols[sort(unique(
-  #    outlier_level.num[outlier_level.num!=0]))]
-  #}
-
-  main <- ifelse("main" %in% names(args), args$main,
-    paste0("Outlier Distribution",
-      ifelse(any_outliers, "", " (None Identified)")))
+  
+  # For each measure, collect relevant information into a dataframe.
+  d <- list()
+  for(i in 1:length(meas)){
+    n <- names(meas)[i]
+    d[[n]] <- data.frame(meas=meas[[n]])
+    
+    if(id_outs){
+      d[[n]]$out <- meas[[n]] > cuts[[n]]
+    }
+    
+    if(name %in% mcd_meas){
+      d[[n]]$inMCD <- ifelse(inMCD[[n]], "In MCD", "Not In MCD")
+    }
+  }
+  
+  # For each measure, collect outlier information if any exist.
+  if(id_outs){
+    drop_line <- list()
+     for(n in names(meas)){
+      any_outs <- any(d[[n]]$out)
+      if(any_outs){
+        drop_line[[n]] <- d[[n]][d[[n]]$out,]
+        drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - 0.5
+        drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + 0.5
+        drop_line[[n]]$ymin <- 0
+        drop_line[[n]]$ymax <- drop_line[[n]]$meas
+      }
+    }
+  }
+  
+  for(i in 1:length(meas)){
+    d[[names(meas)[i]]]$method = names(meas)[i]
+  }
+  d <- do.call(rbind, d)
+  d$idx <- 1:T_
+  
+  main <- ifelse("main" %in% names(args), args$main, name)
   sub <- ifelse("sub" %in% names(args), args$sub,
-    paste0(PCATF.formatted, ", ", choose_PCs.formatted, ", ", method.formatted))
+    ifelse(id_outs,
+           ifelse(length(drop_line) < 0, "No outliers detected.", ""),
+           "(No outlier thresholding performed)"
+    ))
   xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
-  ylab <- ifelse("ylab" %in% names(args), args$ylab, method.formatted)
+  ylab <- ifelse("ylab" %in% names(args), args$ylab, 
+    ifelse(log_meas, paste0("log(", name, " + 1)"), name))
   legend.position <- ifelse("show.legend" %in% names(args),
-    ifelse(args$show.legend, "bottom", "none"),
+    ifelse(args$show.legend, "right", "none"),
     "none")
-  if((method=="leverage") & (!PCA_trend_filtering)){ ylim_max <- 1 }
-  else { ylim_max <- max(d$measure) }
-
-
-  plt <- ggplot(d, aes(x=index,y=measure, color=outlier_level))
-  if(any_outliers){
-    if(method=="leverage"){ nudge_y <- ylim_max * .08 }
-    else { nudge_y <- ylim_max * .12 }
-    plt <- plt +
-      geom_rect(data=drop_line, inherit.aes=FALSE,
-        aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
-        fill=outlier_level), alpha=.9) +
-      #geom_text(aes(label=ifelse(is_outlier, as.character(index) ,"")), size=4,
-      #  nudge_y=nudge_y, check_overlap=TRUE, show.legend=FALSE)
-      geom_text_repel(aes(label=ifelse(is_outlier, as.character(index) ,"")), size=4,
-        nudge_y=nudge_y, show.legend=FALSE)
+  if((name=="Leverage") & (!("PCATF__lev" %in% names(meas)))){ 
+    ylim_max <- 1 
+  } else { 
+    ylim_max <- max(d$measure) 
   }
-  plt <- plt + geom_point(show.legend=FALSE) +
-  scale_color_manual(values=c("grey","black","black","black")) +
-  scale_fill_manual(values=cols, labels=colnames(outliers), drop=FALSE) +
-  geom_hline(yintercept=cutoffs, linetype="dashed", color="gray") +
-  labs(x=xlab, y=ylab, fill="Outlier Level") +
-  coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)),
-    ylim=c(0, ylim_max*1.2)) +
-  theme_classic() +
-  theme(legend.position=legend.position, panel.spacing.y=unit(1.5, "lines")) +
-  scale_x_continuous(expand=c(0,0)) +
-  scale_y_continuous(expand=c(0,0)) +
-  ggtitle(main, subtitle=sub) #+ geom_rug(sides="l", col=rgb(.5,0,0,alpha=.2))
-
-  if(method %in% c("robdist", "robdist_subset")){
-    plt <- plt + facet_grid(inMCD~.)
+  
+  plt <- ggplot()
+  if(id_outs){
+    for(i in 1:length(drop_line)){
+      n <- names(drop_line)[i]
+      plt <- plt +
+        geom_rect(data=drop_line[[n]],
+        aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n])
+      #Text label if any outlier is detected.
+    }
   }
-
-  if("type" %in% names(args)){
-    if(args$type == "n"){ return(plt) }
+  if(name %in% mcd_meas){
+    plt <- plt + geom_point(data=d, aes(x=idx, y=meas, color=method, shape=inMCD)) + 
+      scale_shape_manual(values=c(3, 16))
+    #plt <- plt + geom_point(data=d, aes(x=idx, y=meas, color=method))
+  } else {
+    plt <- plt + geom_point(data=d, aes(x=idx, y=meas, color=method))
   }
+  plt <- plt +
+    scale_color_manual(values=colors, labels=name_formatted)
+    #scale_fill_manual(values=colors)
+  for(i in 1:length(meas)){
+    n <- names(meas)[i]
+    plt <- plt + geom_hline(yintercept=cuts[[n]], linetype="dashed", color=colors[n])
+  }
+  plt <- plt + labs(x=xlab, y=ylab, color="Method") +
+    #coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)), ylim=c(0, ylim_max*1.2)) + #fix this line
+    theme(legend.position=legend.position, panel.spacing.y=unit(1.5, "lines")) +
+    scale_x_continuous(expand=c(0,0)) +
+    scale_y_continuous(expand=c(0,0))
+  if(name == "DVARS"){
+    print("Need to implement dual axis...")
+    print("Minimum is not zero...")
+  }
+  #if(name == "MCD Distance"){
+  #  plt <- plt + facet_grid(inMCD~.)
+  #}
   return(plt)
+}
+
+plot.clever <- function(x, ...){
+  projection_methods = x$params$projection_methods
+  outlyingness_methods = x$params$outlyingness_methods
+  DVARS = x$params$DVARS
+  PCATF_kwargs = x$params$PCATF_kwargs
+  kurt_quantile = x$params$kurt_quantile
+  kurt_detrend = x$params$kurt_detrend
+  #id_outs = x$params$id_outs
+  #lev_cutoff = x$params$lev_cutoff
+  #MCD_cutoff = x$params$MCD_cutoff
+  lev_images = x$params$lev_images
+
+  projection_methods_formatted <- list(
+    PCA_var = "High-variance PCs",
+    PCA_kurt = "High-kurtosis PCs",
+    PCATF = "PCA Trend Filtering"
+  )
+
+  methods_lev <- paste0(c("PCA_var", "PCA_kurt", "PCATF"), "__leverage")
+  methods_lev <- names(x$outlier_measures[names(x$outlier_measures) %in% methods_lev])
+  any_lev <- length(methods_lev) > 0
+  methods_rbd <- paste(c("PCA_var", "PCA_kurt"), "robdist", sep="__")
+  any_rbd <- length(methods_rbd) > 0
+  methods_rds <- paste(c("PCA_var", "PCA_kurt"), "robdist_subset", sep="__")
+  any_rds <- length(methods_rds) > 0
+  methods_DVARS <- c("DVARS_DPD", "DVARS_ZD")
+  methods_DVARS <- names(x$outlier_measures[names(x$outlier_measures) %in% methods_DVARS])
+  any_DVARS <- length(methods_DVARS) > 0
+
+  plots <- list()
+  if(any_lev){
+    plots <- append(plots, list(clever_plot_indiv_panel(
+      meas = x$outlier_measures[methods_lev],
+      cuts = x$outlier_cutoffs[methods_lev],
+      name = "Leverage",
+      ...
+    )))
+  }
+  if(any_rbd){
+    plots <- append(plots, list(clever_plot_indiv_panel(
+      meas = x$outlier_measures[methods_rbd],
+      cuts = x$outlier_cutoffs[methods_rbd],
+      name = "Robust Distance",
+      inMCD = x$inMCD,
+      ...
+    )))
+  }
+  if(any_rds){
+    plots <- append(plots, list(clever_plot_indiv_panel(
+      meas = x$outlier_measures[methods_rds],
+      cuts = x$outlier_cutoffs[methods_rds],
+      name = "Robust Distance (Subset)",
+      inMCD = x$inMCD,
+      ...
+    )))
+  }
+  if(any_DVARS){
+    plots <- append(plots, list(clever_plot_indiv_panel(
+      meas = x$outlier_measures[methods_DVARS],
+      cuts = x$outlier_cutoffs[methods_DVARS],
+      name = "DVARS",
+      ...
+    )))
+  }
+  
+  plot_grid(plotlist=plots, ncol=1, align="v")
 }
 
 #' Calculate the leverage images for each outlier that meets the
