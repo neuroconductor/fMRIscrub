@@ -251,6 +251,7 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, ...){
       name = "DVARS",
       ...
     )))
+  }
   if(methods_any$FD){
     plots <- append(plots, list(clever_plot_indiv_panel(
       meas = FD,
