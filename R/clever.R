@@ -9,7 +9,7 @@
 #'  clever will use all combinations of the requested projection and 
 #'  outlyingness methods that make sense. For example, if  
 #'  \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
-#'  \code{outlyingness_methods=c("leverage", "robdist")} then these four
+#'  \code{outlyingness_methods=c("leverage", "robdist")} then these five
 #'  combinations will be used: PCATF with leverage, PCA_var with leverage, 
 #'  PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. Each 
 #'  method combination will yield its own outlyingness time series.
@@ -21,7 +21,7 @@
 #'  clever will use all combinations of the requested projection and 
 #'  outlyingness methods that make sense. For example, if  
 #'  \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
-#'  \code{outlyingness_methods=c("leverage", "robdist")} then these four
+#'  \code{outlyingness_methods=c("leverage", "robdist")} then these five
 #'  combinations will be used: PCATF with leverage, PCA_var with leverage, 
 #'  PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. Each 
 #'  method combination will yield its own outlyingness time series.
@@ -44,10 +44,10 @@
 #' @param lev_cutoff The outlier cutoff value for leverage, as a multiple of the median
 #'  leverage. Only used if 
 #'  \code{'leverage' %in% projection_methods} and \code{id_outliers}. Default is 
-#'  \code{5}, or \eqn{5 * median}.
+#'  \code{4}, or \eqn{4 * median}.
 #' @param MCD_cutoff  The outlier cutoff quantile for MCD distance. Only used if 
 #'  \code{'robdist' %in% projection_methods | 'robdist_subset' %in% projection_methods} 
-#'  and \code{id_outliers}. Default is \code{0.99}, or the \eqn{0.99} quantile.
+#'  and \code{id_outliers}. Default is \code{0.999}, for the \eqn{0.999} quantile.
 #'  The quantile is computed from the estimated F distribution.
 #' @param lev_images Should leverage images be computed? If \code{FALSE} memory is
 #'  conserved. Default is \code{FALSE}.
@@ -100,7 +100,8 @@
 #'  }
 #'  \item{outlier_cutoffs}{
 #'    \describe{
-#'      \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff*3}.}
+#'      \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff} times
+#'        the median leverage.}
 #'      \item{MCD}{The robust distance (subset) cutoff for outlier detection: the 
 #'        \code{MCD_cutoff} quantile of the estimated F distribution.}
 #'      \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5%}
@@ -156,8 +157,8 @@ clever = function(
   kurt_quantile = .9,
   kurt_detrend = TRUE,
   id_outliers = TRUE,
-  lev_cutoff = 5,
-  MCD_cutoff = 0.99,
+  lev_cutoff = 4,
+  MCD_cutoff = 0.999,
   lev_images = TRUE,
   verbose = FALSE) {
 
@@ -210,15 +211,6 @@ clever = function(
     warning("Invalid argument: verbose must be TRUE or FALSE. Using TRUE.\n")
     verbose <- TRUE
   }
-
-  methods <- all_valid_methods[all_valid_methods %in% 
-    outer(projection_methods, outlyingness_methods, paste, sep='__')
-  ]
-
-  if(length(methods) < 1){
-    stop("No valid method combinations. Check that the projection and outlyingness methods are compatible.\n")
-  }
-
   Npre_ <- ncol(X)
   T_ <- nrow(X)
   if(Npre_ < T_){
@@ -226,6 +218,13 @@ clever = function(
       are in rows and variables are in columns.\n")
   }
 
+  # Collect all the methods to compute.
+  methods <- all_valid_methods[all_valid_methods %in% 
+    outer(projection_methods, outlyingness_methods, paste, sep='__')
+  ]
+  if(length(methods) < 1){
+    stop("No valid method combinations. Check that the projection and outlyingness methods are compatible.\n")
+  }
   outlier_measures <- outlier_lev_imgs <- setNames(vector("list", length(methods)), methods)
   if(id_outliers){
     outlier_cutoffs <- outlier_flags <- setNames(vector("list", length(methods)), methods)
@@ -253,10 +252,10 @@ clever = function(
   mad <- mad[!const_mask]
   X <- X[!const_mask,]
   X <- X/c(mad)
-
   # Revert transpose.
   X <- t(X)
   N_ <- ncol(X)
+   
   # Compute DVARS.
   if(DVARS){
     if(verbose){ print("Computing DVARS.") }
@@ -312,26 +311,22 @@ clever = function(
     # The PC directions were needed to compute PCATF. If leverage images 
     #   are not wanted, we can now delete the directions to save space.
     if(!lev_images){ X.svd$v <- NULL }
+
+    # Remove trend-filtered PCs with constant scores.
+    tf_zero_var <- apply(X.svdtf$u, 2, var) < TOL
+    if(any(tf_zero_var)){
+      if(all(tf_zero_var)){
+        stop("Error: All trend-filtered PC scores are zero-variance.\n")
+      }
+      warning(paste("Warning:", sum(tf_zero_var), 
+        "trend-filtered PC scores are zero-variance. 
+        Removing these PCs."))
+      X.svdtf$u <- X.svdtf$u[,!tf_zero_var]
+      X.svdtf$d <- X.svdtf$d[!tf_zero_var]
+      if(lev_images){ X.svdtf$v <- X.svdtf$v[,!tf_zero_var] }
+    }
   }
   gc()
-
-  # Remove PCs with constant scores (often present in PCATF).
-  remove_const_PCs <- function(the_svd, PC_name){
-    zero_var <- apply(the_svd$u, 2, var) < TOL
-    if(any(zero_var)){
-      if(all(zero_var)){
-        stop(paste("Error: All", PC_name, "scores are zero-variance.\n"))
-      }
-      warning(paste("Warning:", sum(zero_var), PC_name,
-        "scores are zero-variance. Removing these PCs."))
-      the_svd$u <- the_svd$u[,!zero_var]
-      the_svd$d <- the_svd$d[!zero_var]
-      if(lev_images){ the_svd$v <- the_svd$v[,!zero_var] }
-    }
-    return(the_svd)
-  }
-  if(exists('X.svd')){ X.svd <- remove_const_PCs(X.svd, 'PC') }
-  if(exists('X.svdtf')){ X.svdtf <- remove_const_PCs(X.svdtf, 'trend-filtered PC') }
 
   # Choose which PCs to retain for each projection.
   projections <- setNames(vector("list", length(projection_methods)), projection_methods)

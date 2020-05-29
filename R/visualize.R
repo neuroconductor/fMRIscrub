@@ -4,10 +4,11 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   # Extra colors:
   ## "#E78AC3"
   ## "#FFD92F"
+  ## "#B8B8B8" #grey, not exactly from this palette
   colors <- list(
     PCA_var__leverage = "#8DA0CB",
     PCA_kurt__leverage = "#FC8D62", 
-    PCATF__leverage = "#A6D854", #or grey
+    PCATF__leverage = "#A6D854", 
     PCA_var__robdist = "#8DA0CB", 
     PCA_kurt__robdist = "#FC8D62",
     PCA_var__robdist_subset = "#8DA0CB",
@@ -15,10 +16,11 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
     DVARS_DPD = "#66C2A5",
     DVARS_ZD = "#E5C494"
   )
+  DVARS_outs_col <- "#B8B8B8"
   name_formatted <- list(
     PCA_var__leverage = "High-variance PCs",
     PCA_kurt__leverage = "High-kurtosis PCs" ,
-    PCATF__leverage = "Trend-filtered PCs", #or grey
+    PCATF__leverage = "Trend-filtered PCs", 
     PCA_var__robdist = "High-variance PCs",
     PCA_kurt__robdist = "High-kurtosis PCs",
     PCA_var__robdist_subset = "High-variance PCs",
@@ -67,16 +69,30 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   }
   
   # For each measure, collect outlier information if any exist.
+  any_outs <- FALSE
   if(id_outs){
     drop_line <- list()
-     for(n in names(meas)){
-      any_outs <- any(d[[n]]$out)
+    if(name == "DVARS"){
+      DVARS_outs <- d[['DVARS_DPD']]$out & d[['DVARS_ZD']]$out
+      any_outs <- any(DVARS_outs)
       if(any_outs){
-        drop_line[[n]] <- d[[n]][d[[n]]$out,]
-        drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - 0.5
-        drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + 0.5
-        drop_line[[n]]$ymin <- 0
-        drop_line[[n]]$ymax <- drop_line[[n]]$meas
+        drop_line[['DVARS']] <- data.frame(
+          xmin = which(DVARS_outs) - 0.5,
+          xmax = which(DVARS_outs) + 0.5,
+          ymin = min(c(d[['DVARS_DPD']]$meas, d[['DVARS_ZD']]$meas)),
+          ymax = max(c(d[['DVARS_DPD']]$meas, d[['DVARS_ZD']]$meas))
+        ) 
+      }
+    } else {
+      for(n in names(meas)){
+        any_outs <- any(d[[n]]$out)
+        if(any_outs){
+          drop_line[[n]] <- d[[n]][d[[n]]$out,]
+          drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - 0.5
+          drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + 0.5
+          drop_line[[n]]$ymin <- min(0, min(data.frame(meas)))
+          drop_line[[n]]$ymax <- drop_line[[n]]$meas
+        }  
       }
     }
   }
@@ -93,7 +109,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
            ifelse(length(drop_line) < 0, "No outliers detected.", ""),
            "(No outlier thresholding performed)"
     ))
-  xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
+  #xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
   ylab <- ifelse("ylab" %in% names(args), args$ylab, 
     ifelse(log_meas, paste0("log(", name, " + 1)"), name))
   legend.position <- ifelse("show.legend" %in% names(args),
@@ -106,13 +122,19 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   }
   
   plt <- ggplot()
-  if(id_outs){
-    for(i in 1:length(drop_line)){
-      n <- names(drop_line)[i]
+  if(any_outs){
+    if(name == 'DVARS'){
       plt <- plt +
-        geom_rect(data=drop_line[[n]],
-        aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n])
-      #Text label if any outlier is detected.
+        geom_rect(data=drop_line[['DVARS']],
+          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=DVARS_outs_col)
+    } else {
+      for(i in 1:length(drop_line)){
+        n <- names(drop_line)[i]
+        plt <- plt +
+          geom_rect(data=drop_line[[n]],
+            aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n])
+        #Text label if any outlier is detected.
+      } 
     }
   }
   if(name %in% mcd_meas){
@@ -129,14 +151,23 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
     n <- names(meas)[i]
     plt <- plt + geom_hline(yintercept=cuts[[n]], linetype="dashed", color=colors[n])
   }
+  
+  xticks_width <- c(1, 2, 2.5, 3, 5)
+  xticks_width <- c(xticks_width, xticks_width*10, xticks_width*100, xticks_width*1000, xticks_width*10000, xticks_width*100000)
+  xticks_width <- max(xticks_width[xticks_width*2 < T_*.9])
+  xticks <- c(seq(from=0, to=floor(T_*.9), by=xticks_width), T_)
+  
   plt <- plt + labs(x=xlab, y=ylab, color="Method") +
     #coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)), ylim=c(0, ylim_max*1.2)) + #fix this line
-    theme(legend.position=legend.position, panel.spacing.y=unit(1.5, "lines")) +
-    scale_x_continuous(expand=c(0,0)) +
-    scale_y_continuous(expand=c(0,0))
+    theme(
+      axis.title.x=element_blank(),
+      legend.position=legend.position, 
+      panel.spacing.y=unit(1.5, "lines")) +
+    scale_x_continuous(expand=expansion(mult = c(.01, .01)), breaks=xticks) +
+    scale_y_continuous(expand=expansion(mult = c(0, .05)))
+  
   if(name == "DVARS"){
-    print("Need to implement dual axis...")
-    print("Minimum is not zero...")
+    print("To-do: implement dual axis for DVARS...")
   }
   #if(name == "MCD Distance"){
   #  plt <- plt + facet_grid(inMCD~.)
@@ -144,7 +175,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   return(plt)
 }
 
-plot.clever <- function(x, ...){
+plot.clever <- function(x, methods_to_plot="one", ...){
   projection_methods = x$params$projection_methods
   outlyingness_methods = x$params$outlyingness_methods
   DVARS = x$params$DVARS
@@ -161,55 +192,63 @@ plot.clever <- function(x, ...){
     PCA_kurt = "High-kurtosis PCs",
     PCATF = "PCA Trend Filtering"
   )
-
-  methods_lev <- paste0(c("PCA_var", "PCA_kurt", "PCATF"), "__leverage")
-  methods_lev <- names(x$outlier_measures[names(x$outlier_measures) %in% methods_lev])
-  any_lev <- length(methods_lev) > 0
-  methods_rbd <- paste(c("PCA_var", "PCA_kurt"), "robdist", sep="__")
-  any_rbd <- length(methods_rbd) > 0
-  methods_rds <- paste(c("PCA_var", "PCA_kurt"), "robdist_subset", sep="__")
-  any_rds <- length(methods_rds) > 0
-  methods_DVARS <- c("DVARS_DPD", "DVARS_ZD")
-  methods_DVARS <- names(x$outlier_measures[names(x$outlier_measures) %in% methods_DVARS])
-  any_DVARS <- length(methods_DVARS) > 0
-
+  
+  methods <- list(
+    lev = paste0(c("PCA_var", "PCA_kurt", "PCATF"), "__leverage"),
+    rbd = paste(c("PCA_var", "PCA_kurt"), "robdist", sep="__"),
+    rds = paste(c("PCA_var", "PCA_kurt"), "robdist_subset", sep="__"),
+    DVARS = c("DVARS_DPD", "DVARS_ZD")
+  )
+  if(is.null(methods_to_plot) | methods_to_plot=="all"){
+    methods <- lapply(methods, intersect, names(x$outlier_measures))
+  } else if(methods_to_plot=="one"){
+    methods <- lapply(methods, intersect, names(x$outlier_measures)[1])
+  } else {
+    methods <- lapply(methods, intersect, methods_to_plot)
+  }
+  methods_any <- lapply(lapply(methods, length), as.logical)
+  
   plots <- list()
-  if(any_lev){
+  if(methods_any$lev){
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = x$outlier_measures[methods_lev],
-      cuts = x$outlier_cutoffs[methods_lev],
+      meas = x$outlier_measures[methods$lev],
+      cuts = x$outlier_cutoffs[methods$lev],
       name = "Leverage",
       ...
     )))
   }
-  if(any_rbd){
+  if(methods_any$rbd){
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = x$outlier_measures[methods_rbd],
-      cuts = x$outlier_cutoffs[methods_rbd],
-      name = "Robust Distance",
+      meas = x$outlier_measures[methods$rbd],
+      cuts = x$outlier_cutoffs[methods$rbd],
+      name = "RobDist",
       inMCD = x$inMCD,
       ...
     )))
   }
-  if(any_rds){
+  if(methods_any$rds){
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = x$outlier_measures[methods_rds],
-      cuts = x$outlier_cutoffs[methods_rds],
-      name = "Robust Distance (Subset)",
+      meas = x$outlier_measures[methods$rds],
+      cuts = x$outlier_cutoffs[methods$rds],
+      name = "RobDist Subset",
       inMCD = x$inMCD,
       ...
     )))
   }
-  if(any_DVARS){
+  if(methods_any$DVARS){
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = x$outlier_measures[methods_DVARS],
-      cuts = x$outlier_cutoffs[methods_DVARS],
+      meas = x$outlier_measures[methods$DVARS],
+      cuts = x$outlier_cutoffs[methods$DVARS],
       name = "DVARS",
       ...
     )))
   }
   
-  plot_grid(plotlist=plots, ncol=1, align="v")
+  plots[[length(plots)]] <- plots[[length(plots)]] + theme(axis.title.x=element_text()) + xlab('Index (Time Point)')
+  
+  rel_heights <- rep(1, length(plots))
+  rel_heights[length(plots)] <- 1.1
+  plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
 }
 
 #' Calculate the leverage images for each outlier that meets the
