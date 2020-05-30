@@ -216,7 +216,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
 #' @return A ggplot
 #'
 #' @import ggplot2
-#' @importFrom cowplot plot_grid
+#' @importFrom cowplot plot_grid ggdraw
 #' 
 #' @method plot clever 
 #' @export
