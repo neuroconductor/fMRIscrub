@@ -16,8 +16,6 @@
 #' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
-#'
-#' @method plot clever
 #' 
 #' @import ggplot2
 #' 
@@ -222,6 +220,8 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
 #'
 #' @import ggplot2
 #' @importFrom cowplot plot_grid
+#' 
+#' @method plot clever 
 #' @export
 plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_title=NULL, ...){
   projection_methods = x$params$projection_methods

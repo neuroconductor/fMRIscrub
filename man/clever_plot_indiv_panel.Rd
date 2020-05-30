@@ -4,7 +4,7 @@
 \alias{clever_plot_indiv_panel}
 \title{Plots one or several outlyingness measures of the same type.}
 \usage{
-\method{plot}{clever}(meas, cuts, name, inMCD = NULL, ...)
+clever_plot_indiv_panel(meas, cuts, name, inMCD = NULL, ...)
 }
 \arguments{
 \item{meas}{A T_ x m data.frame with each column being the time-course for a 
