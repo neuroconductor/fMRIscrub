@@ -1,3 +1,22 @@
+#' Plots one or several outlyingness measures of the same type.
+#'
+#' @param meas A T_ x m data.frame with each column being the time-course for a 
+#'  scrubbing method. Column names should identify the method as one of the following:
+#'  \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage},
+#'  \code{PCA_var__robdist}, \code{PCA_kurt__robdist},
+#'  \code{PCA_var__robdist_subset}, \code{PCA_kurt__robdist_subset},
+#'  \code{DVARS_DPD}, \code{DVARS_ZD}, or \code{FD}.
+#' @param cuts A 1 x m data.frame with each colum being the cutoff for a 
+#'  scrubbing method. Column names should be the same as those provided for \code{meas}.
+#' @param name The name of the type of outlyingness measure being plotted:
+#'  \code{Leverage}, \code{RobDist}, \code{RobDist Subset}, \code{FD}, \code{DVARS}.
+#' @param inMCD A T_ x m data.frame indicating whether each observation was in the 
+#'  MCD subset, for each method. Is only required and used if the measure is robust 
+#'  distance (subset).
+#'
+#' @return A ggplot
+#'
+#' @export
 clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   args <- list(...)
 
@@ -28,7 +47,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
     PCA_kurt__robdist_subset = "High-kurtosis PCs",
     DVARS_DPD = "DVARS Delta % D",
     DVARS_ZD = "DVARS z-score",
-    FD = "Framewise Displacement"
+    FD = "Framewise Disp."
   )
 
   T_ <- length(meas[[1]])
@@ -181,7 +200,24 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   return(plt)
 }
 
-plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, ...){
+#' Plots the outlyingness measures from a clever result. Can support multiple panels of
+#'  different outlyingness measures, but by default, it will plot only the first method.
+#'
+#' @param x The clever object.
+#' @param methods_to_plot Either: "one" to plot only the first method; "all" to plot
+#'  all the methods that were computed; or, a character vector of desired methods.
+#'  Default is "one".
+#' @param FD (Optional) A length T_ vector of FD values, in mm. If provided, the FD 
+#'  time series plot will be added.
+#' @param FD_cut (Optional) The outlier cutoff for FD. Default is 0.5 mm.
+#' @param plot_title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to the individual plots in each panel.
+#'
+#' @return A ggplot
+#'
+#' @importFrom cowplot plot_grid
+#' @export
+plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_title=NULL, ...){
   projection_methods = x$params$projection_methods
   outlyingness_methods = x$params$outlyingness_methods
   DVARS = x$params$DVARS
@@ -254,8 +290,8 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, ...){
   }
   if(methods_any$FD){
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = FD,
-      cuts = FD_cut,
+      meas = data.frame(FD=FD),
+      cuts = data.frame(FD=FD_cut),
       name = "FD",
       ...
     )))
@@ -265,7 +301,21 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, ...){
 
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
-  plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
+
+  plt <- plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
+
+  if(!is.null(plot_title)){
+    plt <- plot_grid(
+      ggdraw() + 
+        draw_label(plot_title, fontface='bold', x=0, hjust=0) +
+        theme(plot.margin = margin(0, 0, 0, 7)),
+      plt,
+      ncol=1,
+      rel_heights=c(.15, length(plots))
+    )
+  }
+
+  return(plt)
 }
 
 #' Calculate the leverage images for each outlier that meets the
@@ -313,12 +363,13 @@ get_leverage_images <- function(X_svd, timepoints, const_mask=NULL){
 #'  within the area of interest and 0's representing regions to mask out.
 #' @param sliced_dim If the mask is 2D, which dimension does it represent?
 #'  Will default to the 3rd dimension (axial).
+#' @param NA_fill Replace in-mask NA values with this. Default NA (no action).
 #'
 #' @return A 4D array representing the volume time series. Time is on the 4th
 #'  dimension.
 #'
 #' @export
-Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA){
+Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA, NA_fill=FALSE){
   in_mask <- mask > 0
   t <- nrow(mat)
 
@@ -339,6 +390,8 @@ Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA){
   for(i in 1:t){
     vts[,,,i][in_mask] <- mat[i,]
   }
+
+  vts[is.na(vts)] <- NA_fill
 
   return(vts)
 }

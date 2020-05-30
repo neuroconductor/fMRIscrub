@@ -11,7 +11,7 @@
 #' @importFrom robustbase rowMedians
 scale_med <- function(mat){
   TOL <- 1e-8
-  # Transpose to use vector recycling (will revert after).
+
   mat <- t(mat)
   #	Center.
   mat <- mat - c(rowMedians(mat, na.rm=TRUE))
@@ -24,14 +24,15 @@ scale_med <- function(mat){
     } else {
       warning(paste0("Warning: ", sum(const_mask),
       " constant voxels (out of ", length(const_mask),
-      " ). These will be set to zero for estimation of the covariance.\n"))
+      " ). These will be removed for estimation of the covariance.\n"))
     }
   }
-  mad <- mad[const_mask]
+  mad <- mad[!const_mask]
+  mat <- mat[!const_mask,]
   mat <- mat/c(mad)
-  
   # Revert transpose.
   mat <- t(mat)
+  N_ <- ncol(mat)
 
   out <- list(mat=mat, const_mask=const_mask)
   return(out)

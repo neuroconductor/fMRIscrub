@@ -12,6 +12,10 @@ vignette: >
 ```{r}
 library(knitr)
 opts_chunk$set(autodep = TRUE, cache = TRUE)
+
+library(ggplot2)
+library(cowplot)
+theme_set(theme_cowplot())
 ```
 
 ## Overview
@@ -42,7 +46,7 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 library(devtools)
-devtools::install_github('mandymejia/clever')
+devtools::install_github('mandymejia/clever', ref='2.0')
 ```
 
 ## Tutorial Data
@@ -66,97 +70,37 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-We next run clever on both datasets using all possible combinations of parameters.
+We next run clever on both datasets. We could just measure leverage using the variance-based PC projection:
 
 ```{r}
-clever.Dat1.kurt.lev = clever(Dat1, choose_PCs='kurtosis', 
-                              PCA_trend_filtering=FALSE, verbose=TRUE)
-clever.Dat2.kurt.lev = clever(Dat2, choose_PCs='kurtosis', 
-                              PCA_trend_filtering=FALSE, verbose=TRUE)
+clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
+clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
 ```
 
+```{r fig.width=8, fig.height=5}
+plot_grid(plot(clever.Dat1.var.lev, plot_title="Dat1"), plot(clever.Dat2.var.lev, plot_title="Dat2"), nrow=1)
+```
+
+We could also use all combinations of projection and outlyingness methods and compare them:
+
 ```{r}
-clever.Dat1.vari.lev = clever(Dat1, choose_PCs = 'variance', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat1.kurt.rds = clever(Dat1, choose_PCs='kurtosis', method = 'robdist_subset', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat1.vari.rds = clever(Dat1, choose_PCs = 'variance', method = 'robdist_subset', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat1.kurt.rbd = clever(Dat1, choose_PCs='kurtosis', method = 'robdist', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat1.vari.rbd = clever(Dat1, choose_PCs = 'variance', method = 'robdist', 
-                              PCA_trend_filtering=FALSE)
-
-clever.Dat2.vari.lev = clever(Dat2, choose_PCs = 'variance', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat2.kurt.rds = clever(Dat2, choose_PCs='kurtosis', method = 'robdist_subset', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat2.vari.rds = clever(Dat2, choose_PCs = 'variance', method = 'robdist_subset', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat2.kurt.rbd = clever(Dat2, choose_PCs='kurtosis', method = 'robdist', 
-                              PCA_trend_filtering=FALSE)
-clever.Dat2.vari.rbd = clever(Dat2, choose_PCs = 'variance', method = 'robdist', 
-                              PCA_trend_filtering=FALSE)
-
-clevers.Dat1 = list(clever.Dat1.kurt.lev, clever.Dat1.vari.lev, clever.Dat1.kurt.rds, clever.Dat1.vari.rds, clever.Dat1.kurt.rbd, clever.Dat1.vari.rbd)
-
-clevers.Dat2 = list(clever.Dat2.kurt.lev, clever.Dat2.vari.lev, clever.Dat2.kurt.rds, clever.Dat2.vari.rds, clever.Dat2.kurt.rbd, clever.Dat2.vari.rbd)
+clever.Dat1 = clever(Dat1, projection_methods="all", outlyingness_methods="all", verbose=TRUE)
+clever.Dat2 = clever(Dat2, projection_methods="all", outlyingness_methods="all", verbose=TRUE)
 ```
 
 Here are the outliers for the first dataset:
 
-```{r warning=FALSE, message=FALSE}
-library(ggpubr)
-library(gridExtra)
-ggplot2::theme_set(ggpubr::theme_pubr())
-```
-
-```{r fig.height=12, fig.width=7}
-plt_cell = vector('list', length=6)
-plt_row = vector('list', length=3)
-for(j in 0:2){
-  for(i in 1:2){
-    plt_cell[[j*2 + i]] = plot(clevers.Dat1[[j*2 + i]], type='n')
-  }
-  r = c(plt_cell[(j*2+1):(j*2+2)], common.legend=T, legend='bottom', align='hv', ncol=2)
-  plt_row[[j + 1]] = do.call(ggarrange, r)
-}
-
-grid.arrange(grobs=plt_row, ncol=1)
+```{r fig.height=8}
+plot(clever.Dat1, "all", plot_title="Dat1")
 ```
 
 And for the second:
 
-```{r fig.height=12, fig.width=7}
-plt_cell = vector('list', length=6)
-plt_row = vector('list', length=3)
-for(j in 0:2){
-  for(i in 1:2){
-    plt_cell[[j*2 + i]] = plot(clevers.Dat2[[j*2 + i]], type='n')
-  }
-  r = c(plt_cell[(j*2+1):(j*2+2)], common.legend=T, legend='bottom', align='hv', ncol=2)
-  plt_row[[j + 1]] = do.call(ggarrange, r)
-}
-
-grid.arrange(grobs=plt_row, ncol=1)
+```{r fig.height=8}
+plot(clever.Dat2, "all", plot_title="Dat2")
 ```
 
-For the first dataset, clever identifies 59-61 and 150-151 consistently across all parameter settings. Other times are variously identified as well, with the mean method of choosing PCs tending to identify more outliers than the kurtosis method. For the second dataset, few or no outliers are identified. Overall, these results are consistent with our prior knowledge of both datasets. 
-
-### Trend filtering
-
-New to version 1.5 is an option to use the scores from PCATF instead of regular PCA (citation forthcoming: Dr. Daniel McDonald and Lei Ding). Notice how the leverage trends are "filtered" to have flat lines in local neighborhoods. This result not only is easier to analyze visually, but also aligns with the idea that outliers shold occur in clusters if the artifact-causing phenomenon occurs over a period longer than the T_R.  
-
-```{r}
-clever.Dat1.PCATF.lev = clever(Dat1, PCA_trend_filtering=TRUE)
-clever.Dat2.PCATF.lev = clever(Dat2, PCA_trend_filtering=TRUE)
-```
-
-```{r fig.height=4, fig.width=7}
-grid.arrange(grobs=list(
-  D1=plot(clever.Dat1.PCATF.lev)+ggtitle('Dat1, PCATF'), 
-  D2=plot(clever.Dat2.PCATF.lev)+ggtitle('Dat2, PCATF')), ncol=2)
-```
+For the first dataset, clever identifies outliers at timepoints 59-61 and 150-151 consistently across most methods. A few other time points are flagged as well. There seems to be strong agreement between leverage scrubbing and DVARS. Weaker outliers around the 40th time point are identified in the second dataset, and DVARS flags a couple frames in this region as well. Overall, these results are consistent with our prior knowledge of both datasets. 
 
 ### Image reconstruction
 
@@ -194,7 +138,7 @@ Below, we compare the timepoint of median leverage (first) to the timepoint of m
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
-levs = clever.Dat1.kurt.lev$leverage
+levs = clever.Dat1$outlier_measures$PCA_var__leverage
 t_med = order(levs)[ceiling(length(levs)/2)]
 t_max = which.max(levs)
 
@@ -206,24 +150,27 @@ The median time point appears normal, whereas the most outlying time point clear
 
 ### Leverage images
 
-New to 1.5, clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at the 60th timepoint for the first dataset.
+clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. To solve for these images, be sure to use `lev_images=TRUE` (already the default option).
 
 ```{r}
-Lev_Img1 = clever.Dat1.kurt.lev$lev_imgs
+Lev_Img1 = clever.Dat1$outlier_lev_imgs$PCA_var__leverage
 print('The timepoints meeting the first outlier level threshold:')
-row.names(Lev_Img1$mean)
-
+paste(row.names(Lev_Img1$mean), collapse=", ")
 ```
 
+Here are the leverage images at the 59th timepoint for the first dataset:
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
 
-Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
-Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
+# Constant voxels are deleted during the clever algorithm, so the leverage images will have
+# missing values where the constant voxels were. The NA_fill option is used here to make
+# these voxels have the same color as the background (out-of-mask voxels).
+Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1, NA_fill=0)
+Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1, NA_fill=0)
 
-image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=60)'))
-image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=60)'))
+image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=59)'))
+image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=59)'))
 ```
 
-Banding artifacts are clearly visible.
+The leverage image highlights the banding artifact present at this time point.

@@ -4,7 +4,7 @@
 #' @param projection_methods Vector of projection methods to use. Choose at least
 #'  one of the following: \code{"PCA_var"} for PCA + variance, \code{"PCA_kurt"}
 #'  for PCA + kurtosis, and \code{"PCATF"} for PCA Trend Filtering + variance.
-#'  Default is \code{c("PCA_var")}.
+#'  Or, use \code{"all"} to use all methods. Default is \code{c("PCA_var")}.
 #' 
 #'  clever will use all combinations of the requested projection and 
 #'  outlyingness methods that make sense. For example, if  
@@ -16,7 +16,8 @@
 #' @param outlyingness_methods Vector of outlyingness measures to compute. Choose
 #'  at least one of the following: \code{"leverage"} for leverage, 
 #'  \code{"robdist"} for robust distance, and \code{"robdist_subset"} for robust
-#'  distance subset.  Default is \code{c("leverage")}.
+#'  distance subset.  Or, use \code{"all"} to use all methods. 
+#'  Default is \code{c("leverage")}.
 #' 
 #'  clever will use all combinations of the requested projection and 
 #'  outlyingness methods that make sense. For example, if  
@@ -43,11 +44,11 @@
 #' @param id_outliers Should the outliers be identified? Default is \code{TRUE}.
 #' @param lev_cutoff The outlier cutoff value for leverage, as a multiple of the median
 #'  leverage. Only used if 
-#'  \code{'leverage' %in% projection_methods} and \code{id_outliers}. Default is 
+#'  \code{"leverage" \%in\% projection_methods} and \code{id_outliers}. Default is 
 #'  \code{4}, or \eqn{4 * median}.
 #' @param MCD_cutoff  The outlier cutoff quantile for MCD distance. Only used if 
-#'  \code{'robdist' %in% projection_methods | 'robdist_subset' %in% projection_methods} 
-#'  and \code{id_outliers}. Default is \code{0.999}, for the \eqn{0.999} quantile.
+#'  \code{"robdist" \%in\% projection_methods | "robdist_subset" \%in\% projection_methods} 
+#'  and \code{id_outliers}. Default is \code{0.99}, for the \eqn{0.99} quantile.
 #'  The quantile is computed from the estimated F distribution.
 #' @param lev_images Should leverage images be computed? If \code{FALSE} memory is
 #'  conserved. Default is \code{FALSE}.
@@ -71,7 +72,7 @@
 #'            to make the kurtosis-based PC projection. They are ordered from highest 
 #'            kurtosis to lowest kurtosis.}  
 #'          \item{PCs}{The subsetted SVD decomposition. PCs are ordered in the standard
-#'            way, from highest variance to lowest variance, instead of by kurtosis. }  
+#'            way, from highest variance to lowest variance, instead of by kurtosis.}  
 #'        }
 #'      }
 #'      \item{PCATF}{
@@ -104,8 +105,8 @@
 #'        the median leverage.}
 #'      \item{MCD}{The robust distance (subset) cutoff for outlier detection: the 
 #'        \code{MCD_cutoff} quantile of the estimated F distribution.}
-#'      \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5%}
-#'      \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5% 
+#'      \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5 percent}
+#'      \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5 percent 
 #'        significance level with Bonferroni FWER correction.}
 #'    }
 #'  }
@@ -128,7 +129,7 @@
 #'    \describe{
 #'      \item{mean}{The average of the PC directions, weighted by the unscaled
 #'        PC scores at each outlying time point (U[i,] * V^T). Row names are
-#'        the corresponding time points.'}
+#'        the corresponding time points.}
 #'      \item{top}{The PC direction with the highest PC score at each outlying
 #'        time point. Row names are the corresponding time points.}
 #'      \item{top_dir}{The index of the PC direction with the highest PC score
@@ -158,7 +159,7 @@ clever = function(
   kurt_detrend = TRUE,
   id_outliers = TRUE,
   lev_cutoff = 4,
-  MCD_cutoff = 0.999,
+  MCD_cutoff = 0.99,
   lev_images = TRUE,
   verbose = FALSE) {
 
@@ -177,14 +178,22 @@ clever = function(
   TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
 
   # Check arguments.
-  projection_methods <- match.arg(
-    projection_methods,
-    all_projection_methods, 
-    several.ok=TRUE)
-  outlyingness_methods <- match.arg(
-    outlyingness_methods,
-    all_outlyingness_methods, 
-    several.ok=TRUE)
+  if(identical(projection_methods, "all")){
+    projection_methods <- all_projection_methods
+  } else {
+    projection_methods <- match.arg(
+      projection_methods,
+      all_projection_methods, 
+      several.ok=TRUE)
+  }
+  if(identical(outlyingness_methods, "all")){
+    outlyingness_methods <- all_outlyingness_methods
+  } else {
+    outlyingness_methods <- match.arg(
+      outlyingness_methods,
+      all_outlyingness_methods, 
+      several.ok=TRUE)
+  }
   if(!is.matrix(X)){ X <- as.matrix(X) }
   if("PCA_kurt" %in% projection_methods){
     if(!is.numeric(kurt_quantile)){
@@ -246,7 +255,7 @@ clever = function(
     } else {
       warning(paste0("Warning: ", sum(const_mask),
       " constant voxels (out of ", length(const_mask),
-      " ). These will be set to zero for estimation of the covariance.\n"))
+      " ). These will be removed for estimation of the covariance.\n"))
     }
   }
   mad <- mad[!const_mask]
@@ -319,8 +328,7 @@ clever = function(
         stop("Error: All trend-filtered PC scores are zero-variance.\n")
       }
       warning(paste("Warning:", sum(tf_zero_var), 
-        "trend-filtered PC scores are zero-variance. 
-        Removing these PCs."))
+        "trend-filtered PC scores are zero-variance. Removing these PCs.\n"))
       X.svdtf$u <- X.svdtf$u[,!tf_zero_var]
       X.svdtf$d <- X.svdtf$d[!tf_zero_var]
       if(lev_images){ X.svdtf$v <- X.svdtf$v[,!tf_zero_var] }
@@ -419,14 +427,14 @@ clever = function(
       robdist_subset = PC.robdist_subset
     )
     measure <- outlyingness_method.fun(projection$svd$u)
-    if(outlyingness_method %in% c("robdist_subset", "robdist")){
+    if(outlyingness_method %in% c("robdist", "robdist_subset")){
       this_inMCD <- measure$inMCD
       Fparam <- measure$Fparam
       measure <- measure$robdist
     }
     outlier_measures[[method_combo]] <- measure
     
-    if(outlyingness_method %in% c("robdist_subset", "robdist")){
+    if(outlyingness_method %in% c("robdist", "robdist_subset")){
       inMCD[[method_combo]] <- this_inMCD
     }
     

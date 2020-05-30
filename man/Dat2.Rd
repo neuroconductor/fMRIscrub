@@ -4,7 +4,9 @@
 \name{Dat2}
 \alias{Dat2}
 \title{Example fMRI Time Series for Subject 2}
-\format{A matrix of 145 time points by 4679 voxels}
+\format{
+A matrix of 145 time points by 4679 voxels
+}
 \usage{
 Dat2
 }

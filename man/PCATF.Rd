@@ -6,6 +6,7 @@
 \usage{
 PCATF(
   X,
+  X.svd = NULL,
   solve_directions = TRUE,
   K = NULL,
   lambda = 0.5,
@@ -17,12 +18,16 @@ PCATF(
 \arguments{
 \item{X}{A numerical data matrix (observations x variables).}
 
+\item{X.svd}{(Optional) The svd decomposition of X. Save time by providing
+this argument if the svd has already been computed. Default NULL.}
+
 \item{solve_directions}{Should the principal directions be solved for? These
 will be needed to display the leverage images for outlying observations.}
 
 \item{K}{The number of PCs to solve for, or \code{"mean var"}, in which case
 the number of PCs will be the amount of regular PCs with variance above
-the mean.}
+the mean. The "mean var" option is deprecated, since clever now calculates this
+ value outside of this function and passes the value directly to K as an integer.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
 Default is .5 . Can be NULL (lets algorithm decide).}
