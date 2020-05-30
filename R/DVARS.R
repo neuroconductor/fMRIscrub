@@ -82,13 +82,3 @@ compute_DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
   out <- list(D=D, DVARS=DVARS, DPD=DPD, ZD=ZD)
   return(out)
 }
-
-#we choose a (one-sided) 5% familywise error rate significance level via Bonferroni and a 5% Δ%D-var cut-off
-get_DVARS.out <- function(meas){
-  T_ <- length(meas$ZD)
-  out <- list(
-    ZD_05_FWER = meas$ZD > qnorm(1-.05/T_),
-    DPD_05_cut = abs(meas$DPD) > 5)
-  out$DVARS_both = out$ZD_05_FWER & out$DPD_05_cut
-  return(out)
-}
