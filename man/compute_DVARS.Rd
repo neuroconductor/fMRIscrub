@@ -10,9 +10,11 @@ compute_DVARS(X, normalize = FALSE, norm_I = 100, verbose = FALSE)
 \arguments{
 \item{X}{a T x N numeric matrix representing an fMRI run.}
 
-\item{normalize}{}
+\item{normalize}{Normalize the data as proposed in the original paper? Default is 
+\code{FALSE}.}
 
-\item{norm_I}{}
+\item{norm_I}{The value to scale to. Default is \code{100}, as in the original
+paper.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }

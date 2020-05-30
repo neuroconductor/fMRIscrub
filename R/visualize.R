@@ -18,7 +18,6 @@
 #' @return A ggplot
 #'
 #' @method plot clever
-#' @S3method plot clever
 #' 
 #' @import ggplot2
 #' 

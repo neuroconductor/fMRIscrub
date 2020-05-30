@@ -5,7 +5,7 @@
 \title{Plots the outlyingness measures from a clever result. Can support multiple panels of
  different outlyingness measures, but by default, it will plot only the first method.}
 \usage{
-plot.clever(
+\method{plot}{clever}(
   x,
   methods_to_plot = "one",
   FD = NULL,
