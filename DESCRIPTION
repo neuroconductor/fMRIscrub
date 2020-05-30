@@ -25,6 +25,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
+    cowplot,
     ggplot2,
     ggrepel,
     MASS,
