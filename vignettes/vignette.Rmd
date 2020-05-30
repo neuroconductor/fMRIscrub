@@ -46,7 +46,7 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 library(devtools)
-devtools::install_github('mandymejia/clever', ref='2.0')
+devtools::install_github('mandymejia/clever')
 ```
 
 ## Tutorial Data

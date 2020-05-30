@@ -13,9 +13,15 @@
 #' @param inMCD A T_ x m data.frame indicating whether each observation was in the 
 #'  MCD subset, for each method. Is only required and used if the measure is robust 
 #'  distance (subset).
+#' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
 #'
+#' @method plot clever
+#' @S3method plot clever
+#' 
+#' @import ggplot2
+#' 
 #' @export
 clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   args <- list(...)
@@ -215,6 +221,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
 #'
 #' @return A ggplot
 #'
+#' @import ggplot2
 #' @importFrom cowplot plot_grid
 #' @export
 plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_title=NULL, ...){

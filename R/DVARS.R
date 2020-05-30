@@ -26,8 +26,10 @@ sd_hIQR <- function(x, d=1){
 #' * We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
 #'
 #' @param X a T x N numeric matrix representing an fMRI run.
-#' @param normalize 
-#' @param norm_I 
+#' @param normalize Normalize the data as proposed in the original paper? Default is 
+#'  \code{FALSE}.
+#' @param norm_I The value to scale to. Default is \code{100}, as in the original
+#'  paper.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' 
