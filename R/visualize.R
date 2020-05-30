@@ -57,9 +57,6 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
 
   id_outs <- !is.null(cuts)
 
-  #xmax = ymax = ymin = xmin = NULL
-  #rm(list= c("xmax", "ymax", "ymin", "xmin"))
-
   if(name == "DVARS"){
     DVARS_names <- list(DVARS_DPD="DVARS Delta Pct. D",
                         DVARS_ZD="DVARS z-score")
