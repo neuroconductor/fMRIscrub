@@ -13,7 +13,7 @@
 #'  decreasing variance (i.e. increasing index).
 #'
 #' @export
-choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
+choose_PCs.variance <- function(svd, max_keep = NULL, min_keep = 1){
   var <- svd$d^2
 
   # Identify how many PCs will be kept.
@@ -58,19 +58,17 @@ choose_PCs.variance <- function(svd, max_keep=NULL, min_keep=1){
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
-  max_keep=NULL, min_keep=1, n_sim=5000){
+choose_PCs.kurtosis <- function(svd, kurt_quantile = 0.9, detrend = TRUE,
+  max_keep = NULL, min_keep = 1, n_sim = 5000){
   U <- svd$u
   m <- nrow(U)
 
-  # First remove components that explain less than 90% of variation.
-  cumvarexp <- cumsum(svd$d/sum(svd$d))
-  n <- max(min(which((cumvarexp > .90))), min_keep)
-  n <- max(n, min_keep)
+  # First get the high-variance PCs.
+  n <- length(choose_PCs.variance(svd, max_keep = max_keep, min_keep = min_keep))
   U <- U[,1:n]
   if(n==1){U <- matrix(U, ncol=1)}
 
-  # Compute the kurtosis of the remaining PCs, detrending if applicable.
+  # Compute the kurtosis of the PCs, detrending if applicable.
   if(detrend){
     U.dt <- U - apply(U, 2, est_trend)
     kurt <- apply(U.dt, 2, kurtosis, type=1)
@@ -81,10 +79,10 @@ choose_PCs.kurtosis <- function(svd, kurt_quantile=.9, detrend=TRUE,
   # Determine the quantile cutoff.
   if(m < 1000){
     if(kurt_quantile == .9){
-    # Use precomputed empirical quantile.
+      # Use precomputed empirical 0.90 quantile.
       cut <- kurt_90_quant[m]
     } else {
-    # Simulate and compute the empirical quantile.
+      # Simulate and compute the empirical quantile if not 0.90.
       sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
       cut <- quantile(sim, kurt_quantile)
     }

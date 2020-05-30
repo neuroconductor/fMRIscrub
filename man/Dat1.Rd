@@ -4,7 +4,9 @@
 \name{Dat1}
 \alias{Dat1}
 \title{Example fMRI Time Series for Subject 1}
-\format{A matrix of 193 time points by 4675 voxels}
+\format{
+A matrix of 193 time points by 4675 voxels
+}
 \usage{
 Dat1
 }

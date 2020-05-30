@@ -1,11 +1,20 @@
-structure(list(mejia2017pca = structure(list(title = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",
-                                             author = structure(list(list(given = c("Amanda", "F"), family = "Mejia",
-                                                                          role = NULL, email = NULL, comment = NULL), list(given = c("Mary",
-                                                                                                                                     "Beth"), family = "Nebel", role = NULL, email = NULL, comment = NULL),
-                                                                     list(given = "Ani", family = "Eloyan", role = NULL, email = NULL,
-                                                                          comment = NULL), list(given = "Brian", family = "Caffo",
-                                                                                                role = NULL, email = NULL, comment = NULL), list(
-                                                                                                  given = c("Martin", "A"), family = "Lindquist", role = NULL,
-                                                                                                  email = NULL, comment = NULL)), class = "person"),
-                                             journal = "Biostatistics", volume = "18", number = "3", pages = "521--536",
-                                             year = "2017", publisher = "Oxford University Press"), bibtype = "Article", key = "mejia2017pca")), class = "bibentry", strings = structure(character(0), .Names = character(0)))
+structure(list(
+	mejia2017pca = structure(list(
+		title = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",
+		author = structure(list(
+			list(given = c("Amanda", "F"), family = "Mejia", role = NULL, email = NULL, comment = NULL), 
+			list(given = c("Mary", "Beth"), family = "Nebel", role = NULL, email = NULL, comment = NULL),
+			list(given = "Ani", family = "Eloyan", role = NULL, email = NULL, comment = NULL), 
+			list(given = "Brian", family = "Caffo", role = NULL, email = NULL, comment = NULL), 
+			list(given = c("Martin", "A"), family = "Lindquist", role = NULL, email = NULL, comment = NULL)), 
+			class = "person"),
+		journal = "Biostatistics", volume = "18", number = "3", pages = "521--536", year = "2017", publisher = "Oxford University Press"), 
+		bibtype = "Article", key = "mejia2017pca"),
+	afyouni2018insight = structure(list(
+		title = "Insight and inference for DVARS",
+		author = structure(list(list(given = c("Soroosh"), family = "Afyouni", role = NULL, email = NULL, comment = NULL), 
+			list(given = c("Thomas", "E"), family = "Nichols", role = NULL, email = NULL, comment = NULL)), 
+			class = "person"),
+		journal = "Neuroimage", volume = "172", pages = "291--312", year = "2018", publisher = "Elsevier"), 
+		bibtype = "Article", key = "afyouni2018insight")), 
+	class = "bibentry", strings = structure(character(0), .Names = character(0)))

@@ -6,84 +6,162 @@
 \usage{
 clever(
   X,
-  PCA_trend_filtering = TRUE,
-  PCA_trend_filtering.kwargs = NULL,
-  choose_PCs = c("variance", "kurtosis"),
+  projection_methods = "PCA_var",
+  outlyingness_methods = "leverage",
+  DVARS = TRUE,
+  PCATF_kwargs = NULL,
   kurt_quantile = 0.9,
   kurt_detrend = TRUE,
-  method = c("leverage", "robdist_subset", "robdist"),
-  id_out = TRUE,
-  lev_img_lvl = 1,
+  id_outliers = TRUE,
+  lev_cutoff = 4,
+  MCD_cutoff = 0.99,
+  lev_images = TRUE,
   verbose = FALSE
 )
 }
 \arguments{
 \item{X}{A wide (observations x variables) numerical data matrix.}
 
-\item{PCA_trend_filtering}{Should PCA Trend Filtering (PCATF) be used in place
-of regular PCA? Default is \code{TRUE}. If \code{TRUE}, \code{choose_PCs}
-must be \code{variance} and \code{method} must be \code{leverage}.}
+\item{projection_methods}{Vector of projection methods to use. Choose at least
+ one of the following: \code{"PCA_var"} for PCA + variance, \code{"PCA_kurt"}
+ for PCA + kurtosis, and \code{"PCATF"} for PCA Trend Filtering + variance.
+ Or, use \code{"all"} to use all methods. Default is \code{c("PCA_var")}.
 
-\item{PCA_trend_filtering.kwargs}{Named list of arguments for \code{PCATF}:
-the trend filtering parameter \code{lambda} (Default \code{0.5}), the number
-of iterations \code{niter_max} (Default \code{1000}), convergence tolerance
-\code{tol} (Default \code{1e-8}), and option to print updates \code{verbose}
-(Default \code{FALSE}).}
+ clever will use all combinations of the requested projection and 
+ outlyingness methods that make sense. For example, if  
+ \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
+ \code{outlyingness_methods=c("leverage", "robdist")} then these five
+ combinations will be used: PCATF with leverage, PCA_var with leverage, 
+ PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. Each 
+ method combination will yield its own outlyingness time series.}
 
-\item{choose_PCs}{The criteria for choosing which PCs to retain:
-\code{variance} or \code{kurtosis}. Default is \code{variance}. If trend
-filtering is being used, this must be \code{variance}.}
+\item{outlyingness_methods}{Vector of outlyingness measures to compute. Choose
+ at least one of the following: \code{"leverage"} for leverage, 
+ \code{"robdist"} for robust distance, and \code{"robdist_subset"} for robust
+ distance subset.  Or, use \code{"all"} to use all methods. 
+ Default is \code{c("leverage")}.
 
-\item{kurt_quantile}{The cutoff quantile to use if \code{choose_PCs} is
-\code{kurtosis}. Default is \code{0.9}.}
+ clever will use all combinations of the requested projection and 
+ outlyingness methods that make sense. For example, if  
+ \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
+ \code{outlyingness_methods=c("leverage", "robdist")} then these five
+ combinations will be used: PCATF with leverage, PCA_var with leverage, 
+ PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. Each 
+ method combination will yield its own outlyingness time series.}
 
-\item{kurt_detrend}{If \code{choose_PCs} is \code{kurtosis}, should PCs be
-detrended before measuring kurtosis? Default is \code{TRUE}. Recommended if
-observations represent a time series.}
+\item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
+is \code{TRUE}.}
 
-\item{method}{The outlier measurement: \code{leverage}, \code{robdist},
-or \code{robdist_subset}. Default is \code{leverage}. If trend filtering
-is being used, this must be \code{leverage}.}
+\item{PCATF_kwargs}{Named list of arguments for PCATF: the trend filtering 
+parameter lambda (Default \code{0.5}), the number of iterations \code{niter_max} 
+(Default \code{1000}), convergence tolerance \code{tol} (Default \code{1e-8}), and 
+option to print updates \code{verbose} (Default \code{FALSE}).}
 
-\item{id_out}{Should the outliers be identified? Default is \code{TRUE}.}
+\item{kurt_quantile}{What cutoff quantile for kurtosis should be used? This
+argument only applies if \code{"PCA_kurt"} is one of the projection methods 
+in \code{"projection_methods"}. Default is \code{0.9}.}
 
-\item{lev_img_lvl}{An integer between \code{0} and \code{3}. We can use the
-selected PCs to visualize artifact signals ("leverage images") at each
-outlying time point. Options \code{1} to \code{3} will return the leverage
-images for time points meeting each respective threshold, with \code{1}
-being the lowest and \code{3} being the strictest threshold. They require
-\code{id_out} to be \code{TRUE}. Option \code{0} will not compute the
-leverage images, conserving memory. Option \code{1} is the default.
-\code{FALSE} will yield Option \code{0} and \code{TRUE} will yield Option
-\code{1}.}
+\item{kurt_detrend}{Should the PCs be detrended before measuring kurtosis? 
+This argument only applies if \code{"PCA_kurt"} is one of the projection methods 
+in \code{"projection_methods"}. Default is \code{TRUE}. Detrending is highly
+recommended for time-series data, because trends can induce high kurtosis even
+in the absence of outliers. It is highly advised against for non-time-series
+data because the observations are not temporally related.}
+
+\item{id_outliers}{Should the outliers be identified? Default is \code{TRUE}.}
+
+\item{lev_cutoff}{The outlier cutoff value for leverage, as a multiple of the median
+leverage. Only used if 
+\code{"leverage" \%in\% projection_methods} and \code{id_outliers}. Default is 
+\code{4}, or \eqn{4 * median}.}
+
+\item{MCD_cutoff}{The outlier cutoff quantile for MCD distance. Only used if 
+\code{"robdist" \%in\% projection_methods | "robdist_subset" \%in\% projection_methods} 
+and \code{id_outliers}. Default is \code{0.99}, for the \eqn{0.99} quantile.
+The quantile is computed from the estimated F distribution.}
+
+\item{lev_images}{Should leverage images be computed? If \code{FALSE} memory is
+conserved. Default is \code{FALSE}.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
 \value{
 A clever object, i.e. a list with components
 \describe{
-  \item{params}{A list of all the arguments used.}
- \item{PCs}{
+ \item{params}{A list of all the arguments used.}
+ \item{projections}{
    \describe{
-     \item{indices}{The original indices of the selected PCs.}
-     \item{svd}{The selected subset of the SVD. The v matrix (PC directions)
-       is witheld to conserve memory.}
+     \item{PC_var}{
+       \describe{
+         \item{indices}{The indices retained from the original SVD decomposition 
+           to make the variance-based PC projection.} 
+         \item{PCs}{The subsetted SVD decomposition.}  
+       }
+     }
+     \item{PC_kurt}{
+       \describe{
+         \item{indices}{The indices retained from the original SVD decomposition 
+           to make the kurtosis-based PC projection. They are ordered from highest 
+           kurtosis to lowest kurtosis.}  
+         \item{PCs}{The subsetted SVD decomposition. PCs are ordered in the standard
+           way, from highest variance to lowest variance, instead of by kurtosis.}  
+       }
+     }
+     \item{PCATF}{
+       \describe{
+         \item{indices}{The indices of the trend-filtered PCs used to make the
+           projection.}  
+         \item{PCs}{The PCATF result.}  
+       }
+     }
    }
  }
- \item{leverage}{The leverage of each observation. NULL if \code{method} is
-   not PCA leverage.}
- \item{robdist}{The robust distance of each observation. NULL if
-   \code{method} is not robust distance (subset).}
+ \item{outlier_measures}{
+   \describe{
+     \item{PC_var__lev}{The leverage values for the PC_var projection.}
+     \item{PC_kurt__lev}{The leverage values for the PC_kurt projection.}
+     \item{PCATF__lev}{The leverage values for the PCATF projection.}
+     \item{PC_var__rbd}{The robust MCD distance values for the PC_var projection.}
+     \item{PC_kurt__rbd}{The robust MCD distance values for the PC_kurt projection.}
+     \item{PC_var__rds}{The robust MCD distance values, using the subset method, 
+       for the PC_var projection.}
+     \item{PC_kurt__rds}{The robust MCD distance values, using the subset method, 
+       for the PC_kurt projection.}
+     \item{DVARS_DPD}{The Delta percent DVARS values.}
+     \item{DVARS_ZD}{The DVARS z-scores.}
+   }
+ }
+ \item{outlier_cutoffs}{
+   \describe{
+     \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff} times
+       the median leverage.}
+     \item{MCD}{The robust distance (subset) cutoff for outlier detection: the 
+       \code{MCD_cutoff} quantile of the estimated F distribution.}
+     \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5 percent}
+     \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5 percent 
+       significance level with Bonferroni FWER correction.}
+   }
+ }
+ \item{outlier_flags}{
+   \describe{
+     \item{PC_var__leverage}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_kurt__leverage}{Whether each observation surpasses the outlier cutoff.}
+     \item{PCATF__leverage}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_var__robdist}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_kurt__robdist}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_var__robdist_subset}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_kurt__robdist_subset}{Whether each observation surpasses the outlier cutoff.}
+     \item{DVARS_DPD}{Whether each observation surpasses the outlier cutoff.}
+     \item{DVARS_ZD}{Whether each observation surpasses the outlier cutoff.}
+   }
+ }
  \item{inMCD}{Whether each observation is within the MCD subset. NULL if
    \code{method} is not robust distance (subset).}
- \item{outliers}{An n X 3 data.frame indicating if each observation is an
-   outlier at each of the three levels.}
- \item{cutoffs}{Outlier cutoff values.}
- \item{lev_imgs}{
+ \item{lev_images}{
    \describe{
      \item{mean}{The average of the PC directions, weighted by the unscaled
        PC scores at each outlying time point (U[i,] * V^T). Row names are
-       the corresponding time points.'}
+       the corresponding time points.}
      \item{top}{The PC direction with the highest PC score at each outlying
        time point. Row names are the corresponding time points.}
      \item{top_dir}{The index of the PC direction with the highest PC score
