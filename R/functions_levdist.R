@@ -104,31 +104,28 @@ PC.robdist_subset <- function(U){
 #'    distances.}
 #' }
 #'
-#' @importFrom robustbase covMcd
+#' @importFrom MASS cov.mcd
 #'
 #' @export
 PC.robdist <- function(U){
-
   n <- nrow(U)
   Q <- ncol(U)
-
-  MCD <- covMcd(U)
-  mah <- MCD$mah
-  inMCD <- (MCD$mcd.wt==1)
-
+  
+  best <- c(cov.mcd(U)$best)
+  inMCD <- 1:n %in% best
+  U_in <- U[best,] # observations that are used for the MCD estimates calculation
+  xbar_star <- colMeans(U_in) # MCD estimate of mean
+  U_ins <- scale(U_in, center = TRUE, scale = FALSE )
+  nU <- nrow(U_ins)
+  S_star <- (t(U_ins) %*% U_ins)/(nU-1) # MCD estimate of covariance
+  mah <- (apply(U,1, function(x) t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)))
   # Scale left-out observations to follow F-distribution.
   Fparam <- fit.F(Q, n, sum(inMCD))
-
   # Scale left-out observations to follow F-distribution.
-  scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m)
-  mah[!inMCD] <- scale*mah[!inMCD]
-  mah[!inMCD] <- scale*mah[!inMCD]
-
-  # Match 10th quantile of sample and F distributions.
-  mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) /
-    quantile(mah[!inMCD], 0.1)
-
-  result <- list(mah, inMCD, Fparam)
+  scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m) 
+  mah[!inMCD] <- scale*mah[!inMCD] 
+  
+  result <- list(mah,inMCD, Fparam)
   names(result) <- c('robdist','inMCD', 'Fparam')
   return(result)
 }
