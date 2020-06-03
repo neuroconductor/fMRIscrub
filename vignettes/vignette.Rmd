@@ -73,8 +73,8 @@ dim(Dat2)
 We next run clever on both datasets. We could just measure leverage using the variance-based PC projection:
 
 ```{r}
-clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
-clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
+clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, DVARS=FALSE, lev_images=FALSE, PCs_detrend=TRUE)
+clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, DVARS=FALSE, lev_images=FALSE, PCs_detrend=TRUE)
 ```
 
 ```{r fig.width=8, fig.height=5}
@@ -84,8 +84,8 @@ plot_grid(plot(clever.Dat1.var.lev, plot_title="Dat1"), plot(clever.Dat2.var.lev
 We could also use all combinations of projection and outlyingness methods and compare them:
 
 ```{r}
-clever.Dat1 = clever(Dat1, projection_methods="all", outlyingness_methods="all", verbose=TRUE)
-clever.Dat2 = clever(Dat2, projection_methods="all", outlyingness_methods="all", verbose=TRUE)
+clever.Dat1 = clever(Dat1, projection_methods="all", outlyingness_methods="all", verbose=TRUE, PCs_detrend=TRUE)
+clever.Dat2 = clever(Dat2, projection_methods="all", outlyingness_methods="all", verbose=TRUE, PCs_detrend=TRUE)
 ```
 
 Here are the outliers for the first dataset:

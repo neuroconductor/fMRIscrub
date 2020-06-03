@@ -9,6 +9,7 @@ clever(
   projection_methods = "PCA_var",
   outlyingness_methods = "leverage",
   DVARS = TRUE,
+  PCs_detrend = FALSE,
   PCATF_kwargs = NULL,
   kurt_quantile = 0.9,
   kurt_detrend = TRUE,
@@ -51,6 +52,8 @@ clever(
 
 \item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 is \code{TRUE}.}
+
+\item{PCs_detrend}{Detrend all PCs before computing leverage or robust distance (subset)?}
 
 \item{PCATF_kwargs}{Named list of arguments for PCATF: the trend filtering 
 parameter lambda (Default \code{0.5}), the number of iterations \code{niter_max} 

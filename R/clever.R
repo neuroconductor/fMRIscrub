@@ -28,6 +28,7 @@
 #'  method combination will yield its own outlyingness time series.
 #' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 #'  is \code{TRUE}.
+#' @param PCs_detrend Detrend all PCs before computing leverage or robust distance (subset)?
 #' @param PCATF_kwargs Named list of arguments for PCATF: the trend filtering 
 #'  parameter lambda (Default \code{0.5}), the number of iterations \code{niter_max} 
 #'  (Default \code{1000}), convergence tolerance \code{tol} (Default \code{1e-8}), and 
@@ -154,6 +155,7 @@ clever = function(
   projection_methods = "PCA_var",
   outlyingness_methods = "leverage",
   DVARS = TRUE,
+  PCs_detrend = FALSE,
   PCATF_kwargs = NULL,
   kurt_quantile = .9,
   kurt_detrend = TRUE,
@@ -426,8 +428,14 @@ clever = function(
       robdist = PC.robdist,
       robdist_subset = PC.robdist_subset
     )
+    if(PCs_detrend){
+      U <- projection$svd$u - apply(projection$svd$u, 2, est_trend)
+    } else {
+      U <- projection$svd$u
+    }
     measure <- outlyingness_method.fun(projection$svd$u)
     if(outlyingness_method %in% c("robdist", "robdist_subset")){
+      measure <- outlyingness_method.fun(projection$svd$u)
       this_inMCD <- measure$inMCD
       Fparam <- measure$Fparam
       measure <- measure$robdist

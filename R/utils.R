@@ -73,10 +73,14 @@ logL.lnorm <- function(par, vals, cutoff){
 #'
 #' @return The estimated trend.
 #'
+#' @importFrom stats mad
 #' @importFrom robustbase lmrob
 #' @importFrom robustbase lmrob.control
 #' @export
 est_trend <- function(ts, robust=TRUE){
+  EPS <- 1e-8
+  if(mad(ts) < EPS){ return(ts) }
+
   df <- data.frame(
     index=1:length(ts),
     ts=ts
