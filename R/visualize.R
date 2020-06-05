@@ -18,6 +18,7 @@
 #' @return A ggplot
 #' 
 #' @import ggplot2
+#' @importFrom cowplot theme_cowplot
 #' 
 #' @export
 clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
@@ -80,13 +81,17 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
     n <- names(meas)[i]
     d[[n]] <- data.frame(meas=meas[[n]])
 
-    if(id_outs){
-      d[[n]]$out <- meas[[n]] > cuts[[n]]
-    }
-
     if(name %in% mcd_meas){
       d[[n]]$inMCD <- ifelse(inMCD[[n]], "In MCD", "Not In MCD")
     }
+
+    if(id_outs){
+      d[[n]]$out <- meas[[n]] > cuts[[n]]
+      if(name %in% mcd_meas){
+        d[[n]]$out <- d[[n]]$out & (!(inMCD[[n]]))
+      }
+    }
+
   }
 
   # For each measure, collect outlier information if any exist.
@@ -137,11 +142,11 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
     ifelse(log_meas, paste0("log(", name, " + 1)"), name))
   legend.position <- ifelse("show.legend" %in% names(args),
     ifelse(args$show.legend, "right", "none"),
-    "none")
+    "right")
   if((name=="Leverage") & (!("PCATF__lev" %in% names(meas)))){
     ylim_max <- 1
   } else {
-    ylim_max <- max(d$measure)
+    ylim_max <- max(sapply(meas, max))
   }
 
   # Make ggplot.
@@ -183,6 +188,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, inMCD=NULL, ...){
   xticks <- c(seq(from=0, to=floor(T_*.9), by=xticks_width), T_)
 
   plt <- plt + labs(x=xlab, y=ylab, color="Method") +
+    theme_cowplot() +
     #coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)), ylim=c(0, ylim_max*1.2)) + #fix this line
     theme(
       axis.title.x=element_blank(),
