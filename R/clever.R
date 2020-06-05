@@ -379,6 +379,9 @@ clever = function(
       projection$svd = X.svd
     }
     projection$svd$u <- projection$svd$u[,chosen_PCs_ordered]
+    if(PCs_detrend){
+      projection$svd$u_detrended <- as.matrix(projection$svd$u - apply(projection$svd$u, 2, est_trend))
+    } 
     projection$svd$d <- projection$svd$d[chosen_PCs_ordered]
     if(lev_images){ projection$svd$v <- projection$svd$v[,chosen_PCs_ordered] }
     projections[[projection_method]] = projection
@@ -413,12 +416,19 @@ clever = function(
       max_keep = ifelse(outlyingness_method=="robdist", T_*q, T_*q/3)
       max_keep = ceiling(max_keep)
       if(max_keep < length(projection$indices)){
-        projection$indices <- projection$indices[1:max_keep]
+        print("Reducing number of PCs")
+        print(length(projection$indices))
+        print(max_keep)
+        projection$indices <- projection$indices[1:max_keep] # fix this for kurtosis
         projection$svd$u <- projection$svd$u[,1:max_keep]
+        if(PCs_detrend){
+          projection$svd$u_detrended <- projection$svd$u_detrended[,1:max_keep]
+        }
         projection$svd$d <- projection$svd$d[1:max_keep]
         if(solve_directions){
           projection$svd$v <- projection$svd$v[,1:max_keep]
         }
+        print(dim(projection$svd$u))
       }
     }
 
@@ -429,16 +439,17 @@ clever = function(
       robdist_subset = PC.robdist_subset
     )
     if(PCs_detrend){
-      U <- projection$svd$u - apply(projection$svd$u, 2, est_trend)
+      U_meas <- projection$svd$u_detrended
     } else {
-      U <- projection$svd$u
+      U_meas <- projection$svd$u
     }
-    measure <- outlyingness_method.fun(projection$svd$u)
     if(outlyingness_method %in% c("robdist", "robdist_subset")){
-      measure <- outlyingness_method.fun(projection$svd$u)
+      measure <- outlyingness_method.fun(U_meas)
       this_inMCD <- measure$inMCD
       Fparam <- measure$Fparam
       measure <- measure$robdist
+    } else {
+      measure <- outlyingness_method.fun(U_meas)
     }
     outlier_measures[[method_combo]] <- measure
     
