@@ -10,79 +10,6 @@ PC.leverage <- function(U){
   return(diag(U %*% t(U)))
 }
 
-#' Computes MCD distances based on subsetting the data to reduce
-#'  autocorrelation.
-#'
-#' fMRI timeseries data is known to exhibit autocorrelation.  The distribution
-#'  of MCD distances assumes independent observations, so to minimize
-#'  autocorrelation we split the data into subsets consisting of every 3rd
-#'  observation. For fMRI data with TR of 2 seconds, this will result in
-#'  data that is nearly independent within each subset. However, for shorter
-#'  TR there will still be substantial autocorrelation. In this case we
-#'  recommend using leverage rather than MCD distance.
-#'
-#' @param U An n x Q matrix of PC scores.
-#'
-#' @return A list with components
-#' \describe{
-#'  \item{robdist}{A vector of length n of with the robust distance estimate
-#'    for each observation.}
-#'  \item{inMCD}{A vector of length n indicating if each observation is
-#'    within the MCD subset.}
-#'  \item{Fparam}{The estimated parameters of the F distribution of MCD
-#'    distances.}
-#' }
-#'
-#' @importFrom robustbase covMcd
-#' @export
-PC.robdist_subset <- function(U){
-
-  n <- nrow(U)
-  Q <- ncol(U)
-
-  # Split data into three subsets.
-  t <- n #total number of time points
-  t2 <- floor(t/3)*3 #truncate time series so t divisible by 3
-  starts <- 1:3
-  ends <- (t2-2):t2
-
-  # Compute estimates for each subset.
-  ctr <- matrix(nrow=Q, ncol=3) #store 3 estimates of center
-  cov <- array(dim=c(Q, Q, 3))  #store 3 estimates of covariance
-  inMCD <- rep(FALSE, t)
-  for(k in 1:3){ #three subsets
-    times.k <- seq(starts[k],ends[k],3)
-    U.k <- U[times.k,]
-    MCD.k <- covMcd(U.k) #from robustbase package
-    ctr[,k] <- MCD.k$center
-    cov[,,k] <- MCD.k$cov
-    inMCD.k <- times.k[MCD.k$mcd.wt==1]
-    inMCD[inMCD.k] <- TRUE
-  }
-
-  # Compute average center and scale across subsets.
-  ctr <- rowMeans(ctr)
-  cov <- apply(cov, c(1,2), mean)
-
-  # Compute MCD distances.
-  mah <- mahalanobis(U, ctr, cov) #compute distance for all time points
-
-  # Rescale based on F parameter estimates.
-  Fparam <- fit.F(Q, t2/3, length(inMCD.k))
-
-  # Scale left-out observations to follow F-distribution.
-  scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m)
-  mah[!inMCD] <- scale*mah[!inMCD] #apply scale to obs not in MCD
-
-  # Match 10th quantile of sample and F distributions.
-  mah[!inMCD] <- mah[!inMCD] * qf(0.1, df1=Fparam$df[1], df2=Fparam$df[2]) /
-    quantile(mah[!inMCD], 0.1) #match 10th quantile
-
-  result <- list(mah, inMCD, Fparam)
-  names(result) <- c('robdist','inMCD','Fparam')
-  return(result)
-}
-
 #' Computes MCD distances.
 #'
 #' Computes robust minimum covariance determinant (MCD) distances across
@@ -115,17 +42,16 @@ PC.robdist <- function(U){
   inMCD <- 1:n %in% best
   U_in <- U[best,] # observations that are used for the MCD estimates calculation
   xbar_star <- colMeans(U_in) # MCD estimate of mean
-  U_ins <- scale(U_in, center = TRUE, scale = FALSE )
+  U_ins <- scale(U_in, center = TRUE, scale = FALSE) # Damon: replace with U_ins - xbar_star?
   nU <- nrow(U_ins)
   S_star <- (t(U_ins) %*% U_ins)/(nU-1) # MCD estimate of covariance
   mah <- (apply(U,1, function(x) t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)))
   # Scale left-out observations to follow F-distribution.
   Fparam <- fit.F(Q, n, sum(inMCD))
-  # Scale left-out observations to follow F-distribution.
-  scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m) 
-  mah[!inMCD] <- scale*mah[!inMCD] 
+  outMCD_scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m) 
+  #mah[!inMCD] <- outMCD_scale*mah[!inMCD] # Now, return scale and mah separately.
   
-  result <- list(mah,inMCD, Fparam)
-  names(result) <- c('robdist','inMCD', 'Fparam')
+  result <- list(mah, inMCD, outMCD_scale, Fparam)
+  names(result) <- c("mah", "inMCD", "outMCD_scale", "Fparam")
   return(result)
 }
