@@ -4,7 +4,7 @@
 #' @param projection_methods Vector of projection methods to use. Choose at least
 #'  one of the following: \code{"PCA_var"} for PCA + variance, \code{"PCA_kurt"}
 #'  for PCA + kurtosis, and \code{"PCATF"} for PCA Trend Filtering + variance.
-#'  Or, use \code{"all"} to use all methods. Default is \code{c("PCA_var")}.
+#'  Or, use \code{"all"} to use all methods. Default is \code{c("PCA_kurt")}.
 #' 
 #'  clever will use all combinations of the requested projection and 
 #'  outlyingness methods that make sense. For example, if  
@@ -48,7 +48,7 @@
 #'  \code{4}, or \eqn{4 * median}.
 #' @param MCD_cutoff  The outlier cutoff quantile for MCD distance. Only used if 
 #'  \code{"robdist" \%in\% projection_methods | "robdist_subset" \%in\% projection_methods} 
-#'  and \code{id_outliers}. Default is \code{0.99}, for the \eqn{0.99} quantile.
+#'  and \code{id_outliers}. Default is \code{0.9999}, for the \eqn{0.9999} quantile.
 #'  The quantile is computed from the estimated F distribution.
 #' @param lev_images Should leverage images be computed? If \code{FALSE} memory is
 #'  conserved. Default is \code{FALSE}.
@@ -151,7 +151,7 @@
 #' clev = clever(X)
 clever = function(
   X,
-  projection_methods = "PCA_var",
+  projection_methods = "PCA_kurt",
   outlyingness_methods = "leverage",
   DVARS = TRUE,
   PCATF_kwargs = NULL,
@@ -159,7 +159,7 @@ clever = function(
   kurt_detrend = TRUE,
   id_outliers = TRUE,
   lev_cutoff = 4,
-  MCD_cutoff = 0.99,
+  MCD_cutoff = 0.9999,
   lev_images = TRUE,
   verbose = FALSE) {
 
@@ -274,8 +274,8 @@ clever = function(
     outlier_measures$DVARS_ZD <- X_DVARS$ZD
 
     if(id_outliers){
-      outlier_cutoffs$DVARS_DPD <- qnorm(1-.05/T_)
-      outlier_cutoffs$DVARS_ZD <- 5
+      outlier_cutoffs$DVARS_DPD <- 5
+      outlier_cutoffs$DVARS_ZD <- qnorm(1-.05/T_)
       
       outlier_flags$DVARS_DPD <- X_DVARS$DPD > outlier_cutoffs$DVARS_DPD
       outlier_flags$DVARS_ZD <- X_DVARS$ZD > outlier_cutoffs$DVARS_ZD
