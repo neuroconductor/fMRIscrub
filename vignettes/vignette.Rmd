@@ -42,10 +42,7 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 devtools::install_github('mandymejia/clever')
-```
-
-```{r}
-roxygen2::roxygenize("..")
+library(clever)
 ```
 
 ## Tutorial Data
@@ -57,7 +54,6 @@ ABIDE is a publicly available resource of neuroimaging and phenotypic informatio
 Here, we will run through a simple example. First let's pull the data, as follows:
 
 ```{r, warning = FALSE, message = FALSE}
-#library(clever)
 data(Dat1)
 data(Dat2)
 ```
