@@ -38,34 +38,6 @@ scale_med <- function(mat){
   return(out)
 }
 
-#' Computes the log likelihood of a sample of values from an F distribution.
-#'
-#' @param par A vector of length two which contains the degrees of freedom values.
-#' @param vals A vector of values for which log likelihood will be calculated.
-#' @param cutoff Values greater than the cutoff are removed before log likelihood calculation.
-#'
-#' @return A scalar which represents the log likelihood.
-logL.F <- function(par, vals, cutoff){
-  df1 <- par[1]
-  df2 <- par[2]
-  vals <- vals[vals <= cutoff]
-  return(-1*sum(log(df(vals, df1, df2)) - log(pf(cutoff, df1, df2))))
-}
-
-#' Computes the log likelihood of a sample of values from a log normal distribution.
-#'
-#' @param par A vector of length two which contains the degrees of freedom values.
-#' @param vals A vector of values for which log likelihood will be calculated.
-#' @param cutoff Values greater than the cutoff are removed before log likelihood calculation.
-#'
-#' @return A scalar which represents the log likelihood.
-logL.lnorm <- function(par, vals, cutoff){
-  mean <- par[1]
-  sd <- par[2]
-  vals <- vals[vals <= cutoff]
-  return(-1*sum(log(dlnorm(vals, mean, sd)) - log(plnorm(cutoff, mean, sd))))
-}
-
 #' Estimates the trend of \code{ts} using a robust discrete cosine transform.
 #'
 #' @param ts A numeric vector to detrend.

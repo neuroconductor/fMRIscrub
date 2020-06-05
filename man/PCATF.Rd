@@ -9,6 +9,7 @@ PCATF(
   X.svd = NULL,
   solve_directions = TRUE,
   K = NULL,
+  max_K = 100,
   lambda = 0.5,
   niter_max = 1000,
   tol = 1e-08,
@@ -24,10 +25,9 @@ this argument if the svd has already been computed. Default NULL.}
 \item{solve_directions}{Should the principal directions be solved for? These
 will be needed to display the leverage images for outlying observations.}
 
-\item{K}{The number of PCs to solve for, or \code{"mean var"}, in which case
-the number of PCs will be the amount of regular PCs with variance above
-the mean. The "mean var" option is deprecated, since clever now calculates this
- value outside of this function and passes the value directly to K as an integer.}
+\item{K}{(Optional) The number of PCs to solve for. If not provided, the
+number of PCs will be the amount of regular PCs with variance above
+the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
 Default is .5 . Can be NULL (lets algorithm decide).}

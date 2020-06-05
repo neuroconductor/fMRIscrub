@@ -5,10 +5,9 @@
 #'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
 #'	will be needed to display the leverage images for outlying observations.
-#' @param K The number of PCs to solve for, or \code{"mean var"}, in which case
-#'	the number of PCs will be the amount of regular PCs with variance above
-#'	the mean. The "mean var" option is deprecated, since clever now calculates this
-#'  value outside of this function and passes the value directly to K as an integer.
+#' @param K (Optional) The number of PCs to solve for. If not provided, the
+#'	number of PCs will be the amount of regular PCs with variance above
+#'	the mean, up to 100 PCs. 
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
 #'	Default is .5 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
@@ -20,23 +19,29 @@
 #' @importFrom glmgen trendfilter
 #' @importFrom far orthonormalization
 #' @export
-PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
+PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, max_K=100, lambda=.5,
   niter_max = 1000, tol = 1e-8, verbose=FALSE){
+
+  stopifnot(is.numeric(X))
+  if(is.null(X.svd)){ X.svd <- svd(X) }
+  stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
+  stopifnot(is.logical(solve_directions))
+  if(is.null(K)){
+    K <- length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))
+    K <- min(100, K)
+  } 
+  stopifnot(is.numeric(K))
+  stopifnot(K==round(K))
+  stopifnot(is.numeric(lambda))
+  stopifnot(lambda > 0)
+  stopifnot(is.numeric(niter_max))
+  stopifnot(niter_max==round(niter_max))
+  stopifnot(is.numeric(tol))
+  stopifnot(tol > 0)
+  stopifnot(is.logical(verbose))
 
   N_ <- ncol(X)
   T_ <- nrow(X)
-  if(is.null(X.svd)){ X.svd <- svd(X) }
-
-  if(is.null(K)){
-    K <- T_
-  } else if(is.character(K)){
-    if('mean var' %in% K){
-      K <- choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL)
-      K <- K[length(K)]
-    }
-  } else {
-    if(!is.integer(K)){ print('K argument to PCATF is not recognized.') }
-  }
 
   U <- matrix(NA, nrow = T_, ncol = K)
   D <- rep(NA, K)
