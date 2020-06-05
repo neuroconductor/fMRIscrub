@@ -173,8 +173,7 @@ clever = function(
   all_projection_methods <- c("PCA_var", "PCA_kurt", "PCATF")
   all_outlyingness_methods <- c("leverage", "robdist", "robdist_subset")
   all_valid_methods <- c(
-    paste('PCA_var', c('leverage', 'robdist', 'robdist_subset'), sep='__'),
-    c("PCA_kurt__leverage", "PCA_kurt__robdist", "PCA_kurt__robdist_subset", "PCATF__leverage")
+    c("PCA_var__leverage", "PCA_kurt__leverage", "PCA_kurt__robdist", "PCA_kurt__robdist_subset", "PCATF__leverage")
   )
 
   TOL <- 1e-8 # cutoff for detection of zero variance/MAD voxels
