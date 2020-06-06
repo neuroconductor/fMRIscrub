@@ -13,7 +13,7 @@ scrubbing method. Column names should identify the method as one of the followin
 \code{PCA_var__robdist}, \code{PCA_kurt__robdist},
 \code{DVARS_DPD}, \code{DVARS_ZD}, or \code{FD}.}
 
-\item{cuts}{A 1 x m data.frame with each colum being the cutoff for a 
+\item{cuts}{A 1 x m data.frame with each column being the cutoff for a 
 scrubbing method. Column names should be the same as those provided for \code{meas}.}
 
 \item{name}{The name of the type of outlyingness measure being plotted:

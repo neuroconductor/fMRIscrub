@@ -9,7 +9,6 @@ PCATF(
   X.svd = NULL,
   solve_directions = TRUE,
   K = NULL,
-  max_K = 100,
   lambda = 0.5,
   niter_max = 1000,
   tol = 1e-08,

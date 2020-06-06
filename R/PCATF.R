@@ -19,7 +19,7 @@
 #' @importFrom glmgen trendfilter
 #' @importFrom far orthonormalization
 #' @export
-PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, max_K=100, lambda=.5,
+PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   niter_max = 1000, tol = 1e-8, verbose=FALSE){
 
   stopifnot(is.numeric(X))
@@ -28,7 +28,7 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, max_K=100, lam
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){
     K <- length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))
-    K <- min(100, K)
+    K <- min(5, K)
   } 
   stopifnot(is.numeric(K))
   stopifnot(K==round(K))
@@ -63,11 +63,9 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, max_K=100, lam
       v <- far::orthonormalization(
       crossprod(X, u), basis = FALSE, norm = TRUE)
       diff <- sqrt(mean((u - u.last)^2))
-      if(diff < tol){
-        break
-      }
-      if(verbose){
-        if(i == niter_max){ print(paste0('PC ', k, ' did not converge.')) }
+      if(diff < tol){ break }
+      if(verbose & i == niter_max){
+        print(paste0('PC ', k, ' did not converge.'))
       }
     }
 

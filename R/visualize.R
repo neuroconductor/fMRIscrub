@@ -5,7 +5,7 @@
 #'  \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage},
 #'  \code{PCA_var__robdist}, \code{PCA_kurt__robdist},
 #'  \code{DVARS_DPD}, \code{DVARS_ZD}, or \code{FD}.
-#' @param cuts A 1 x m data.frame with each colum being the cutoff for a 
+#' @param cuts A 1 x m data.frame with each column being the cutoff for a 
 #'  scrubbing method. Column names should be the same as those provided for \code{meas}.
 #' @param name The name of the type of outlyingness measure being plotted:
 #'  \code{Leverage}, \code{RobDist}, \code{RobDist Subset}, \code{FD}, \code{DVARS}.
@@ -60,17 +60,6 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
 
   mcd_meas <- log_meas <- name == "RobDist"
 
-  # Log values if applicable.
-  if(log_meas){
-    for(i in 1:length(meas)){
-      n <- names(meas)[i]
-      meas[[n]] <- log(meas[[n]], base = 10)
-    }
-    if(id_outs){
-      for(cut in cuts){ cut <- log(cut+1, base=10) }
-    }
-  }
-
   # For each measure, collect relevant information into a dataframe.
   d <- list()
   for(i in 1:length(meas)){
@@ -79,18 +68,36 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
 
     if(mcd_meas){
       d[[n]]$inMCD <- ifelse(is.na(MCD_scale[[n]]), "In MCD", "Not In MCD")
+      this_scale <- unique(MCD_scale[[n]][!is.na(MCD_scale[[n]])])
     }
 
     if(id_outs){
-      d[[n]]$out <- meas[[n]] > cuts[[n]]
-      if(mcd_meas){ d[[n]]$out <- d[[n]]$out & (d[[n]]$inMCD == "Not In MCD") }
+      if(mcd_meas){
+        cuts[[n]] <- cuts[[n]] / this_scale
+        d[[n]]$out <- meas[[n]] > cuts[[n]]
+        d[[n]]$out <- d[[n]]$out & (d[[n]]$inMCD == "Not In MCD")
+      } else {
+        d[[n]]$out <- meas[[n]] > cuts[[n]]
+      }
+    }
+  }
+
+  # Log values if applicable.
+  if(log_meas){
+    for(i in 1:length(meas)){
+      n <- names(meas)[i]
+      meas[[n]] <- log(meas[[n]], base=10)
+      d[[n]]$meas <- log(d[[n]]$meas, base=10)
+    }
+    if(id_outs){
+      for(i in 1:length(cuts)){ cuts[[i]] <- log(cuts[[i]]+1, base=10) }
     }
   }
 
   # Get the upper y-axis limit.
   ylim_max <- ifelse(
     ((name=="Leverage") & (!("PCATF__leverage" %in% names(meas)))),
-    1, max(sapply(meas, max))
+    1, max(max(as.numeric(cuts)), max(sapply(meas, max)))
   )
   ylim_max <- ylim_max*1.05
 
@@ -267,16 +274,21 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
     )))
   }
   if(methods_any$DVARS){
+    DVARS_add0 <- x$outlier_measures[methods$DVARS]
+    for(d in 1:length(DVARS_add0)){
+      DVARS_add0[[d]] <- c(0, DVARS_add0[[d]])
+    }
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = x$outlier_measures[methods$DVARS],
+      meas = DVARS_add0,
       cuts = x$outlier_cutoffs[methods$DVARS],
       name = "DVARS",
       ...
     )))
   }
   if(methods_any$FD){
+    FD_add0 = c(0, FD)
     plots <- append(plots, list(clever_plot_indiv_panel(
-      meas = data.frame(FD=FD),
+      meas = data.frame(FD=FD_add0),
       cuts = data.frame(FD=FD_cut),
       name = "FD",
       ...

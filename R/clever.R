@@ -33,8 +33,8 @@
 #'  should not be used with non-time-series data because the observations are 
 #'  not temporally related. Default is \code{TRUE}.
 #' @param PCATF_kwargs Named list of arguments for PCATF: maximum number of PCs
-#'  to compute \code{K} (Default no maximum/Inf) the trend filtering parameter 
-#'  lambda (Default \code{0.5}), the number of iterations \code{niter_max} (Default 
+#'  to compute \code{K} (Default 1000) the trend filtering parameter lambda
+#'  (Default \code{0.5}), the number of iterations \code{niter_max} (Default 
 #'  \code{1000}), convergence tolerance \code{tol} (Default \code{1e-8}), and option 
 #'  to print updates \code{verbose} (Default \code{FALSE}).
 #' @param kurt_quantile What cutoff quantile for kurtosis should be used? This
@@ -198,7 +198,7 @@ clever = function(
   stopifnot(is.logical(PCs_detrend))
   if(!identical(PCATF_kwargs, NULL)){
     names(PCATF_kwargs) <- match.arg(
-      PCATF_kwargs, c("K", "lambda", "niter_max", "tol", "verbose"),
+      names(PCATF_kwargs), c("K", "lambda", "niter_max", "tol", "verbose"),
       several.ok=TRUE)
     if(length(PCATF_kwargs) != length(unique(unlist(PCATF_kwargs)))){
       stop("Duplicate PCATF_kwargs were given.\n")
@@ -313,13 +313,8 @@ clever = function(
 
   # Compute PCATF, if requested.
   if("PCATF" %in% projection_methods){
-    PCATF_K <- length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))
-    if("K" %in% names(PCATF_kwargs)){ 
-      PCATF_K <- min(PCATF_kwargs[["K"]], PCATF_K)
-      PCATF_kwargs[["K"]] <- NULL
-    }
     X.svdtf <- do.call(PCATF, 
-      c(list(X=X, X.svd=X.svd, solve_directions=solve_directions, K=PCATF_K), PCATF_kwargs))
+      c(list(X=X, X.svd=X.svd, solve_directions=solve_directions), PCATF_kwargs))
     # The PC directions were needed to compute PCATF. If leverage images 
     #   are not wanted, we can now delete the directions to save space.
     if(!lev_images){ X.svd$v <- NULL }
