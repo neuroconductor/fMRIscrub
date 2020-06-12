@@ -47,6 +47,12 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
     DVARS_ZD = "DVARS z-score",
     FD = "Framewise Disp."
   )
+  ylab <- switch(name,
+    Leverage="Leverage",
+    RobDist="Robust Distance",
+    DVARS="DVARS",
+    FD="Framewise Displacement"
+  )
 
   T_ <- length(meas[[1]])
 
@@ -143,7 +149,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
     ))
   #xlab <- ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)")
   ylab <- ifelse("ylab" %in% names(args), args$ylab,
-    ifelse(log_meas, paste0("log(", name, " + 1)"), name))
+    ifelse(log_meas, paste0(ylab, " (log)"), ylab))
   legend.position <- ifelse("show.legend" %in% names(args),
     ifelse(args$show.legend, "right", "none"),
     "right")
@@ -193,7 +199,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
   xticks_width <- max(xticks_width[xticks_width*2 < T_*.9])
   xticks <- c(seq(from=0, to=floor(T_*.9), by=xticks_width), T_)
 
-  plt <- plt + labs(x=xlab, y=ylab, color="Method") +
+  plt <- plt + labs(y=ylab, color="Method") +
     theme_cowplot() +
     #coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)), ylim=c(0, ylim_max*1.2)) + #fix this line
     theme(
@@ -234,6 +240,8 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
   projection_methods = x$params$projection_methods
   outlyingness_methods = x$params$outlyingness_methods
   DVARS = x$params$DVARS
+
+  args <- list(...)
 
   projection_methods_formatted <- list(
     PCA_var = "High-variance PCs",
@@ -300,7 +308,8 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
 
   # Add x-axis label to bottom plot.
   plots[[length(plots)]] <- plots[[length(plots)]] + 
-    theme(axis.title.x=element_text()) + xlab('Index (Time Point)')
+    theme(axis.title.x=element_text()) + 
+    xlab(ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)"))
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
 
