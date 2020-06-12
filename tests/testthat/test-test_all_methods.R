@@ -15,7 +15,7 @@ test_that("clever works with some custom parameter settings", {
     PCATF_kwargs=list(lambda=0.1,niter_max=1100,tol=2e-8),
     kurt_quantile=.95,
     lev_cutoff=5,
-    MCD_cutoff=.9,
+    rbd_cutoff=.9,
     lev_images=FALSE,
     verbose=TRUE)
   myplot <- plot(clev, "all", plot_title="My Plot")
