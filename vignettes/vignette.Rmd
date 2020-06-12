@@ -72,9 +72,12 @@ clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
 clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
 ```
 
-```{r fig.width=8, fig.height=5}
-plot_grid(plot(clever.Dat1.var.lev, plot_title="Dat1", show.legend=FALSE), 
-          plot(clever.Dat2.var.lev, plot_title="Dat2", show.legend=FALSE), nrow=1)
+```{r fig.width=4, fig.height=3}
+plot(clever.Dat1.var.lev, plot_title="Dat1", show.legend=FALSE)
+```
+
+```{r fig.width=4, fig.height=3}
+plot(clever.Dat2.var.lev, plot_title="Dat2", show.legend=FALSE)
 ```
 
 
