@@ -8,10 +8,9 @@
 #' @param cuts A 1 x m data.frame with each column being the cutoff for a 
 #'  scrubbing method. Column names should be the same as those provided for \code{meas}.
 #' @param name The name of the type of outlyingness measure being plotted:
-#'  \code{Leverage}, \code{RobDist}, \code{RobDist Subset}, \code{FD}, \code{DVARS}.
-#' @param MCD_scale A T_ x m data.frame that is the scale for out-of-MCD data
-#'  and NA for in-MCD data, for each method. Only required and used if the 
-#'  measure is robust distance.
+#'  \code{Leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.
+#' @param robdist_info A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
+#'  Fparam. Not required if robust distance-based measures are not being plottted.
 #' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
@@ -20,7 +19,7 @@
 #' @importFrom cowplot theme_cowplot
 #' 
 #' @export
-clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
+clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
   args <- list(...)
 
   # Extra colors:
@@ -67,15 +66,13 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
     d[[n]] <- data.frame(meas=meas[[n]])
 
     if(mcd_meas){
-      d[[n]]$inMCD <- ifelse(is.na(MCD_scale[[n]]), "In MCD", "Not In MCD")
-      this_scale <- unique(MCD_scale[[n]][!is.na(MCD_scale[[n]])])
+      d[[n]]$inMCD <- ifelse(robdist_info[[n]]$inMCD, "In MCD", "Not In MCD")
     }
 
     if(id_outs){
       if(mcd_meas){
-        cuts[[n]] <- cuts[[n]] / this_scale
-        d[[n]]$out <- meas[[n]] > cuts[[n]]
-        d[[n]]$out <- d[[n]]$out & (d[[n]]$inMCD == "Not In MCD")
+        cuts[[n]] <- cuts[[n]] / robdist_info[[n]]$outMCD_scale
+        d[[n]]$out <- (meas[[n]] > cuts[[n]]) & (!robdist_info[[n]]$inMCD)
       } else {
         d[[n]]$out <- meas[[n]] > cuts[[n]]
       }
@@ -118,8 +115,8 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
       }
     } else {
       for(n in names(meas)){
-        any_outs <- any(d[[n]]$out)
-        if(any_outs){
+        if(any(d[[n]]$out)){
+          any_outs <- TRUE
           drop_line[[n]] <- d[[n]][d[[n]]$out,]
           drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - 0.5
           drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + 0.5
@@ -153,6 +150,8 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
 
   # Make ggplot.
   plt <- ggplot()
+
+  # Draw drop-down lines for outliers.
   if(any_outs){
     if(name == 'DVARS'){
       plt <- plt +
@@ -168,6 +167,15 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
       }
     }
   }
+
+  # Outlyingness cutoff line.
+  for(i in 1:length(meas)){
+    n <- names(meas)[i]
+    plt <- plt + geom_hline(yintercept=cuts[[n]], linetype="dashed",
+      color=ifelse(length(meas)==1, "black", colors[n]))
+  }
+
+  # Draw data points (after drop-down lines, so they are drawn on top).
   if(mcd_meas){
     plt <- plt + geom_point(data=d, aes(x=idx, y=meas, color=method, shape=inMCD)) +
       scale_shape_manual(values=c(3, 16))
@@ -177,11 +185,6 @@ clever_plot_indiv_panel <- function(meas, cuts, name, MCD_scale=NULL, ...){
   plt <- plt +
     scale_color_manual(values=colors, labels=name_formatted)
     #scale_fill_manual(values=colors)
-  for(i in 1:length(meas)){
-    n <- names(meas)[i]
-    plt <- plt + geom_hline(yintercept=cuts[[n]], linetype="dashed",
-      color=ifelse(length(meas)==1, "black", colors[n]))
-  }
 
   # Use an optimal spacing between the x-ticks.
   xticks_width <- c(1, 2, 2.5, 3, 5)
@@ -269,7 +272,7 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
       meas = x$outlier_measures[methods$rbd],
       cuts = x$outlier_cutoffs[methods$rbd],
       name = "RobDist",
-      MCD_scale = x$MCD_scale,
+      robdist_info = x$robdist_info,
       ...
     )))
   }

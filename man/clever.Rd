@@ -155,6 +155,24 @@ A clever object, i.e. a list with components
      \item{DVARS_ZD}{Whether each observation surpasses the outlier cutoff.}
    }
  }
+ \item{robdist_info}{
+   \describe{
+     \item{PC_var__robdist}{
+       \describe{
+         \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+         \item{outMCD_scale}{The scale for out-of-MCD observations.}
+         \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+       }
+     }
+     \item{PC_var__robdist}{
+       \describe{
+         \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+         \item{outMCD_scale}{The scale for out-of-MCD observations.}
+         \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+       }
+     }
+   }
+ }
  \item{MCD_scale}{The scale value for out-of-MCD observations, and NA for
    in-MCD observations. NULL if \code{method} is not robust distance.}
  \item{lev_images}{

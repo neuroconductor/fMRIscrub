@@ -4,7 +4,7 @@
 \alias{clever_plot_indiv_panel}
 \title{Plots one or several outlyingness measures of the same type.}
 \usage{
-clever_plot_indiv_panel(meas, cuts, name, MCD_scale = NULL, ...)
+clever_plot_indiv_panel(meas, cuts, name, robdist_info = NULL, ...)
 }
 \arguments{
 \item{meas}{A T_ x m data.frame with each column being the time-course for a 
@@ -17,11 +17,10 @@ scrubbing method. Column names should identify the method as one of the followin
 scrubbing method. Column names should be the same as those provided for \code{meas}.}
 
 \item{name}{The name of the type of outlyingness measure being plotted:
-\code{Leverage}, \code{RobDist}, \code{RobDist Subset}, \code{FD}, \code{DVARS}.}
+\code{Leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.}
 
-\item{MCD_scale}{A T_ x m data.frame that is the scale for out-of-MCD data
-and NA for in-MCD data, for each method. Only required and used if the 
-measure is robust distance.}
+\item{robdist_info}{A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
+Fparam. Not required if robust distance-based measures are not being plottted.}
 
 \item{...}{Additional arguments to ggplot: main, sub, xlab, ...}
 }

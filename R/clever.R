@@ -122,6 +122,24 @@
 #'      \item{DVARS_ZD}{Whether each observation surpasses the outlier cutoff.}
 #'    }
 #'  }
+#'  \item{robdist_info}{
+#'    \describe{
+#'      \item{PC_var__robdist}{
+#'        \describe{
+#'          \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
+#'          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+#'        }
+#'      }
+#'      \item{PC_var__robdist}{
+#'        \describe{
+#'          \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
+#'          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+#'        }
+#'      }
+#'    }
+#'  }
 #'  \item{MCD_scale}{The scale value for out-of-MCD observations, and NA for
 #'    in-MCD observations. NULL if \code{method} is not robust distance.}
 #'  \item{lev_images}{
@@ -238,7 +256,7 @@ clever = function(
   if(id_outliers){
     outlier_cutoffs <- outlier_flags <- setNames(vector("list", length(methods)), methods)
   }
-  MCD_scale <- vector("list")
+  robdist_info <- vector("list")
 
   # Center and scale the data robustly.
   # Do it here instead of calling scale_med to save memory.
@@ -443,10 +461,14 @@ clever = function(
     }
     if(outlyingness_method == "robdist"){
       measure <- outlyingness_method.fun(U_meas)
-      this_MCD_scale <- ifelse(measure$inMCD, NA, measure$outMCD_scale)
-      Fparam <- measure$Fparam
+      this_rbd_info <- list(
+        inMCD=measure$inMCD,
+        outMCD_scale=measure$outMCD_scale,
+        Fparam=c(measure$Fparam$c, measure$Fparam$m, measure$Fparam$df[1], measure$Fparam$df[2])
+      )
+      names(this_rbd_info$Fparam) = c("c", "m", "df1", "df2")
       measure <- measure$mah
-      MCD_scale[[method_combo]] <- this_MCD_scale
+      robdist_info[[method_combo]] <- this_rbd_info
     } else {
       measure <- outlyingness_method.fun(U_meas)
     }
@@ -459,9 +481,9 @@ clever = function(
         out_cutoff <- lev_cutoff * median(measure)
         out_flag <- measure > out_cutoff
       } else if(outlyingness_method == "robdist"){
-        out_cutoff <- qf(p=rbd_cutoff, df1=Fparam$df[1], df2=Fparam$df[2])
-        out_flag <- measure*this_MCD_scale > out_cutoff
-        out_flag[is.na(out_flag)] <- FALSE
+        out_cutoff <- qf(p=rbd_cutoff, df1=this_rbd_info$Fparam[["df1"]], df2=this_rbd_info$Fparam[["df2"]])
+        out_flag <- measure*this_rbd_info$outMCD_scale > out_cutoff
+        out_flag[this_rbd_info$inMCD] <- FALSE
       } else {
         stop("INTERNAL ERROR: outlyingness_method not recognized.")
       }
@@ -493,7 +515,7 @@ clever = function(
   # Conserve memory.
   gc()
 
-  if(length(MCD_scale) < 1){MCD_scale <- NULL}
+  if(length(robdist_info) < 1){robdist_info <- NULL}
 
   # Organize the output.
   if(verbose){ print("Done! Organizing results.") }
@@ -502,7 +524,7 @@ clever = function(
     projections = projections, 
     outlier_measures = outlier_measures)
   if("robdist" %in% outlyingness_methods){
-    result$MCD_scale <- MCD_scale
+    result$robdist_info <- robdist_info
   }
   if(id_outliers){
     result$outlier_cutoffs <- outlier_cutoffs
