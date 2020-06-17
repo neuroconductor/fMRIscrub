@@ -45,13 +45,13 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
     PCA_kurt__robdist = "High-kurtosis PCs",
     DVARS_DPD = "DVARS Delta % D",
     DVARS_ZD = "DVARS z-score",
-    FD = "Framewise Disp."
+    FD = "Motion (FD)"
   )
   ylab <- switch(name,
     Leverage="Leverage",
     RobDist="Robust Distance",
     DVARS="DVARS",
-    FD="Framewise Displacement"
+    FD="Motion (FD)"
   )
 
   T_ <- length(meas[[1]])
