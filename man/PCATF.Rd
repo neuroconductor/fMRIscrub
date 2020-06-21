@@ -29,7 +29,7 @@ number of PCs will be the amount of regular PCs with variance above
 the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
-Default is .5 . Can be NULL (lets algorithm decide).}
+Default is 0.5 . Can be NULL (lets algorithm decide).}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 

@@ -9,7 +9,7 @@
 #'	number of PCs will be the amount of regular PCs with variance above
 #'	the mean, up to 100 PCs. 
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
-#'	Default is .5 . Can be NULL (lets algorithm decide).
+#'	Default is 0.5 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
 #' @param tol The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
@@ -28,11 +28,19 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){
     K <- length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))
-    K <- min(5, K)
+    K <- min(100, K)
   } 
   stopifnot(is.numeric(K))
   stopifnot(K==round(K))
   stopifnot(is.numeric(lambda))
+  if(lambda == 0){ 
+    return(
+      list(u = matrix(X.svd$u[, 1:K], ncol=K),
+           d = X.svd$d[1:K],
+           v = matrix(X.svd$v[, 1:K], ncol=K)
+      )
+    )
+  }
   stopifnot(lambda > 0)
   stopifnot(is.numeric(niter_max))
   stopifnot(niter_max==round(niter_max))
@@ -59,9 +67,15 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
       tf.kwargs <- list(y = scale(X %*% v, center = FALSE, scale = d),
       x = 1:T_, nlambda = 1, k = 0)
       if(!is.null(lambda)){ tf.kwargs$lambda <- lambda }
-      u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
-      v <- far::orthonormalization(
-      crossprod(X, u), basis = FALSE, norm = TRUE)
+      tryCatch({
+        u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
+        v <- far::orthonormalization(crossprod(X, u), basis = FALSE, norm = TRUE)
+      }, error = function(e) {
+        # colinears vectors error
+        u <- u.last
+        if(verbose){print(paste0('Co-linear vectors: PC ', k, ' did not converge.'))
+      }
+      })
       diff <- sqrt(mean((u - u.last)^2))
       if(diff < tol){ break }
       if(verbose & i == niter_max){
