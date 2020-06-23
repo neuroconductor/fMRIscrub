@@ -9,7 +9,7 @@
 #'	number of PCs will be the amount of regular PCs with variance above
 #'	the mean, up to 100 PCs. 
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
-#'	Default is 0.5 . Can be NULL (lets algorithm decide).
+#'	Default is 0.05 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
 #' @param tol The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
@@ -19,8 +19,8 @@
 #' @importFrom glmgen trendfilter
 #' @importFrom far orthonormalization
 #' @export
-PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
-  niter_max = 1000, tol = 1e-8, verbose=FALSE){
+PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.05,
+  niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   stopifnot(is.numeric(X))
   if(is.null(X.svd)){ X.svd <- svd(X) }
@@ -44,8 +44,8 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   stopifnot(lambda > 0)
   stopifnot(is.numeric(niter_max))
   stopifnot(niter_max==round(niter_max))
-  stopifnot(is.numeric(tol))
-  stopifnot(tol > 0)
+  stopifnot(is.numeric(TOL))
+  stopifnot(TOL > 0)
   stopifnot(is.logical(verbose))
 
   N_ <- ncol(X)
@@ -67,17 +67,20 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
       tf.kwargs <- list(y = scale(X %*% v, center = FALSE, scale = d),
       x = 1:T_, nlambda = 1, k = 0)
       if(!is.null(lambda)){ tf.kwargs$lambda <- lambda }
-      tryCatch({
-        u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
-        v <- far::orthonormalization(crossprod(X, u), basis = FALSE, norm = TRUE)
+      u <- do.call(glmgen::trendfilter, tf.kwargs)$beta
+      if(any(is.na(u))){ 
+        u <- u.last
+        break
+      }
+      v <- tryCatch({
+        far::orthonormalization(crossprod(X, u), basis = FALSE, norm = TRUE)
       }, error = function(e) {
         # colinears vectors error
-        u <- u.last
-        if(verbose){print(paste0('Co-linear vectors: PC ', k, ' did not converge.'))
-      }
+        if(verbose){print(paste0('Co-linear vectors: PC ', k, ' did not converge.'))}
+        return(v)
       })
       diff <- sqrt(mean((u - u.last)^2))
-      if(diff < tol){ break }
+      if(diff < TOL){ break }
       if(verbose & i == niter_max){
         print(paste0('PC ', k, ' did not converge.'))
       }

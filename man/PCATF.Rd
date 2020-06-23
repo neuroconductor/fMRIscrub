@@ -11,7 +11,7 @@ PCATF(
   K = NULL,
   lambda = 0.5,
   niter_max = 1000,
-  tol = 1e-08,
+  TOL = 1e-08,
   verbose = FALSE
 )
 }
@@ -33,9 +33,9 @@ Default is 0.5 . Can be NULL (lets algorithm decide).}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 
-\item{tol}{The maximum 2-norm between iterations to accept as convergence.}
-
 \item{verbose}{Print statements about convergence?}
+
+\item{tol}{The maximum 2-norm between iterations to accept as convergence.}
 }
 \value{
 SVD The trend-filtered SVD decomposition of X (list with u, d, v).
