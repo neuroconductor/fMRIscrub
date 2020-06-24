@@ -389,7 +389,7 @@ clever = function(
     } else {
       projection$svd <- X.svd
     }
-    projection$svd$u <- projection$svd$u[,chosen_PCs_ordered]
+    projection$svd$u <- matrix(projection$svd$u[,chosen_PCs_ordered], nrow=T_)
     if(PCs_detrend & projection_method!="PCATF"){
       projection$svd$u_detrended <- projection$svd$u - apply(projection$svd$u, 2, est_trend)
       attributes(projection$svd$u_detrended)$dimnames <- NULL
@@ -438,13 +438,13 @@ clever = function(
         } else {
           projection$indices <- projection$indices[1:max_keep]
         }
-        projection$svd$u <- projection$svd$u[,1:max_keep]
+        projection$svd$u <- matrix(projection$svd$u[,1:max_keep], ncol=T_)
         if(PCs_detrend & projection_method!="PCATF"){
-          projection$svd$u_detrended <- projection$svd$u_detrended[,1:max_keep]
+          projection$svd$u_detrended <- matrix(projection$svd$u_detrended[,1:max_keep], ncol=T_)
         }
         projection$svd$d <- projection$svd$d[1:max_keep]
         if(solve_directions){
-          projection$svd$v <- projection$svd$v[,1:max_keep]
+          projection$svd$v <- matrix(projection$svd$v[,1:max_keep], ncol=T_)
         }
       }
     }

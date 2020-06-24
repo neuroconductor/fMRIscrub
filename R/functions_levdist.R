@@ -40,12 +40,12 @@ PC.robdist <- function(U){
   
   best <- c(cov.mcd(U)$best)
   inMCD <- 1:n %in% best
-  U_in <- U[best,] # observations that are used for the MCD estimates calculation
+  U_in <- matrix(U[best,], ncol=Q) # observations that are used for the MCD estimates calculation
   xbar_star <- colMeans(U_in) # MCD estimate of mean
   U_ins <- scale(U_in, center = TRUE, scale = FALSE) # Damon: replace with U_ins - xbar_star?
   nU <- nrow(U_ins)
   S_star <- (t(U_ins) %*% U_ins)/(nU-1) # MCD estimate of covariance
-  mah <- (apply(U,1, function(x) t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)))
+  mah <- (apply(U, 1, function(x) t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)))
   # Scale left-out observations to follow F-distribution.
   Fparam <- fit.F(Q, n, sum(inMCD))
   outMCD_scale <- Fparam$c * (Fparam$m - Q + 1) / (Q * Fparam$m) 

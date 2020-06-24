@@ -60,7 +60,7 @@ not temporally related. Default is \code{TRUE}.}
 
 \item{PCATF_kwargs}{Named list of arguments for PCATF: maximum number of PCs
 to compute \code{K} (Default 1000) the trend filtering parameter lambda
-(Default \code{0.5}), the number of iterations \code{niter_max} (Default 
+(Default \code{0.05}), the number of iterations \code{niter_max} (Default 
 \code{1000}), convergence tolerance \code{tol} (Default \code{1e-8}), and option 
 to print updates \code{verbose} (Default \code{FALSE}).}
 
