@@ -7,7 +7,9 @@
 #' @return A vector of length n with the leverage of each observation.
 #' @export
 PC.leverage <- function(U){
-  return(diag(U %*% t(U)))
+  #diag(U %*% t(U))
+  # Below line yields identical results as above line, but it's faster.
+  apply(U, 1, function(x){sum(x*x)})
 }
 
 #' Computes MCD distances.
