@@ -368,19 +368,19 @@ clever = function(
     if(!lev_images){ X.svd$v <- NULL }
 
     # Remove trend-filtered PCs with constant scores.
-    # TO DO: Reconsider this?
+    # TO DO: Reconsider adding this back?
     tf_zero_var <- apply(X.svdtf$u, 2, var) < TOL
     if(any(tf_zero_var)){
       if(all(tf_zero_var)){
         stop("Error: All trend-filtered PC scores are zero-variance.")
       }
-      warning(paste(
-        "Warning:", sum(tf_zero_var), 
-        "trend-filtered PC scores are zero-variance. Removing these PCs.\n"
-      ))
-      X.svdtf$u <- X.svdtf$u[,!tf_zero_var]
-      X.svdtf$d <- X.svdtf$d[!tf_zero_var]
-      if(lev_images){ X.svdtf$v <- X.svdtf$v[,!tf_zero_var] }
+      # warning(paste(
+      #   "Warning:", sum(tf_zero_var), 
+      #   "trend-filtered PC scores are zero-variance. Removing these PCs.\n"
+      # ))
+      # X.svdtf$u <- X.svdtf$u[,!tf_zero_var]
+      # X.svdtf$d <- X.svdtf$d[!tf_zero_var]
+      # if(lev_images){ X.svdtf$v <- X.svdtf$v[,!tf_zero_var] }
     }
   }
   gc()
