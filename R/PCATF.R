@@ -5,11 +5,11 @@
 #'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
 #'	will be needed to display the leverage images for outlying observations.
-#' @param K (Optional) The number of PCs to solve for. If not provided, the
-#'	number of PCs will be the amount of regular PCs with variance above
+#' @param K (Optional) The number of trend-filtered PCs to solve for. If not 
+#'  provided, it will be set to the number of regular PCs with variance above
 #'	the mean, up to 100 PCs.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
-#'	Default is 0.05 . Can be NULL (lets algorithm decide).
+#'	Default is 0.5 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
 #' @param TOL The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
@@ -37,9 +37,11 @@
 #' out3_svd$d
 #' plot(rowSums(out3_svd$u^2), ty='l')
 #' @export
-PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.05,
-                  niter_max = 1000, TOL = 1e-8, verbose=FALSE){
+PCATF <- function(
+  X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
+  niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
+  # Check arguments.
   stopifnot(is.numeric(X))
   if(is.null(X.svd)){ X.svd <- svd(X) }
   stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
