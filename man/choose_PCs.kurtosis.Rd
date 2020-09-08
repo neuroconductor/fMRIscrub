@@ -4,14 +4,7 @@
 \alias{choose_PCs.kurtosis}
 \title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
 \usage{
-choose_PCs.kurtosis(
-  svd,
-  kurt_quantile = 0.9,
-  detrend = TRUE,
-  max_keep = NULL,
-  min_keep = 1,
-  n_sim = 5000
-)
+choose_PCs.kurtosis(svd, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
@@ -20,12 +13,6 @@ choose_PCs.kurtosis(
 
 \item{detrend}{Should PCs be detrended before measuring kurtosis? Default is
 \code{TRUE}. Recommended if observations represent a time series.}
-
-\item{max_keep}{If specified, the total number kept will be at most this
-value.}
-
-\item{min_keep}{The total number kept will be at least this
-value. The default value is \code{1}.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis. Only used if a new simulation is performed. (If
@@ -42,6 +29,5 @@ First, the largest PCs which together explain 90% of the variance are
  be disabled). The kurtosis cutoff is then the 90% quantile of the sampling
  distribution of kurtosis for Normal data of the same length as the PCs; it
  is estimated by simulation or calculated from the theoretical asymptotic
- distribution if the PCs are long enough. Finally, the total number kept is
- constrained by the \code{max_keep} and \code{min_keep} arguments.
+ distribution if the PCs are long enough.
 }

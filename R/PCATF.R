@@ -11,13 +11,13 @@
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
 #'	Default is 0.05 . Can be NULL (lets algorithm decide).
 #' @param niter_max The number of iterations to use for approximating the PC.
-#' @param tol The maximum 2-norm between iterations to accept as convergence.
+#' @param TOL The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
 #'
 #' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 #'
 #' @importFrom glmgen trendfilter
-#' @example
+#' @examples
 #' set.seed(12345)
 #' U = matrix(rnorm(100*3),ncol=3)
 #' U[20:23,1] = U[20:23,1] + 3
@@ -45,7 +45,7 @@ PCATF <- function(X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.05,
   stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){
-    K <- length(choose_PCs.variance(X.svd, max_keep=NULL, min_keep=NULL))
+    K <- length(choose_PCs.variance(X.svd))
     K <- min(100, K)
   }
   stopifnot(is.numeric(K))

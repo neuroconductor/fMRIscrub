@@ -42,6 +42,9 @@ Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
 devtools::install_github('mandymejia/clever')
+```
+
+```{r}
 library(clever)
 ```
 
@@ -84,9 +87,9 @@ plot(clever.Dat2.var.lev, plot_title="Dat2", show.legend=FALSE)
 We could also use all combinations of projection and outlyingness methods and compare them:
 
 ```{r}
-clever.Dat1 = clever(Dat1, projection_methods="all", outlyingness_methods="all", 
+clever.Dat1 = clever(Dat1, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
-clever.Dat2 = clever(Dat2, projection_methods="all", outlyingness_methods="all", 
+clever.Dat2 = clever(Dat2, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
 ```
 

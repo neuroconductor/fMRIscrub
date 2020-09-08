@@ -18,12 +18,12 @@ sd_hIQR <- function(x, d=1){
 #' Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
 #' 
 #' Differences from implementation at github.com/asoroosh/DVARS:
-#' * The matrix is transposed.
-#' * We center and scale the matrix differently (see clever/scale_med)
-#' * We set all zero-variance voxels to zero during centering & scaling. This means
-#'    that when we remove constant 0 or NA voxels, constant non-zero voxels are also 
-#'    removed.
-#' * We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
+#' \itemize{
+#'  \item The matrix is transposed.
+#'  \item We center and scale the matrix differently (see \code{\link{scale_med}})
+#'  \item We set all zero-variance voxels to zero during centering & scaling. This means that when we remove constant 0 or NA voxels, constant non-zero voxels are also removed.
+#'  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
+#' }
 #'
 #' @param X a T x N numeric matrix representing an fMRI run.
 #' @param normalize Normalize the data as proposed in the original paper? Default is 
@@ -32,9 +32,9 @@ sd_hIQR <- function(x, d=1){
 #'  paper.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
+#' @export
 #' 
-#' 
-compute_DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
+DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
   T_ <- nrow(X)
   N_ <- ncol(X)
 
@@ -61,7 +61,7 @@ compute_DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
   D_3D <- (Diff^2)/4
   A <- apply(A_3D, 1, mean)
   D <- apply(D_3D, 1, mean)
-  DVARS <- 2*sqrt(D) # == sqrt(apply(Diff, 1, mean))
+  DVARS_ <- 2*sqrt(D) # == sqrt(apply(Diff, 1, mean))
 
   # compute DPD
   DPD <- (D - median(D))/mean(A) * 100
@@ -79,6 +79,6 @@ compute_DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
     (DV2-mu_0)/sigma_0  # avoid overflow by approximating
   )
 
-  out <- list(D=D, DVARS=DVARS, DPD=DPD, ZD=ZD)
+  out <- list(D=D, DVARS=DVARS_, DPD=DPD, ZD=ZD)
   return(out)
 }

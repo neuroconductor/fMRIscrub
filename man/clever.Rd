@@ -2,14 +2,14 @@
 % Please edit documentation in R/clever.R
 \name{clever}
 \alias{clever}
-\title{Calculates PCA leverage or robust distance and identifies outliers.}
+\title{Identify outliers with \code{clever}}
 \usage{
 clever(
   X,
-  projection_methods = "PCA_kurt",
-  outlyingness_methods = "leverage",
+  projection = "PCA_kurt",
+  out_meas = "leverage",
   DVARS = TRUE,
-  PCs_detrend = TRUE,
+  detrend_PCs = TRUE,
   PCATF_kwargs = NULL,
   kurt_quantile = 0.95,
   kurt_detrend = TRUE,
@@ -21,75 +21,71 @@ clever(
 )
 }
 \arguments{
-\item{X}{A wide (observations x variables) numerical data matrix.}
+\item{X}{Numerical data matrix. Should be wide (N observations x P variables, 
+\eqn{N >> P}).}
 
-\item{projection_methods}{Vector of projection methods to use. Choose at least
- one of the following: \code{"PCA_var"} for PCA + variance, \code{"PCA_kurt"}
- for PCA + kurtosis, and \code{"PCATF"} for PCA Trend Filtering + variance.
- Or, use \code{"all"} to use all methods. Default is \code{c("PCA_kurt")}.
+\item{projection}{Character vector indicating the projection methods
+to use. Choose at least one of the following: \code{"PCA_var"} for 
+PCA + variance, \code{"PCA_kurt"} for PCA + kurtosis, and \code{"PCATF"} for
+PCA Trend Filtering + variance. Or, use \code{"all"} to use all projection 
+methods. Default: \code{c("PCA_kurt")}.}
 
- clever will use all combinations of the requested projection and 
- outlyingness methods that make sense. For example, if  
- \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
- \code{outlyingness_methods=c("leverage", "robdist")} then these five
- combinations will be used: PCATF with leverage, PCA_var with leverage, 
- PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. 
- Each method combination will yield its own outlyingness time series.}
-
-\item{outlyingness_methods}{Vector of outlyingness measures to compute. Choose
- at least one of the following: \code{"leverage"} for leverage, or 
- \code{"robdist"} for robust distance. Or, use \code{"all"} to use all methods. 
- Default is \code{c("leverage")}.
-
- clever will use all combinations of the requested projection and 
- outlyingness methods that make sense. For example, if  
- \code{projection_methods=c("PCATF", "PCA_var", "PCA_kurt")} and 
- \code{outlyingness_methods=c("leverage", "robdist")} then these five
- combinations will be used: PCATF with leverage, PCA_var with leverage, 
- PCA_var with robdist, PCA_kurt with leverage, and PCA_kurt with robdist. Each 
- method combination will yield its own outlyingness time series.}
+\item{out_meas}{Character vector indicating the outlyingness measures to 
+compute. Choose at least one of the following: \code{"leverage"} for 
+leverage, or \code{"robdist"} for robust distance. Or, use \code{"all"} 
+to use both methods. Default: \code{c("leverage")}.}
 
 \item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 is \code{TRUE}.}
 
-\item{PCs_detrend}{Detrend all PCs before computing leverage or robust distance? 
-Detrending is recommended for time-series data, especially if there are many
-time points or changing circumstances, such as in task-based fMRI. Detrending
-should not be used with non-time-series data because the observations are 
-not temporally related. Default is \code{TRUE}.}
+\item{detrend_PCs}{Detrend all PCs before computing leverage or robust 
+ distance? Default: \code{TRUE}.
 
-\item{PCATF_kwargs}{Named list of arguments for PCATF: maximum number of PCs
-to compute \code{K} (Default 1000) the trend filtering parameter lambda
-(Default \code{0.05}), the number of iterations \code{niter_max} (Default 
-\code{1000}), convergence tolerance \code{tol} (Default \code{1e-8}), and option 
-to print updates \code{verbose} (Default \code{FALSE}).}
+ Detrending is recommended for time-series data, especially if there are many
+ time points or changing circumstances, such as in task-based fMRI. 
+ Detrending should not be used with non-time-series data because the 
+ observations are not temporally related.}
 
-\item{kurt_quantile}{What cutoff quantile for kurtosis should be used? This
-argument only applies if \code{"PCA_kurt"} is one of the projection methods 
-in \code{"projection_methods"}. Default is \code{0.95}.}
+\item{PCATF_kwargs}{Named list of arguments for PCATF projection method.
+ Only applies if \code{("PCATF" \%in\% projection)}.
+
+ Valid entries are: 
+ 
+ \describe{
+   \item{K}{maximum number of PCs to compute (Default: \code{1000})}
+   \item{lambda}{trend filtering parameter (Default: \code{0.05})}
+   \item{niter_max}{maximum number of iterations (Default: \code{1000})}
+   \item{verbose}{Print updates? (Default: \code{FALSE})}
+ }}
+
+\item{kurt_quantile}{What cutoff quantile for kurtosis should be used? Only 
+applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{0.95}.}
 
 \item{kurt_detrend}{Should the PCs be detrended before measuring kurtosis? 
-This argument only applies if \code{"PCA_kurt"} is one of the projection methods 
-in \code{"projection_methods"}. Default is \code{TRUE}. Detrending is highly
-recommended for time-series data, because trends can induce high kurtosis even
-in the absence of outliers. Detrending should not be done with non-time-series
-data because the observations are not temporally related.}
+ Only applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{TRUE}. 
 
-\item{id_outliers}{Should the outliers be identified? Default is \code{TRUE}.}
+ Detrending is highly recommended for time-series data, because trends can 
+ induce high kurtosis even in the absence of outliers. Detrending should not
+ be done with non-time-series data because the observations are not 
+ temporally related.}
 
-\item{lev_cutoff}{The outlier cutoff value for leverage, as a multiple of the median
-leverage. Only used if 
-\code{"leverage" \%in\% projection_methods} and \code{id_outliers}. Default is 
+\item{id_outliers}{Should the outliers be identified? Default: \code{TRUE}.}
+
+\item{lev_cutoff}{The outlier cutoff value for leverage, as a multiple of the
+median leverage. Only used if 
+\code{"leverage" \%in\% projection} and \code{id_outliers}. Default: 
 \code{4}, or \eqn{4 * median}.}
 
 \item{rbd_cutoff}{The outlier cutoff quantile for MCD distance. Only used if 
-\code{"robdist" \%in\% projection_methods} and \code{id_outliers}. Default 
-The quantile is computed from the estimated F distribution.}
+ \code{"robdist" \%in\% projection} and \code{id_outliers}. Default: 
+ \code{0.9999}, for the \eqn{0.9999} quantile.
 
-\item{lev_images}{Should leverage images be computed? If \code{FALSE} memory is
-conserved. Default is \code{FALSE}.}
+ The quantile is computed from the estimated F distribution.}
 
-\item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
+\item{lev_images}{Should leverage images be computed? If \code{FALSE} memory
+is conserved. Default: \code{FALSE}.}
+
+\item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
 A clever object, i.e. a list with components
@@ -99,18 +95,19 @@ A clever object, i.e. a list with components
    \describe{
      \item{PC_var}{
        \describe{
-         \item{indices}{The indices retained from the original SVD decomposition 
-           to make the variance-based PC projection.} 
-         \item{PCs}{The subsetted SVD decomposition.}  
+         \item{indices}{The indices retained from the original SVD 
+           projection to make the variance-based PC projection.} 
+         \item{PCs}{The PC projection.}  
        }
      }
      \item{PC_kurt}{
        \describe{
-         \item{indices}{The indices retained from the original SVD decomposition 
-           to make the kurtosis-based PC projection. They are ordered from highest 
-           kurtosis to lowest kurtosis.}  
-         \item{PCs}{The subsetted SVD decomposition. PCs are ordered in the standard
-           way, from highest variance to lowest variance, instead of by kurtosis.}  
+         \item{indices}{The indices retained from the original SVD 
+           projection to make the kurtosis-based PC projection. They are 
+           ordered from highest kurtosis to lowest kurtosis.}  
+         \item{PCs}{The PC projection. PCs are ordered in the standard
+           way, from highest variance to lowest variance, instead of by 
+           kurtosis.}  
        }
      }
      \item{PCATF}{
@@ -146,27 +143,27 @@ A clever object, i.e. a list with components
  }
  \item{outlier_flags}{
    \describe{
-     \item{PC_var__leverage}{Whether each observation surpasses the outlier cutoff.}
-     \item{PC_kurt__leverage}{Whether each observation surpasses the outlier cutoff.}
-     \item{PCATF__leverage}{Whether each observation surpasses the outlier cutoff.}
-     \item{PC_var__robdist}{Whether each observation surpasses the outlier cutoff.}
-     \item{PC_kurt__robdist}{Whether each observation surpasses the outlier cutoff.}
-     \item{DVARS_DPD}{Whether each observation surpasses the outlier cutoff.}
-     \item{DVARS_ZD}{Whether each observation surpasses the outlier cutoff.}
+     \item{PC_var__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{PC_kurt__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{PCATF__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{PC_var__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{PC_kurt__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{DVARS_DPD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+     \item{DVARS_ZD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
    }
  }
  \item{robdist_info}{
    \describe{
      \item{PC_var__robdist}{
        \describe{
-         \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+         \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
          \item{outMCD_scale}{The scale for out-of-MCD observations.}
          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
        }
      }
      \item{PC_var__robdist}{
        \describe{
-         \item{inMCD}{Whether each observation was in the MCD estimate or not.}
+         \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
          \item{outMCD_scale}{The scale for out-of-MCD observations.}
          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
        }
@@ -190,6 +187,16 @@ A clever object, i.e. a list with components
 }
 \description{
 Calculates PCA leverage or robust distance and identifies outliers.
+}
+\details{
+\code{clever} will use all combinations of the requested projection and 
+ out_meas methods that make sense. For example, if  
+ \code{projection=c("PCATF", "PCA_var", "PCA_kurt")} and 
+ \code{out_meas=c("leverage", "robdist")} then these five
+ combinations will be used: PCATF with leverage, PCA + variance with 
+ leverage, PCA + variance with robust distance, PCA + kurtosis with leverage,
+ and PCA + kurtosis with robust distance. Each method combination will yield 
+ its own out_meas time series.
 }
 \examples{
 n_voxels = 1e4

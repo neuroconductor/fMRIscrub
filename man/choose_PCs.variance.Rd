@@ -4,22 +4,15 @@
 \alias{choose_PCs.variance}
 \title{Selects the principle components of above-average variance from a SVD.}
 \usage{
-choose_PCs.variance(svd, max_keep = NULL, min_keep = 1)
+choose_PCs.variance(svd)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
-
-\item{max_keep}{If specified, the total number kept will be at most this
-value.}
-
-\item{min_keep}{The total number kept will be at least this
-value. The default value is \code{1}.}
 }
 \value{
 The original indices of the PCs which were retained, in order of
  decreasing variance (i.e. increasing index).
 }
 \description{
-PCs with above-average variance are retained, but the total number kept is
- constrained by the \code{max_keep} and \code{min_keep} arguments.
+PCs with above-average variance are retained.
 }

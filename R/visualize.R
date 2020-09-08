@@ -161,14 +161,18 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
   if(any_outs){
     if(name == 'DVARS'){
       plt <- plt +
-        geom_rect(data=drop_line[['DVARS']],
-          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=DVARS_outs_col)
+        geom_rect(
+          data=drop_line[['DVARS']],
+          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=DVARS_outs_col
+        )
     } else {
       for(i in 1:length(drop_line)){
         n <- names(drop_line)[i]
         plt <- plt +
-          geom_rect(data=drop_line[[n]],
-            aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n])
+          geom_rect(
+            data=drop_line[[n]],
+            aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n]
+          )
         #Text label if any outlier is detected.
       }
     }

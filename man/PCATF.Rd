@@ -33,13 +33,33 @@ Default is 0.05 . Can be NULL (lets algorithm decide).}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 
-\item{verbose}{Print statements about convergence?}
+\item{TOL}{The maximum 2-norm between iterations to accept as convergence.}
 
-\item{tol}{The maximum 2-norm between iterations to accept as convergence.}
+\item{verbose}{Print statements about convergence?}
 }
 \value{
 SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 }
 \description{
 PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
+}
+\examples{
+set.seed(12345)
+U = matrix(rnorm(100*3),ncol=3)
+U[20:23,1] = U[20:23,1] + 3
+U[40:43,2] = U[40:43,2] - 2
+U = svd(U)$u
+D = diag(c(10,5,1))
+V = svd(matrix(rnorm(3*20),nrow=20))$u
+X = U \%*\% D \%*\% t(V)
+out3 = PCATF(X, K=3, lambda=.75)
+matplot(out3$u, ty='l')
+out3$d
+plot(rowSums(out3$u^2), ty='l')
+
+# Orthonormalized
+out3_svd = svd(out3$u)
+matplot(out3_svd$u, ty='l')
+out3_svd$d
+plot(rowSums(out3_svd$u^2), ty='l')
 }
