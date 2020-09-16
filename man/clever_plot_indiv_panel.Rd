@@ -4,25 +4,23 @@
 \alias{clever_plot_indiv_panel}
 \title{Plots one or several outlyingness measures of the same type.}
 \usage{
-clever_plot_indiv_panel(meas, cuts, name, inMCD = NULL, ...)
+clever_plot_indiv_panel(meas, cuts, name, robdist_info = NULL, ...)
 }
 \arguments{
 \item{meas}{A T_ x m data.frame with each column being the time-course for a 
 scrubbing method. Column names should identify the method as one of the following:
 \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage},
 \code{PCA_var__robdist}, \code{PCA_kurt__robdist},
-\code{PCA_var__robdist_subset}, \code{PCA_kurt__robdist_subset},
 \code{DVARS_DPD}, \code{DVARS_ZD}, or \code{FD}.}
 
-\item{cuts}{A 1 x m data.frame with each colum being the cutoff for a 
+\item{cuts}{A 1 x m data.frame with each column being the cutoff for a 
 scrubbing method. Column names should be the same as those provided for \code{meas}.}
 
 \item{name}{The name of the type of outlyingness measure being plotted:
-\code{Leverage}, \code{RobDist}, \code{RobDist Subset}, \code{FD}, \code{DVARS}.}
+\code{Leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.}
 
-\item{inMCD}{A T_ x m data.frame indicating whether each observation was in the 
-MCD subset, for each method. Is only required and used if the measure is robust 
-distance (subset).}
+\item{robdist_info}{A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
+Fparam. Not required if robust distance-based measures are not being plottted.}
 
 \item{...}{Additional arguments to ggplot: main, sub, xlab, ...}
 }

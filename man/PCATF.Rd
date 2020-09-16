@@ -11,7 +11,7 @@ PCATF(
   K = NULL,
   lambda = 0.5,
   niter_max = 1000,
-  tol = 1e-08,
+  TOL = 1e-08,
   verbose = FALSE
 )
 }
@@ -24,17 +24,16 @@ this argument if the svd has already been computed. Default NULL.}
 \item{solve_directions}{Should the principal directions be solved for? These
 will be needed to display the leverage images for outlying observations.}
 
-\item{K}{The number of PCs to solve for, or \code{"mean var"}, in which case
-the number of PCs will be the amount of regular PCs with variance above
-the mean. The "mean var" option is deprecated, since clever now calculates this
- value outside of this function and passes the value directly to K as an integer.}
+\item{K}{(Optional) The number of trend-filtered PCs to solve for. If not 
+ provided, it will be set to the number of regular PCs with variance above
+the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
-Default is .5 . Can be NULL (lets algorithm decide).}
+Default is 0.5 . Can be NULL (lets algorithm decide).}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 
-\item{tol}{The maximum 2-norm between iterations to accept as convergence.}
+\item{TOL}{The maximum 2-norm between iterations to accept as convergence.}
 
 \item{verbose}{Print statements about convergence?}
 }
@@ -43,4 +42,24 @@ SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 }
 \description{
 PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
+}
+\examples{
+set.seed(12345)
+U = matrix(rnorm(100*3),ncol=3)
+U[20:23,1] = U[20:23,1] + 3
+U[40:43,2] = U[40:43,2] - 2
+U = svd(U)$u
+D = diag(c(10,5,1))
+V = svd(matrix(rnorm(3*20),nrow=20))$u
+X = U \%*\% D \%*\% t(V)
+out3 = PCATF(X, K=3, lambda=.75)
+matplot(out3$u, ty='l')
+out3$d
+plot(rowSums(out3$u^2), ty='l')
+
+# Orthonormalized
+out3_svd = svd(out3$u)
+matplot(out3_svd$u, ty='l')
+out3_svd$d
+plot(rowSums(out3_svd$u^2), ty='l')
 }
