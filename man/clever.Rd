@@ -16,6 +16,7 @@ clever(
   id_outliers = TRUE,
   lev_cutoff = 4,
   rbd_cutoff = 0.9999,
+  R_true = NULL,
   lev_images = FALSE,
   verbose = FALSE
 )
@@ -81,6 +82,9 @@ median leverage. Only used if
  \code{0.9999}, for the \eqn{0.9999} quantile.
 
  The quantile is computed from the estimated F distribution.}
+
+\item{R_true}{The N x N correlation matrix, if known. Used for the bootstrap
+robust distance method.}
 
 \item{lev_images}{Should leverage images be computed? If \code{FALSE} memory
 is conserved. Default: \code{FALSE}.}

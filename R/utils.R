@@ -121,3 +121,25 @@ est_trend <- function(ts, robust=TRUE){
 
   trend
 }
+
+#' Induce independence
+#' 
+#' @param dep_data N x P Dependent data
+#' @param R_true N x N correlation matrix
+#' 
+#' @return List of "indep_data" (independent data) and "R_sqrt" (square root of R_true)
+#' 
+induc_indep <- function(dep_data, R_true){
+  R_svd <- svd(R_true)
+  U <- R_svd$u
+  V <- R_svd$v
+  D_invsqrt <- diag(1/sqrt(R_svd$d))
+  R_invsqrt <- U %*% D_invsqrt %*% t(V) # inverse square root of correlation matrix
+  Y_tilde <- R_invsqrt %*% dep_data # n by p
+  
+  # for re-inducing dependence later
+  D_sqrt <- diag(sqrt(R_svd$d))
+  R_sqrt <- U %*% D_sqrt %*% t(V)
+  
+  list(indep_data=Y_tilde, R_sqrt=R_sqrt)
+}
