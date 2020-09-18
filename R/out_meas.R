@@ -58,15 +58,23 @@ PC.robdist <- function(U){
   return(result)
 }
 
-induc_indep <- function(dep_data, corr_matrix){
-  U <- svd(R_true)$u
-  V <- svd(R_true)$v
-  D_invsqrt <- diag(1/sqrt(svd(R_true)$d))
+#' Induce independence
+#' 
+#' @param dep_data N x P Dependent data
+#' @param R_true N x N correlation matrix
+#' 
+#' @return List of "indep_data" (independent data) and "R_sqrt" (square root of R_true)
+#' 
+induc_indep <- function(dep_data, R_true){
+  R_svd <- svd(R_true)
+  U <- R_svd$u
+  V <- R_svd$v
+  D_invsqrt <- diag(1/sqrt(R_svd$d))
   R_invsqrt <- U %*% D_invsqrt %*% t(V) # inverse square root of correlation matrix
   Y_tilde <- R_invsqrt %*% dep_data # n by p
   
   # for re-inducing dependence later
-  D_sqrt <- diag(sqrt(svd(R_true)$d))
+  D_sqrt <- diag(sqrt(R_svd$d))
   R_sqrt <- U %*% D_sqrt %*% t(V)
   
   result <- list(Y_tilde,R_sqrt)
@@ -74,20 +82,32 @@ induc_indep <- function(dep_data, corr_matrix){
   return(result)
 }
 
-id_out_boot_robdist <- function(dep_data,boot_sample){
-  Y_tilde <- induc_indep(dep_data,R_true)$indep_data
-  R_sqrt <- induc_indep(dep_data,R_true)$R_sqrt
-  scale <- PC.robdist(Y_tilde)$scale
+#' Identify outliers based on bootstrap robust distance.
+#' 
+#' @param dep_data N x P Dependent data
+#' @param R_true N x N correlation matrix
+#' @param boot_sample Number of bootstrap samples to compute
+#' @param quantile_cutoff Cutoff quantile for outliers
+#' 
+#' @return List of "cut" (P cutoff values, one for each observation) and "flag" (P indicators of outlyingness)
+#' 
+#' @importFrom expm sqrtm
+#' 
+id_out_boot_robdist <- function(dep_data, R_true, boot_sample=1000, quantile_cutoff=.9999){
+  x < - induc_indep(dep_data,R_true)
+  Y_tilde <- x$indep_data
+  R_sqrt <- x$R_sqrt
+  outMCD_scale <- PC.robdist(Y_tilde)$outMCD_scale
   n <- dim(Y_tilde)[1]
   p <- dim(Y_tilde)[2]
-  B <- boot_sample
   best <- cov.mcd(Y_tilde, nsamp="best")$best # AKA inMCD
   h <- length(best)
   
   # start to obtain "notout"
   notbest<- setdiff(1:n, best)
-  out <- id_out.robdist(PC.robdist(Y_tilde)$robdist, PC.robdist(Y_tilde)$inMCD,PC.robdist(Y_tilde)$Fparam)
-  id_out <- c(which(out$outliers[,3] ==T))
+  x <- PC.robdist(Y_tilde)
+  out <- outs.robdist(x$mah, x$inMCD, x$Fparam)
+  id_out <- which(out$flag)
   notout <- setdiff(notbest, id_out)
   # end to obtain "notout"
   
@@ -104,12 +124,12 @@ id_out_boot_robdist <- function(dep_data,boot_sample){
   
   # QUANTILE ADJUSTMENT for the "mostly notbest" observations
   gamma <- length(notbest)/ n
-  alpha <- c(0.01, 0.001, 0.0001)
+  alpha <- 1- quantile_cutoff
   adj_alpha <- alpha * gamma
   ### BOOTSTRAP STEP
   Y_tilde_boot <- array(NA,dim=c(n,p))
-  RD_boot <- matrix(NA,n,B)
-  for(b in 1:B){ # start loop over bootstrap samples
+  RD_boot <- matrix(NA,n,boot_sample)
+  for(b in 1:boot_sample){ # start loop over bootstrap samples
     Y_tilde_boot <- 0 * Y_tilde_boot
     best_boot <- sample(best, h, replace = T)
     notout_boot <- sample(notout, (n-h), replace=T)
@@ -121,22 +141,16 @@ id_out_boot_robdist <- function(dep_data,boot_sample){
     temp <- (Y_boot_b-xbar_star_mat) %*% invcov_sqrt
     RD_boot[,b] <- rowSums(temp * temp)
   } # end loop over bootstrap samples
-  RD_scaled <- scale[m] * RD_boot # scale is from Hardin & Rocke's approach (2005)
-  boot_cutoffs <- t(apply(RD_scaled[notbest,],1,quantile,probs=c(1-adj_alpha)))
+  RD_scaled <- outMCD_scale * RD_boot # scale is from Hardin & Rocke's approach (2005)
+  boot_cutoff <- t(apply(RD_scaled[notbest,],1,quantile,probs=c(1-adj_alpha)))
   
   
   # Robust Distance of the Original Data
   RD_orig <- apply(dep_data,1, function(x) t(x-xbar_star) %*% invcov %*% (x-xbar_star))
   
   
-  out.RD99 <- out.RD999 <- out.RD9999 <- rep(FALSE, n)
-  out.RD99[notbest] <- (RD_orig[notbest] > boot_cutoffs[1])
-  out.RD999[notbest] <- (RD_orig[notbest] > boot_cutoffs[2])
-  out.RD9999[notbest] <- (RD_orig[notbest] > boot_cutoffs[3])
-  
-  out <- data.frame(out.RD99, out.RD999, out.RD9999)
-  
-  names(out) <- c('0.99 quantile','0.999 quantile','0.9999 quantile')
-  result <- list(outliers=out, cutoffs=boot_cutoffs)
-  return(result)
+  out <- rep(FALSE, n)
+  out[notbest] <- (RD_orig[notbest] > boot_cutoff)
+
+  list(cut=boot_cutoff, flag=out)
 }

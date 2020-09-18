@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{scale_med}
 \alias{scale_med}
-\title{Centers and scales a matrix robustly for the purpose of covariance estimation.}
+\title{Scale data columns robustly}
 \usage{
 scale_med(mat)
 }
@@ -10,9 +10,13 @@ scale_med(mat)
 \item{mat}{A numerical matrix.}
 }
 \value{
-The input matrix centered and scaled.
+The input matrix with its columns centered and scaled.
 }
 \description{
+Centers and scales the columns of a matrix robustly for the purpose of 
+ covariance estimation.
+}
+\details{
 Centers each column on its median, and scales each column by its median
 absolute deviation (MAD). If any column MAD is zero, its values become zero
 and a warning is raised. If all MADs are zero, an error is raised.
