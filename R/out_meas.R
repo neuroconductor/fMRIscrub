@@ -36,7 +36,7 @@ PC.leverage <- function(U){
 #' @importFrom MASS cov.mcd
 #'
 #' @export
-PC.robdist <- function(U){
+PC.robdist <- function(U){ #comment :)
   n <- nrow(U)
   Q <- ncol(U)
   
