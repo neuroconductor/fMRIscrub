@@ -61,7 +61,7 @@ out_measures.robdist <- function(U, quantile_cutoff=NA){
   U_ins <- scale(U_in, center = TRUE, scale = FALSE) 
   nU <- nrow(U_ins)
   S_star <- (t(U_ins) %*% U_ins)/(nU-1) # MCD estimate of covariance
-  RD <- (apply(U, 1, function(x) t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)))
+  RD <- apply(U, 1, function(x) {t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)})
   # Scale left-out observations to follow F-distribution.
   Fparam <- fit.F(Q, n, sum(inMCD))
   Fparam <- c(Fparam$c, Fparam$m, Fparam$df[1], Fparam$df[2])
@@ -96,17 +96,19 @@ out_measures.robdist <- function(U, quantile_cutoff=NA){
 #' 
 #' @importFrom expm sqrtm
 #' 
-out_measures.robdist_bootstrap <- function(U, R_true=NULL, boot_sample=1000, quantile_cutoff=NA){
+out_measures.robdist_bootstrap <- function(U, R_true=NULL, boot_sample=1000, quantile_cutoff=NULL){
   if (is.null(R_true)) { R_true <- diag(nrow(U)) }
 
-  x < - induc_indep(U, R_true)
+  x <- induc_indep(U, R_true)
   Y_tilde <- x$indep_data
   R_sqrt <- x$R_sqrt
   n <- nrow(Y_tilde)
   p <- ncol(Y_tilde)
 
-  out1 <- out_measures.robdist(Y_tilde, quantile_cutoff=quantile_cutoff)
-  best <- which(out1$inMCD)
+  quant_cut2 <- quantile_cutoff # TO DO: take a look at this...
+  if (is.null(quant_cut2)) { quant_cut2 <- 0.9999 }
+  out1 <- out_measures.robdist(Y_tilde, quantile_cutoff=quant_cut2)
+  best <- which(out1$info$inMCD)
   h <- length(best)
   
   # Obtain "notout"
@@ -122,7 +124,7 @@ out_measures.robdist_bootstrap <- function(U, R_true=NULL, boot_sample=1000, qua
   invcov <- solve(S_star) # dim p by p
   
   # Robust Distance of the Original Data
-  RD_orig <- apply(U, 1, function(x) t(x-xbar_star) %*% invcov %*% (x-xbar_star))
+  RD_orig <- apply(U, 1, function(x) {t(x-xbar_star) %*% invcov %*% (x-xbar_star)})
   out <- list(meas=RD_orig)
 
   if (!is.null(quantile_cutoff)){
@@ -149,9 +151,8 @@ out_measures.robdist_bootstrap <- function(U, R_true=NULL, boot_sample=1000, qua
       temp <- (Y_boot_b - xbar_star_mat) %*% invcov_sqrt
       RD_boot[,b] <- rowSums(temp * temp)
     } # end loop over bootstrap samples
-    RD_scaled <- out1$outMCD_scale * RD_boot # scale is from Hardin & Rocke's approach (2005)
-    
-    out$cut <- t(apply(RD_scaled[notbest,], 1, quantile, probs=c(1-adj_alpha)))
+    RD_scaled <- out1$info$outMCD_scale * RD_boot # scale is from Hardin & Rocke's approach (2005)
+    out$cut <- apply(RD_scaled[notbest,], 1, quantile, probs=c(1-adj_alpha))
     out$flag <- rep(FALSE, n)
     out$flag[notbest] <- (RD_orig[notbest] > out$cut)
   }

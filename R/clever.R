@@ -20,8 +20,9 @@
 #'  methods. Default: \code{c("PCA_kurt")}.
 #' @param out_meas Character vector indicating the outlyingness measures to 
 #'  compute. Choose at least one of the following: \code{"leverage"} for 
-#'  leverage, or \code{"robdist"} for robust distance. Or, use \code{"all"} 
-#'  to use both methods. Default: \code{c("leverage")}.
+#'  leverage, \code{"robdist"} for robust distance, or \code{"robdist_bootstrap"}
+#'  for robust distane bootstrap. Or, use \code{"all"} 
+#'  to use all methods. Default: \code{c("leverage")}.
 #' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 #'  is \code{TRUE}.
 #' @param detrend_PCs Detrend all PCs before computing leverage or robust 
@@ -197,11 +198,12 @@ clever = function(
 
   # Define the valid `projection` and `out_meas`, and their valid combos.
   all_projection <- c("PCA_var", "PCA_kurt", "PCATF")
-  all_out_meas <- c("leverage", "robdist")
+  all_out_meas <- c("leverage", "robdist", "robdist_bootstrap")
   all_valid_methods <- c(
-    c("PCA_var__leverage", "PCA_kurt__leverage", 
-      "PCA_var__robdist", "PCA_kurt__robdist", 
-      "PCATF__leverage")
+    "PCA_var__leverage", "PCA_kurt__leverage", 
+    "PCA_var__robdist", "PCA_kurt__robdist", 
+    "PCA_var__robdist_bootstrap", "PCA_kurt__robdist_bootstrap",
+    "PCATF__leverage"
   )
 
   # Define the cutoff value for detecting zero variance/MAD voxels
@@ -444,7 +446,7 @@ clever = function(
     if (verbose) { cat(paste0("Method ", method_ii, ":\n")) }
 
     # Adjust PC number if using robust distance.
-    if (out_ii_name == "robdist") {
+    if (out_ii_name %in% c("robdist", "robdist_bootstrap")) {
       # Let q <- N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()
       #  requires q <= approx. 1/2 for computation of the MCD covariance estimate.
       #  Higher q will use more components for estimation, thus retaining a
@@ -504,7 +506,7 @@ clever = function(
     out_kwargs_ii <- switch(out_ii_name,
       leverage = list(median_cutoff=cutoff_ii),
       robdist = list(quantile_cutoff=cutoff_ii),
-      robdist_bootstrap = list(R_true=NULL, quantile_cutoff=cutoff_ii)
+      robdist_bootstrap = list(R_true=R_true, quantile_cutoff=cutoff_ii)
     )
     out_kwargs_ii <- c(list(U = U_meas), out_kwargs_ii)
     out_ii <- do.call(out_fun_ii, out_kwargs_ii)

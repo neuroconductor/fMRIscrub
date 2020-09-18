@@ -8,7 +8,7 @@ out_measures.robdist_bootstrap(
   U,
   R_true = NULL,
   boot_sample = 1000,
-  quantile_cutoff = NA
+  quantile_cutoff = NULL
 )
 }
 \arguments{
