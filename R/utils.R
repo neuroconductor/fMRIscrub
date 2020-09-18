@@ -1,4 +1,7 @@
-#' Centers and scales a matrix robustly for the purpose of covariance estimation.
+#' Scale data columns robustly
+#' 
+#' Centers and scales the columns of a matrix robustly for the purpose of 
+#'  covariance estimation.
 #'
 #' Centers each column on its median, and scales each column by its median
 #' absolute deviation (MAD). If any column MAD is zero, its values become zero
@@ -6,7 +9,7 @@
 #'
 #' @param mat A numerical matrix.
 #'
-#' @return The input matrix centered and scaled.
+#' @return The input matrix with its columns centered and scaled.
 #'
 #' @importFrom robustbase rowMedians
 scale_med <- function(mat){
