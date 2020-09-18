@@ -77,9 +77,7 @@ induc_indep <- function(dep_data, R_true){
   D_sqrt <- diag(sqrt(R_svd$d))
   R_sqrt <- U %*% D_sqrt %*% t(V)
   
-  result <- list(Y_tilde,R_sqrt)
-  names(result) <- c('indep_data','R_sqrt')
-  return(result)
+  list(indep_data=Y_tilde,R_sqrt=R_sqrt)
 }
 
 #' Identify outliers based on bootstrap robust distance.
@@ -103,13 +101,12 @@ id_out_boot_robdist <- function(dep_data, R_true, boot_sample=1000, quantile_cut
   best <- cov.mcd(Y_tilde, nsamp="best")$best # AKA inMCD
   h <- length(best)
   
-  # start to obtain "notout"
+  # Obtain "notout"
   notbest<- setdiff(1:n, best)
   x <- PC.robdist(Y_tilde)
   out <- outs.robdist(x$mah, x$inMCD, x$Fparam)
   id_out <- which(out$flag)
   notout <- setdiff(notbest, id_out)
-  # end to obtain "notout"
   
   Y_tilde_in <- Y_tilde[best,]
   xbar_star <- colMeans(Y_tilde_in) # MCD estimate of mean , length of p
@@ -127,8 +124,8 @@ id_out_boot_robdist <- function(dep_data, R_true, boot_sample=1000, quantile_cut
   alpha <- 1- quantile_cutoff
   adj_alpha <- alpha * gamma
   ### BOOTSTRAP STEP
-  Y_tilde_boot <- array(NA,dim=c(n,p))
-  RD_boot <- matrix(NA,n,boot_sample)
+  Y_tilde_boot <- array(NA, dim=c(n,p))
+  RD_boot <- matrix(NA, n, boot_sample)
   for(b in 1:boot_sample){ # start loop over bootstrap samples
     Y_tilde_boot <- 0 * Y_tilde_boot
     best_boot <- sample(best, h, replace = T)
@@ -138,15 +135,15 @@ id_out_boot_robdist <- function(dep_data, R_true, boot_sample=1000, quantile_cut
     Y_boot_b <- R_sqrt %*% Y_tilde_boot #RE-INDUCING DEPENDENCE
     #RD_boot[,b] <- apply(Y_boot_b,1, function(x) t(x-xbar_star) %*% invcov %*% (x-xbar_star))
     #following two lines are alternative way to get RDs
-    temp <- (Y_boot_b-xbar_star_mat) %*% invcov_sqrt
+    temp <- (Y_boot_b - xbar_star_mat) %*% invcov_sqrt
     RD_boot[,b] <- rowSums(temp * temp)
   } # end loop over bootstrap samples
   RD_scaled <- outMCD_scale * RD_boot # scale is from Hardin & Rocke's approach (2005)
-  boot_cutoff <- t(apply(RD_scaled[notbest,],1,quantile,probs=c(1-adj_alpha)))
+  boot_cutoff <- t(apply(RD_scaled[notbest,], 1, quantile, probs=c(1-adj_alpha)))
   
   
   # Robust Distance of the Original Data
-  RD_orig <- apply(dep_data,1, function(x) t(x-xbar_star) %*% invcov %*% (x-xbar_star))
+  RD_orig <- apply(dep_data, 1, function(x) t(x-xbar_star) %*% invcov %*% (x-xbar_star))
   
   
   out <- rep(FALSE, n)
