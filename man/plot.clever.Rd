@@ -21,7 +21,7 @@
 all the methods that were computed; or, a character vector of desired methods.
 Default is "one".}
 
-\item{FD}{(Optional) A length T_ vector of FD values, in mm. If provided, the FD 
+\item{FD}{(Optional) A length T_ vector of FD values, in mm. If provided, the FD
 time series plot will be added.}
 
 \item{FD_cut}{(Optional) The outlier cutoff for FD. Default is 0.5 mm.}

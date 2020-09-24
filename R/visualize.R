@@ -1,27 +1,28 @@
 #' Plots one or several outlyingness measures of the same type.
 #'
-#' @param meas A T_ x m data.frame with each column being the time-course for a 
+#' @param meas A T_ x m data.frame with each column being the time-course for a
 #'  scrubbing method. Column names should identify the method as one of the following:
 #'  \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage},
 #'  \code{PCA_var__robdist}, \code{PCA_kurt__robdist},
 #'  \code{DVARS_DPD}, \code{DVARS_ZD}, or \code{FD}.
-#' @param cuts A 1 x m data.frame with each column being the cutoff for a 
+#' @param cuts A 1 x m data.frame with each column being the cutoff for a
 #'  scrubbing method. Column names should be the same as those provided for \code{meas}.
 #' @param name The name of the type of outlyingness measure being plotted:
 #'  \code{Leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.
-#' @param robdist_info A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
+#' @param robdist_info A list containing information related to the robust distance measure: inMCD, outMCD_scale, and
 #'  Fparam. Not required if robust distance-based measures are not being plottted.
 #' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
-#' 
+#'
 #' @import ggplot2
 #' @importFrom cowplot theme_cowplot
-#' 
+#'
 #' @export
 clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
   args <- list(...)
-
+  inMCD = idx = method = xmin = xmax = ymin = ymax = NULL
+  rm(list = c("xmin", "xmax", "ymin", "ymax", "method", "idx", "inMCD"))
   # Extra colors:
   ## "#E78AC3"
   ## "#FFD92F"
@@ -198,7 +199,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
 
   # Use an optimal spacing between the x-ticks.
   xticks_width <- c(1, 2, 2.5, 3, 5)
-  xticks_width <- c(xticks_width, xticks_width*10, xticks_width*100, 
+  xticks_width <- c(xticks_width, xticks_width*10, xticks_width*100,
     xticks_width*1000, xticks_width*10000, xticks_width*100000)
   xticks_width <- max(xticks_width[xticks_width*2 < T_*.9])
   xticks <- c(seq(from=0, to=floor(T_*.9), by=xticks_width), T_)
@@ -227,7 +228,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
 #' @param methods_to_plot Either: "one" to plot only the first method; "all" to plot
 #'  all the methods that were computed; or, a character vector of desired methods.
 #'  Default is "one".
-#' @param FD (Optional) A length T_ vector of FD values, in mm. If provided, the FD 
+#' @param FD (Optional) A length T_ vector of FD values, in mm. If provided, the FD
 #'  time series plot will be added.
 #' @param FD_cut (Optional) The outlier cutoff for FD. Default is 0.5 mm.
 #' @param plot_title (Optional) If provided, will add a title to the plot.
@@ -237,8 +238,8 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
 #'
 #' @import ggplot2
 #' @importFrom cowplot plot_grid ggdraw draw_label
-#' 
-#' @method plot clever 
+#'
+#' @method plot clever
 #' @export
 plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_title=NULL, ...){
   projection_methods = x$params$projection_methods
@@ -311,8 +312,8 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
   }
 
   # Add x-axis label to bottom plot.
-  plots[[length(plots)]] <- plots[[length(plots)]] + 
-    theme(axis.title.x=element_text()) + 
+  plots[[length(plots)]] <- plots[[length(plots)]] +
+    theme(axis.title.x=element_text()) +
     xlab(ifelse("xlab" %in% names(args), args$xlab, "Index (Time Point)"))
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
@@ -322,7 +323,7 @@ plot.clever <- function(x, methods_to_plot="one", FD=NULL, FD_cut=0.5, plot_titl
   # Add title if provided.
   if(!is.null(plot_title)){
     plt <- plot_grid(
-      ggdraw() + 
+      ggdraw() +
         draw_label(plot_title, fontface='bold', x=0, hjust=0) +
         theme(plot.margin = margin(0, 0, 0, 7)),
       plt,
