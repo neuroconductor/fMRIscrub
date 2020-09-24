@@ -4,7 +4,7 @@ author: "Amanda Mejia, Preya Shah & Damon Pham"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{clever}
+  %\VignetteIndexEntry{Clever: Using PCA Leverage for Outlier Detection in High-Dimensional Data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
