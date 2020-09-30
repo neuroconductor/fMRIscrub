@@ -20,8 +20,9 @@
 #'  methods. Default: \code{c("PCA_kurt")}.
 #' @param out_meas Character vector indicating the outlyingness measures to 
 #'  compute. Choose at least one of the following: \code{"leverage"} for 
-#'  leverage, or \code{"robdist"} for robust distance. Or, use \code{"all"} 
-#'  to use both methods. Default: \code{c("leverage")}.
+#'  leverage, \code{"robdist"} for robust distance, or \code{"robdist_bootstrap"}
+#'  for robust distane bootstrap. Or, use \code{"all"} 
+#'  to use all methods. Default: \code{c("leverage")}.
 #' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 #'  is \code{TRUE}.
 #' @param detrend_PCs Detrend all PCs before computing leverage or robust 
@@ -61,6 +62,8 @@
 #'  \code{0.9999}, for the \eqn{0.9999} quantile.
 #' 
 #'  The quantile is computed from the estimated F distribution.
+#' @param R_true The N x N correlation matrix, if known. Used for the bootstrap
+#'  robust distance method.
 #' @param lev_images Should leverage images be computed? If \code{FALSE} memory
 #'  is conserved. Default: \code{FALSE}.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
@@ -185,6 +188,7 @@ clever = function(
   id_outliers = TRUE,
   lev_cutoff = 4,
   rbd_cutoff = 0.9999,
+  R_true = NULL,
   lev_images = FALSE,
   verbose = FALSE) {
 
@@ -194,11 +198,12 @@ clever = function(
 
   # Define the valid `projection` and `out_meas`, and their valid combos.
   all_projection <- c("PCA_var", "PCA_kurt", "PCATF")
-  all_out_meas <- c("leverage", "robdist")
+  all_out_meas <- c("leverage", "robdist")#, "robdist_bootstrap")
   all_valid_methods <- c(
-    c("PCA_var__leverage", "PCA_kurt__leverage", 
-      "PCA_var__robdist", "PCA_kurt__robdist", 
-      "PCATF__leverage")
+    "PCA_var__leverage", "PCA_kurt__leverage", 
+    "PCA_var__robdist", "PCA_kurt__robdist", 
+    #"PCA_var__robdist_bootstrap", "PCA_kurt__robdist_bootstrap",
+    "PCATF__leverage"
   )
 
   # Define the cutoff value for detecting zero variance/MAD voxels
@@ -295,7 +300,7 @@ clever = function(
     } else {
       warning(paste0("Warning: ", sum(const_mask),
       " constant voxels (out of ", length(const_mask),
-      " ). These will be removed for estimation of the covariance.\n"))
+      "). These will be removed for estimation of the covariance.\n"))
     }
   }
   mad <- mad[!const_mask]
@@ -430,7 +435,7 @@ clever = function(
   for(ii in 1:length(methods)){
 
     # --------------------------------------------------------------------------
-    # Measure outlingness. -----------------------------------------------------
+    # Measure outlingness and ID outliers. -------------------------------------
     # --------------------------------------------------------------------------
 
     method_ii <- methods[ii]
@@ -438,10 +443,13 @@ clever = function(
     proj_ii_name <- method_ii_split[1]; out_ii_name <- method_ii_split[2]
     proj_ii <- projection[[proj_ii_name]]
     
-    if (verbose) { cat(paste0("Method ", method_ii, ":\n")) }
+    if (verbose) { 
+      cat(paste0("Method ", method_ii)) 
+      if (id_outliers) { cat(":") }
+    }
 
     # Adjust PC number if using robust distance.
-    if (out_ii_name == "robdist") {
+    if (out_ii_name %in% c("robdist", "robdist_bootstrap")) {
       # Let q <- N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()
       #  requires q <= approx. 1/2 for computation of the MCD covariance estimate.
       #  Higher q will use more components for estimation, thus retaining a
@@ -456,8 +464,7 @@ clever = function(
       max_keep = min(100, ceiling(T_*q))
       if (max_keep < length(proj_ii$indices)) {
         cat(paste(
-          "\treducing number of PCs from", length(proj_ii$indices), "to", 
-          max_keep, "\n"
+          " Reducing number of PCs from", length(proj_ii$indices), "to", max_keep
         ))
 
         # Identify the indices to keep.
@@ -483,61 +490,64 @@ clever = function(
     # Compute the outlyingness measure.
     U_meas <- ifelse(detrend_PCs && proj_ii_name != "PCATF", "u_detrended", "u")
     U_meas <- proj_ii$svd[[U_meas]]
-    meas_ii <- switch(out_ii_name,
-      leverage = PC.leverage(U_meas),
-      robdist = PC.robdist(U_meas)
+
+    out_fun_ii <- switch(out_ii_name,
+      leverage = out_measures.leverage,
+      robdist = out_measures.robdist,
+      robdist_bootstrap = out_measures.robdist_bootstrap
     )
-
-    # Extract in-MCD and F distribution information from the robust distances.
-    if (out_ii_name == "robdist") {
-      rbd_info_ii <- list(
-        inMCD=meas_ii$inMCD,
-        outMCD_scale=meas_ii$outMCD_scale,
-        Fparam=c(meas_ii$Fparam$c, meas_ii$Fparam$m, meas_ii$Fparam$df[1], meas_ii$Fparam$df[2])
+    if (id_outliers) {
+      cutoff_ii <- switch(out_ii_name,
+        leverage=lev_cutoff,
+        robdist=rbd_cutoff,
+        robdist_bootstrap=rbd_cutoff
       )
-      names(rbd_info_ii$Fparam) = c("c", "m", "df1", "df2")
-      meas_ii <- meas_ii$mah
-      robdist_info[[method_ii]] <- rbd_info_ii
-    } 
-
-    outlier_measures[[method_ii]] <- meas_ii
+    } else {
+      cutoff_ii <- NULL
+    }
+    out_kwargs_ii <- switch(out_ii_name,
+      leverage = list(median_cutoff=cutoff_ii),
+      robdist = list(quantile_cutoff=cutoff_ii),
+      robdist_bootstrap = list(R_true=R_true, quantile_cutoff=cutoff_ii)
+    )
+    out_kwargs_ii <- c(list(U = U_meas), out_kwargs_ii)
+    out_ii <- do.call(out_fun_ii, out_kwargs_ii)
+    outlier_measures[[method_ii]] <- out_ii$meas
+    if (id_outliers) {
+      outlier_cutoffs[[method_ii]] <- out_ii$cut
+      outlier_flags[[method_ii]] <- out_ii$flag
+    }
+    if (out_ii_name == "robdist") {
+      robdist_info[[method_ii]] <- out_ii$info
+    }
       
     # --------------------------------------------------------------------------
-    # Identify outliers and make leverage images.-------------------------------
+    # Make leverage images.-----------------------------------------------------
     # --------------------------------------------------------------------------
 
-    # Identify outliers.
     if (id_outliers) {
-      if (verbose) { cat("...identifying outliers.\n") }
-
-      cut_ii <- switch(out_ii_name,
-        leverage = outs.leverage(meas_ii, median_cutoff=lev_cutoff),
-        robdist = outs.robdist(
-          meas_ii, 
-          rbd_info_ii$Fparam[["df1"]], rbd_info_ii$Fparam[["df2"]],
-          rbd_info_ii$inMCD, rbd_info_ii$outMCD_scale, rbd_cutoff
-        )
-      )
-      outlier_cutoffs[[method_ii]] <- cut_ii$cut
-      outlier_flags[[method_ii]] <- cut_ii$flag
-    }
-
-    # Make leverage images.
-    if(lev_images){
-      if(sum(cut_ii$flag) > 0){
-        if(verbose){
-          cat("...outliers detected. Computing leverage images.\n")
+      if (sum(out_ii$flag) > 0) {
+        if (verbose) {
+          cat(" Outliers detected.")
+          if (lev_images) {
+            cat(" Computing leverage images.")
+            outlier_lev_imgs[[method_ii]] <- get_leverage_images(
+              proj_ii$svd, which(out_ii$flag), const_mask
+            )
+          }
         }
-        outlier_lev_imgs[[method_ii]] <- get_leverage_images(
-          proj_ii$svd, which(cut_ii$flag), const_mask
-        )
       } else {
-        if(verbose){
-          cat("...no outliers detected. Skipping leverage images.\n")
+        if (verbose) {
+          cat(" No outliers detected.")
+          if (lev_images) {
+            cat(" Skipping leverage images.")
+          }
         }
         outlier_lev_imgs[[method_ii]] <- list(mean=NULL, top=NULL, top_dir=NULL)
       }
     }
+
+    if (verbose) {cat("\n")}
   }
 
   # ----------------------------------------------------------------------------
@@ -550,7 +560,7 @@ clever = function(
   if (length(robdist_info) < 1) {robdist_info <- NULL}
 
   # Organize the output.
-  if (verbose) { cat("Done! Organizing results.\n") }
+  if (verbose) { cat("Done!\n\n") }
   result <- list(
     params = NULL, 
     projections = projection, 

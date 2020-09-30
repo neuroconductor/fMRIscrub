@@ -13,7 +13,7 @@ status](https://ci.appveyor.com/api/projects/status/github/mandymejia/clever?bra
 coverage](https://coveralls.io/repos/github/mandymejia/clever/badge.svg)](https://coveralls.io/r/mandymejia/clever?branch=master)
 <!-- badges: end -->
 
-clever computes principal Components LEVERage (CLEVER) and robust
+`clever` computes principal Components LEVERage (“CLEVER”) and robust
 distance, measures of outlyingness for high-dimensional data such as
 fMRI data.
 
@@ -34,3 +34,12 @@ You can install the development version of clever from
 # install.packages("devtools")
 devtools::install_github("mandymejia/clever")
 ```
+
+`clever` requires the `glmgen` package for PCA Trend Filtering (PCATF).
+Please see <https://github.com/glmgen/glmgen> for installation
+instructions.
+
+## Vignette
+
+You can view the vignette using this link:
+<https://htmlpreview.github.io/?https://github.com/mandymejia/clever/blob/master/vignettes/vignette.html>

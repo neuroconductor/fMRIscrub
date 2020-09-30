@@ -16,6 +16,7 @@ clever(
   id_outliers = TRUE,
   lev_cutoff = 4,
   rbd_cutoff = 0.9999,
+  R_true = NULL,
   lev_images = FALSE,
   verbose = FALSE
 )
@@ -32,8 +33,9 @@ methods. Default: \code{c("PCA_kurt")}.}
 
 \item{out_meas}{Character vector indicating the outlyingness measures to 
 compute. Choose at least one of the following: \code{"leverage"} for 
-leverage, or \code{"robdist"} for robust distance. Or, use \code{"all"} 
-to use both methods. Default: \code{c("leverage")}.}
+leverage, \code{"robdist"} for robust distance, or \code{"robdist_bootstrap"}
+for robust distane bootstrap. Or, use \code{"all"} 
+to use all methods. Default: \code{c("leverage")}.}
 
 \item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 is \code{TRUE}.}
@@ -81,6 +83,9 @@ median leverage. Only used if
  \code{0.9999}, for the \eqn{0.9999} quantile.
 
  The quantile is computed from the estimated F distribution.}
+
+\item{R_true}{The N x N correlation matrix, if known. Used for the bootstrap
+robust distance method.}
 
 \item{lev_images}{Should leverage images be computed? If \code{FALSE} memory
 is conserved. Default: \code{FALSE}.}
