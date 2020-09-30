@@ -213,9 +213,7 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
     scale_x_continuous(expand=expansion(mult = c(.01, .01)), breaks=xticks) +
     scale_y_continuous(expand=expansion(mult = c(0, .01)))
 
-  if(name == "DVARS"){
-    print("To-do: implement dual axis for DVARS...")
-  }
+  # [TO-DO]: implement dual axis for DVARS.
 
   return(plt)
 }

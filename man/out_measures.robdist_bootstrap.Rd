@@ -7,7 +7,7 @@
 out_measures.robdist_bootstrap(
   U,
   R_true = NULL,
-  boot_sample = 1000,
+  boot_sample = NULL,
   quantile_cutoff = NULL
 )
 }
@@ -17,7 +17,8 @@ out_measures.robdist_bootstrap(
 \item{R_true}{N x N correlation matrix. If \code{NULL} (default), the identity
 matrix wil lbe used}
 
-\item{boot_sample}{Number of bootstrap samples to compute}
+\item{boot_sample}{Number of bootstrap samples to compute. If \code{NULL},
+use the lowest reasonable value (\code{10/(1-quantile_cutoff)}).}
 
 \item{quantile_cutoff}{The F-distribution quantile cutoff. Default: 
 \code{NA} (do not compute outliers).}

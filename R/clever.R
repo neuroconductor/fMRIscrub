@@ -198,11 +198,11 @@ clever = function(
 
   # Define the valid `projection` and `out_meas`, and their valid combos.
   all_projection <- c("PCA_var", "PCA_kurt", "PCATF")
-  all_out_meas <- c("leverage", "robdist", "robdist_bootstrap")
+  all_out_meas <- c("leverage", "robdist")#, "robdist_bootstrap")
   all_valid_methods <- c(
     "PCA_var__leverage", "PCA_kurt__leverage", 
     "PCA_var__robdist", "PCA_kurt__robdist", 
-    "PCA_var__robdist_bootstrap", "PCA_kurt__robdist_bootstrap",
+    #"PCA_var__robdist_bootstrap", "PCA_kurt__robdist_bootstrap",
     "PCATF__leverage"
   )
 
@@ -443,7 +443,10 @@ clever = function(
     proj_ii_name <- method_ii_split[1]; out_ii_name <- method_ii_split[2]
     proj_ii <- projection[[proj_ii_name]]
     
-    if (verbose) { cat(paste0("Method ", method_ii, ":\n")) }
+    if (verbose) { 
+      cat(paste0("Method ", method_ii)) 
+      if (id_outliers) { cat(":") }
+    }
 
     # Adjust PC number if using robust distance.
     if (out_ii_name %in% c("robdist", "robdist_bootstrap")) {
@@ -461,8 +464,7 @@ clever = function(
       max_keep = min(100, ceiling(T_*q))
       if (max_keep < length(proj_ii$indices)) {
         cat(paste(
-          "\treducing number of PCs from", length(proj_ii$indices), "to", 
-          max_keep, "\n"
+          " Reducing number of PCs from", length(proj_ii$indices), "to", max_keep
         ))
 
         # Identify the indices to keep.
@@ -523,21 +525,29 @@ clever = function(
     # Make leverage images.-----------------------------------------------------
     # --------------------------------------------------------------------------
 
-    if (id_outliers && lev_images) {
+    if (id_outliers) {
       if (sum(out_ii$flag) > 0) {
         if (verbose) {
-          cat("...outliers detected. Computing leverage images.\n")
+          cat(" Outliers detected.")
+          if (lev_images) {
+            cat(" Computing leverage images.")
+            outlier_lev_imgs[[method_ii]] <- get_leverage_images(
+              proj_ii$svd, which(out_ii$flag), const_mask
+            )
+          }
         }
-        outlier_lev_imgs[[method_ii]] <- get_leverage_images(
-          proj_ii$svd, which(out_ii$flag), const_mask
-        )
       } else {
         if (verbose) {
-          cat("...no outliers detected. Skipping leverage images.\n")
+          cat(" No outliers detected.")
+          if (lev_images) {
+            cat(" Skipping leverage images.")
+          }
         }
         outlier_lev_imgs[[method_ii]] <- list(mean=NULL, top=NULL, top_dir=NULL)
       }
     }
+
+    if (verbose) {cat("\n")}
   }
 
   # ----------------------------------------------------------------------------
@@ -550,7 +560,7 @@ clever = function(
   if (length(robdist_info) < 1) {robdist_info <- NULL}
 
   # Organize the output.
-  if (verbose) { cat("Done! Organizing results.\n") }
+  if (verbose) { cat("Done!\n\n") }
   result <- list(
     params = NULL, 
     projections = projection, 
