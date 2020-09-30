@@ -375,15 +375,15 @@ get_leverage_images <- function(X_svd, timepoints, const_mask=NULL){
 #'  columns are pixels/voxels.
 #' @param mask A corresponding binary mask, with 1's representing regions
 #'  within the area of interest and 0's representing regions to mask out.
+#' @param out_of_mask_value Fill value for out-of-mask voxels. Default: \code{NA}.
 #' @param sliced_dim If the mask is 2D, which dimension does it represent?
 #'  Will default to the 3rd dimension (axial).
-#' @param NA_fill Replace in-mask NA values with this. Default NA (no action).
 #'
 #' @return A 4D array representing the volume time series. Time is on the 4th
 #'  dimension.
 #'
 #' @export
-Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA, NA_fill=FALSE){
+Matrix_to_VolumeTimeSeries <- function(mat, mask, out_of_mask_value=NA, sliced_dim = NA){
   in_mask <- mask > 0
   T_ <- nrow(mat)
 
@@ -400,12 +400,10 @@ Matrix_to_VolumeTimeSeries <- function(mat, mask, sliced_dim = NA, NA_fill=FALSE
     stop("Not Implemented: mask must be 2D or 3D.")
   }
 
-  vts <- array(0, dim=dims)
+  vts <- array(out_of_mask_value, dim=dims)
   for(i in 1:T_){
     vts[,,,i][in_mask] <- mat[i,]
   }
-
-  vts[is.na(vts)] <- NA_fill
 
   return(vts)
 }

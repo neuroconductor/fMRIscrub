@@ -176,7 +176,7 @@ cat('The timepoints meeting the first outlier level threshold:\n')
 cat(paste(row.names(Lev_Img1$mean), collapse=", "))
 ```
 
-Here are the leverage images at the 59th timepoint for the first dataset:
+Here are the leverage images at timepoint `r t_max` for the first dataset:
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
@@ -184,11 +184,12 @@ par(mfrow=c(1,2))
 # Constant voxels are deleted during the `clever` algorithm, so the leverage images will have
 # missing values where the constant voxels were. The NA_fill option is used here to make
 # these voxels have the same color as the background (out-of-mask voxels).
-Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1, NA_fill=0)
-Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1, NA_fill=0)
+Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
+Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
 
-image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=59)'))
-image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=59)'))
+idx = which(as.numeric(row.names(Lev_Img1$mean)) == t_max)
+image(Lev_Img1.mean[,,,idx], main=paste0('Lev. img., mean dir. (T=',t_max,')'))
+image(Lev_Img1.top[,,,idx], main=paste0('Lev. img., top dir. (T=',t_max,')'))
 ```
 
-The leverage image highlights the banding artifact present at this time point. The artifact is more visible than it was in the original data, supporting the idea that PCs with the most outlier information were retained.
+The leverage images highlight the banding artifact present at this time point.

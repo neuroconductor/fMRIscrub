@@ -4,7 +4,7 @@
 \alias{Matrix_to_VolumeTimeSeries}
 \title{Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.}
 \usage{
-Matrix_to_VolumeTimeSeries(mat, mask, sliced_dim = NA, NA_fill = FALSE)
+Matrix_to_VolumeTimeSeries(mat, mask, out_of_mask_value = NA, sliced_dim = NA)
 }
 \arguments{
 \item{mat}{A matrix whose rows are observations at different times, and
@@ -13,10 +13,10 @@ columns are pixels/voxels.}
 \item{mask}{A corresponding binary mask, with 1's representing regions
 within the area of interest and 0's representing regions to mask out.}
 
+\item{out_of_mask_value}{Fill value for out-of-mask voxels. Default: \code{NA}.}
+
 \item{sliced_dim}{If the mask is 2D, which dimension does it represent?
 Will default to the 3rd dimension (axial).}
-
-\item{NA_fill}{Replace in-mask NA values with this. Default NA (no action).}
 }
 \value{
 A 4D array representing the volume time series. Time is on the 4th
