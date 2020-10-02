@@ -25,13 +25,24 @@
 #'  to use all methods. Default: \code{c("leverage")}.
 #' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 #'  is \code{TRUE}.
-#' @param detrend_PCs Detrend all PCs before computing leverage or robust 
-#'  distance? Default: \code{TRUE}.
+#' @param detrend Detrend the PCs before measuring kurtosis or computing 
+#'  leverage or robust distance? Default: \code{TRUE}.
 #' 
-#'  Detrending is recommended for time-series data, especially if there are many
-#'  time points or changing circumstances, such as in task-based fMRI. 
+#'  Detrending is highly recommended for time-series data, especially if there 
+#'  are many time points or evolving circumstances affecting the data. There are
+#'  two reasons: first, temporal trends induce positive or negative kurtosis, 
+#'  contaminating the connection between high kurtosis and outlier presence. 
+#'  Second, trends tend to reduce the size of the in-MCD subset for the robust 
+#'  distance method causing many false positives.
+#'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
+#' 
+#'  In addition to \code{TRUE} and \code{FALSE}, a third option \code{kurtosis}
+#'  can be used to only detrend the PCs for the purpose of measuring kurtosis, 
+#'  and not for the actual outlyingness measurement.
+#' 
+#'  This option will not affect the PCATF projection, which is never detrended.
 #' @param PCATF_kwargs Named list of arguments for PCATF projection method.
 #'  Only applies if \code{("PCATF" \%in\% projection)}.
 #' 
@@ -45,13 +56,6 @@
 #'  }
 #' @param kurt_quantile What cutoff quantile for kurtosis should be used? Only 
 #'  applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{0.95}.
-#' @param kurt_detrend Should the PCs be detrended before measuring kurtosis? 
-#'  Only applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{TRUE}. 
-#' 
-#'  Detrending is highly recommended for time-series data, because trends can 
-#'  induce high kurtosis even in the absence of outliers. Detrending should not
-#'  be done with non-time-series data because the observations are not 
-#'  temporally related.
 #' @param id_outliers Should the outliers be identified? Default: \code{TRUE}.
 #' @param lev_cutoff The outlier cutoff value for leverage, as a multiple of the
 #'  median leverage. Only used if 
@@ -181,10 +185,9 @@ clever = function(
   projection = "PCA_kurt",
   out_meas = "leverage",
   DVARS = TRUE,
-  detrend_PCs = TRUE,
+  detrend = TRUE,
   PCATF_kwargs = NULL,
   kurt_quantile = .95,
-  kurt_detrend = TRUE,
   id_outliers = TRUE,
   lev_cutoff = 4,
   rbd_cutoff = 0.9999,
@@ -225,13 +228,18 @@ clever = function(
     out_meas <- match.arg(out_meas, all_out_meas, several.ok=TRUE)
   }
 
-  is.TRUEorFALSE <- function(x){is.logical(x) && length(x)==1}
+  is.TRUEorFALSE <- function(x) { length(x)==1 && is.logical(x) }
   stopifnot(is.TRUEorFALSE(DVARS))
-  stopifnot(is.TRUEorFALSE(detrend_PCs))
-  stopifnot(is.TRUEorFALSE(kurt_detrend))
   stopifnot(is.TRUEorFALSE(id_outliers))
   stopifnot(is.TRUEorFALSE(lev_images))
   stopifnot(is.TRUEorFALSE(verbose))
+
+  stopifnot(length(detrend)==1)
+  detrend <- switch(as.character(detrend),
+    `TRUE` = c("PCs", "kurtosis"),
+    kurtosis = "kurtosis",
+    `FALSE` = NULL
+  )
 
   if(!identical(PCATF_kwargs, NULL)){
     names(PCATF_kwargs) <- match.arg(
@@ -407,12 +415,15 @@ clever = function(
     chosen_PCs <- switch(proj_ii_name,
       PCATF = 1:ncol(X.svdtf$u),
       PCA_var = choose_PCs.variance(svd=X.svd),
-      PCA_kurt = choose_PCs.kurtosis(svd=X.svd, kurt_quantile=kurt_quantile, detrend=kurt_detrend)
+      PCA_kurt = choose_PCs.kurtosis(
+        svd=X.svd, 
+        kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
+      )
     )
     ## kurtosis order =/= index order
     chosen_PCs_ordered <- chosen_PCs[order(chosen_PCs)]
     
-    # Get the PC subset. Detrend if `detrend_PCs`.
+    # Get the PC subset. 
     proj_ii_svd <- switch(proj_ii_name,
       PCATF = X.svdtf,
       PCA_var = X.svd,
@@ -420,7 +431,7 @@ clever = function(
     )
     proj_ii_svd$u <- proj_ii_svd$u[,chosen_PCs_ordered,drop=FALSE]
     proj_ii_svd$d <- proj_ii_svd$d[chosen_PCs_ordered]
-    if(detrend_PCs & proj_ii_name!="PCATF"){
+    if("PCs" %in% detrend && proj_ii_name != "PCATF"){
       proj_ii_svd$u_detrended <- proj_ii_svd$u - apply(proj_ii_svd$u, 2, est_trend)
       attributes(proj_ii_svd$u_detrended)$dimnames <- NULL
     } 
@@ -478,7 +489,7 @@ clever = function(
         # Take that SVD subset.
         proj_ii$svd$u <- proj_ii$svd$u[,1:max_keep,drop=FALSE]
         proj_ii$svd$d <- proj_ii$svd$d[1:max_keep]
-        if (detrend_PCs && proj_ii_name!="PCATF") {
+        if ("PCs" %in% detrend && proj_ii_name!="PCATF") {
           proj_ii$svd$u_detrended <- proj_ii$svd$u_detrended[,1:max_keep,drop=FALSE]
         }
         if (solve_dirs) {
@@ -488,7 +499,11 @@ clever = function(
     }
 
     # Compute the outlyingness measure.
-    U_meas <- ifelse(detrend_PCs && proj_ii_name != "PCATF", "u_detrended", "u")
+    U_meas <- ifelse(
+      "PCs" %in% detrend && proj_ii_name != "PCATF", 
+      "u_detrended", 
+      "u"
+    )
     U_meas <- proj_ii$svd[[U_meas]]
 
     out_fun_ii <- switch(out_ii_name,
@@ -578,7 +593,7 @@ clever = function(
     projection = names(projection),
     out_meas = out_meas,
     DVARS = DVARS,
-    detrend_PCs = detrend_PCs,
+    detrend = detrend,
     PCATF_kwargs = PCATF_kwargs,
     kurt_quantile = kurt_quantile,
     kurt_detrend = kurt_detrend,

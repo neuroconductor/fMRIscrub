@@ -13,9 +13,8 @@ status](https://ci.appveyor.com/api/projects/status/github/mandymejia/clever?bra
 coverage](https://coveralls.io/repos/github/mandymejia/clever/badge.svg)](https://coveralls.io/r/mandymejia/clever?branch=master)
 <!-- badges: end -->
 
-`clever` computes principal Components LEVERage (“CLEVER”) and robust
-distance, measures of outlyingness for high-dimensional data such as
-fMRI data.
+`clever` computes principal Components LEVERage (“CLEVER”) and other
+measures of outlyingness for high-dimensional data such as fMRI data.
 
 ## Installation
 
