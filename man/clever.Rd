@@ -9,10 +9,9 @@ clever(
   projection = "PCA_kurt",
   out_meas = "leverage",
   DVARS = TRUE,
-  detrend_PCs = TRUE,
+  detrend = TRUE,
   PCATF_kwargs = NULL,
   kurt_quantile = 0.95,
-  kurt_detrend = TRUE,
   id_outliers = TRUE,
   lev_cutoff = 4,
   rbd_cutoff = 0.9999,
@@ -40,13 +39,24 @@ to use all methods. Default: \code{c("leverage")}.}
 \item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 is \code{TRUE}.}
 
-\item{detrend_PCs}{Detrend all PCs before computing leverage or robust 
- distance? Default: \code{TRUE}.
+\item{detrend}{Detrend the PCs before measuring kurtosis or computing 
+ leverage or robust distance? Default: \code{TRUE}.
 
- Detrending is recommended for time-series data, especially if there are many
- time points or changing circumstances, such as in task-based fMRI. 
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. There are
+ two reasons: first, temporal trends induce positive or negative kurtosis, 
+ contaminating the connection between high kurtosis and outlier presence. 
+ Second, trends tend to reduce the size of the in-MCD subset for the robust 
+ distance method causing many false positives.
+ 
  Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
+ observations are not temporally related.
+
+ In addition to \code{TRUE} and \code{FALSE}, a third option \code{kurtosis}
+ can be used to only detrend the PCs for the purpose of measuring kurtosis, 
+ and not for the actual outlyingness measurement.
+
+ This option will not affect the PCATF projection, which is never detrended.}
 
 \item{PCATF_kwargs}{Named list of arguments for PCATF projection method.
  Only applies if \code{("PCATF" \%in\% projection)}.
@@ -62,14 +72,6 @@ is \code{TRUE}.}
 
 \item{kurt_quantile}{What cutoff quantile for kurtosis should be used? Only 
 applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{0.95}.}
-
-\item{kurt_detrend}{Should the PCs be detrended before measuring kurtosis? 
- Only applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{TRUE}. 
-
- Detrending is highly recommended for time-series data, because trends can 
- induce high kurtosis even in the absence of outliers. Detrending should not
- be done with non-time-series data because the observations are not 
- temporally related.}
 
 \item{id_outliers}{Should the outliers be identified? Default: \code{TRUE}.}
 
