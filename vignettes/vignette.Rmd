@@ -38,7 +38,7 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 2. Perform PCA on the normalized $Y$ matrix using the singular value decomposition (SVD) in order to obtain the $T \times T$ PC score matrix, $U$.
 
-3. Some PCs are removed from $U$ to obtain the $Q \times T$ ($Q < T$) matrix, $U'$. The PCs which are retained are those likley to contain outlier information: PCs with greater-than-average variance, or PCs with both greater-than-average variance and high kurtosis. (The removal of at least one PC is also a theoretical requirement for leverage; additionally, the robust distance method requires $Q$ to be appropriately small relative to $T$.)
+3. Some PCs are removed from $U$ to obtain the $Q \times T$ ($Q < T$) matrix, $U'$. The PCs which are retained are those likley to contain outlier information: PCs with greater-than-average variance, or PCs with both high variance and high kurtosis. (The removal of at least one PC is also a theoretical requirement for leverage; additionally, the robust distance method requires $Q$ to be appropriately small relative to $T$.)
 
 4. Next, leverage and/or robust distance is measured. The output of each is a length $T$ vector representing the "outlyingness" of each time point.  
 
