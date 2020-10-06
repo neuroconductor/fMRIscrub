@@ -596,7 +596,6 @@ clever = function(
     detrend = detrend,
     PCATF_kwargs = PCATF_kwargs,
     kurt_quantile = kurt_quantile,
-    kurt_detrend = kurt_detrend,
     id_outliers = id_outliers,
     lev_cutoff = lev_cutoff,
     rbd_cutoff = rbd_cutoff,
