@@ -6,7 +6,7 @@
 \usage{
 CompCor(
   vol,
-  data_mask = NULL,
+  data_ROI = NULL,
   data = NULL,
   noise_ROI,
   noise_nPC = 5,
@@ -17,12 +17,12 @@ CompCor(
 \item{vol}{The \eqn{I x J x K x T} volumetric fMRI timeseries, including both
 the data voxels (unless \code{data} is provided) and the noise voxels.}
 
-\item{data_mask}{A logical mask for \code{vol} where \code{TRUE} values
+\item{data_ROI}{A logical mask for \code{vol} where \code{TRUE} values
 indicate data voxels, from which the noise components will be regressed. Up
-to one of \code{data_mask} or \code{data} should be provided.}
+to one of \code{data_ROI} or \code{data} should be provided.}
 
 \item{data}{A \eqn{V x T} data matrix from which the noise components
-will be regressed. Up to one of \code{data_mask} or \code{data} should be 
+will be regressed. Up to one of \code{data_ROI} or \code{data} should be 
 provided.}
 
 \item{noise_ROI}{A list of logical masks for \code{vol} where \code{TRUE} 
@@ -44,8 +44,8 @@ will be used to achieve this proportion of variance explained. Default:
 A list with entries \code{"data"}, \code{"noise"}, \code{"noise_mask"}
  and \code{"noise_var"}.
 
- If \code{data_mask} or \code{data} was provided, the entry \code{"data"} will be a 
- \code{V x T} matrix where each row is a data voxel (if \code{data_mask} was 
+ If \code{data_ROI} or \code{data} was provided, the entry \code{"data"} will be a 
+ \code{V x T} matrix where each row is a data voxel (if \code{data_ROI} was 
  provided, the voxels are in spatial order; if \code{data} was provided, the 
  voxels are in the same order) time series with each noise PC regressed from
  it. Otherwise, this entry will be \code{NULL}.

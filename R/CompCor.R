@@ -56,6 +56,25 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
   vol
 }
 
+#' Hat matrix
+#'
+#' Get the hat matrix of X after adding a column of ones (for the intercept).
+#'
+#' @param X Numeric matrix. A column of ones will be added for the intercept.
+#'
+#' @return The hat matrix, a square matrix with the same number of rows/columns
+#'  as the number of rows in \code{X}.
+#'
+#' @keywords internal
+hat_mat <- function(X){
+  X <- cbind(1, X)
+  # The hat matrix is     X * (X^T * X)^(-1) * X^T.
+  # This is identical to  X * solve(t(X) %*% X, t(X))
+  # Could there be a more efficient way? 
+  # https://stackoverflow.com/questions/9071020/compute-projection-hat-matrix-via-qr-factorization-svd-and-cholesky-factoriz/39298028#39298028
+  X %*% solve(t(X) %*% X, t(X))
+}
+
 #' CompCor
 #'
 #' The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
@@ -64,11 +83,11 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 #'
 #' @param vol The \eqn{I x J x K x T} volumetric fMRI timeseries, including both
 #'  the data voxels (unless \code{data} is provided) and the noise voxels.
-#' @param data_mask A logical mask for \code{vol} where \code{TRUE} values
+#' @param data_ROI A logical mask for \code{vol} where \code{TRUE} values
 #'  indicate data voxels, from which the noise components will be regressed. Up
-#'  to one of \code{data_mask} or \code{data} should be provided.
+#'  to one of \code{data_ROI} or \code{data} should be provided.
 #' @param data A \eqn{V x T} data matrix from which the noise components
-#'  will be regressed. Up to one of \code{data_mask} or \code{data} should be 
+#'  will be regressed. Up to one of \code{data_ROI} or \code{data} should be 
 #'  provided.
 #' @param noise_ROI A list of logical masks for \code{vol} where \code{TRUE} 
 #'  values indicate voxels in a certain "noise ROI" (e.g. the WM or CSF). Noise
@@ -86,8 +105,8 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 #' @return A list with entries \code{"data"}, \code{"noise"}, \code{"noise_mask"}
 #'  and \code{"noise_var"}.
 #'
-#'  If \code{data_mask} or \code{data} was provided, the entry \code{"data"} will be a 
-#'  \code{V x T} matrix where each row is a data voxel (if \code{data_mask} was 
+#'  If \code{data_ROI} or \code{data} was provided, the entry \code{"data"} will be a 
+#'  \code{V x T} matrix where each row is a data voxel (if \code{data_ROI} was 
 #'  provided, the voxels are in spatial order; if \code{data} was provided, the 
 #'  voxels are in the same order) time series with each noise PC regressed from
 #'  it. Otherwise, this entry will be \code{NULL}.
@@ -96,15 +115,16 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 #'  scores, one for each \code{noise_ROI}.
 #'
 #' @importFrom robustbase rowMedians
+#'
 #' @export
-CompCor <- function(vol, data_mask=NULL, data=NULL, noise_ROI, noise_nPC=5, noise_erosion=0){
+CompCor <- function(vol, data_ROI=NULL, data=NULL, noise_ROI, noise_nPC=5, noise_erosion=0){
   stopifnot(length(dim(vol)) == 4)
   T_ <- dim(vol)[4]
 
-  if (!is.null(data_mask)) {
-    stopifnot(dim(data_mask)==dim(vol)[1:3])
-    stopifnot(all(unique(data_mask) %in% c(TRUE, FALSE)))
-    data <- matrix(vol[data_mask], ncol=T_)
+  if (!is.null(data_ROI)) {
+    stopifnot(dim(data_ROI)==dim(vol)[1:3])
+    stopifnot(all(unique(data_ROI) %in% c(TRUE, FALSE)))
+    data <- matrix(vol[data_ROI], ncol=T_)
   }
   if (!is.null(data)) {
     stopifnot(is.matrix(data))
@@ -118,14 +138,13 @@ CompCor <- function(vol, data_mask=NULL, data=NULL, noise_ROI, noise_nPC=5, nois
   N <- length(noise_ROI)
   noise_nPC <- rep(noise_nPC, ceiling(N/length(noise_nPC)))
   noise_erosion <- rep(noise_erosion, ceiling(N/length(noise_erosion)))
-  noise_mask <- noise_ROI
   noise_comps <- vector("list", N); names(noise_comps) <- names(noise_ROI)
   noise_var <- vector("list", N); names(noise_var) <- names(noise_ROI)
   for (ii in 1:N) {
-    noise_mask[[ii]] <- erode_vol(noise_mask[[ii]], noise_erosion[ii], FALSE)
-    stopifnot(is.array(noise_mask[[ii]]) && dim(noise_mask[[ii]])==dim(vol)[1:3])
+    noise_ROI[[ii]] <- erode_vol(noise_ROI[[ii]], noise_erosion[ii], FALSE)
+    stopifnot(is.array(noise_ROI[[ii]]) && dim(noise_ROI[[ii]])==dim(vol)[1:3])
     # Vectorize noise ROI.
-    noise_ii <- matrix(vol[noise_mask[[ii]]], ncol=T_)
+    noise_ii <- matrix(vol[noise_ROI[[ii]]], ncol=T_)
     noise_ii <- noise_ii - robustbase::rowMedians(noise_ii, na.rm=TRUE)
     # Compute the PC scores.
     if (noise_nPC[ii] >= 1) {
@@ -141,20 +160,19 @@ CompCor <- function(vol, data_mask=NULL, data=NULL, noise_ROI, noise_nPC=5, nois
       noise_var[[ii]] <- noise_var[[ii]][1:noise_nPC[ii]]
     }
   }
-  noise <- do.call(cbind, noise_comps)
 
   # Regress.
   if (!is.null(data)) {
-    # Center voxel timecourses on medians.
-    #data <- data - robustbase::rowMedians(data, na.rm=TRUE)
-    # (SS^T)^(-1)S and solve(S %*% t(S), diag(25)) %*% S are identical
-    one_minus_hat <- diag(nrow(noise)) - noise %*% solve(t(noise) %*% noise, t(noise))
-    data <- t(one_minus_hat %*% t(data))
+    # Project each row of the data (which is why we transpose) on 
+    #   the PCs (and the vector of ones for the intercept).
+    noise_mat <- do.call(cbind, noise_comps)
+    I_minus_H <- diag(nrow(noise_mat)) - hat_mat(noise_mat)
+    data <- t(I_minus_H %*% t(data))
   } else {
     data <- NULL
   }
 
-  list(data=data, noise_mask=noise_mask, noise=noise_comps, noise_var=noise_var)
+  list(data=data, noise=list(PCs=noise_comps, var=noise_var, ROI=noise_ROI))
 }
 
 #' CompCor for HCP data
@@ -211,7 +229,6 @@ CompCor <- function(vol, data_mask=NULL, data=NULL, noise_ROI, noise_nPC=5, nois
 #'  scores, one for each \code{noise_ROI}.
 #'
 #' @export
-#'
 CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI=NULL, noise_nPC=5, noise_erosion=0, verbose=TRUE){
   # Check `vol`.
   if (is.character(vol)) {
@@ -258,8 +275,8 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
     } else {
       stop("`data_labs` argument is not in a recognized form.")
     }
-    data_mask <- array(labs %in% do.call(c, data_labs), dim=dim(labs))
-    data <- list(matrix(vol[data_mask], ncol=dim(vol)[4]))
+    data_ROI <- array(labs %in% do.call(c, data_labs), dim=dim(labs))
+    data <- list(matrix(vol[data_ROI], ncol=dim(vol)[4]))
   } else {
     if (is.character(data_cii)) { 
       if (requireNamespace("oro.nifti", quietly = TRUE)) {
@@ -269,7 +286,7 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
       }
     }
     data <- data_cii$data
-    data_mask <- NULL
+    data_ROI <- NULL
   }
 
   # Check `noise_ROI`.
@@ -291,17 +308,15 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
   }
   noise_ROI <- lapply(noise_ROI, function(x){array(labs %in% x, dim=dim(labs))})
   x <- CompCor(vol, noise_ROI=noise_ROI, noise_nPC=noise_nPC, noise_erosion=noise_erosion)
-  noise_comp <- x$noise; noise_mask <- x$noise_mask; noise_var <- x$noise_var
-  noise <- do.call(cbind, noise_comp)
 
-  # (SS^T)^(-1)S and solve(S %*% t(S), diag(25)) %*% S are identical
+  # Project each row of the data (which is why we transpose) on 
+  #   the PCs (and the vector of ones for the intercept).
   if (verbose) { cat("Performing CompCor regression.\n") }
-  one_minus_hat <- diag(nrow(noise)) - noise %*% solve(t(noise) %*% noise, t(noise))
+  noise_mat <- do.call(cbind, x$noise$PCs)
+  I_minus_H <- diag(nrow(noise_mat)) - hat_mat(noise_mat)
   for (ii in 1:length(data)) {
     if (is.null(data[[ii]])) { next }
-    # Center voxel timecourses on medians.
-    #data[[ii]] <- data[[ii]] - robustbase::rowMedians(data[[ii]], na.rm=TRUE)
-    data[[ii]] <- t(one_minus_hat %*% t(data[[ii]]))
+    data <- t(I_minus_H %*% t(data))
   }
 
   if (!use_cifti) {
@@ -311,5 +326,5 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
     data <- data_cii
   }
 
-  list(data=data, data_mask=data_mask, noise=noise_comp, noise_mask=noise_mask, noise_var=noise_var)
+  list(data=data, data_ROI=data_ROI, noise=list(x$noise))
 }
