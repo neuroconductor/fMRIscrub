@@ -279,8 +279,8 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
     data <- list(matrix(vol[data_ROI], ncol=dim(vol)[4]))
   } else {
     if (is.character(data_cii)) { 
-      if (requireNamespace("oro.nifti", quietly = TRUE)) {
-        data_cii <- read_cifti(data_cii) 
+      if (requireNamespace("ciftiTools", quietly = TRUE)) {
+        data_cii <- ciftiTools::read_cifti(data_cii) 
       } else {
         stop("Package `ciftiTools` required to read the CIFTI file. Please install it from the github repo `mandymejia/ciftiTools`.")
       }
