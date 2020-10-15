@@ -21,7 +21,7 @@
 #' @param out_meas Character vector indicating the outlyingness measures to 
 #'  compute. Choose at least one of the following: \code{"leverage"} for 
 #'  leverage, \code{"robdist"} for robust distance, or \code{"robdist_bootstrap"}
-#'  for robust distane bootstrap. Or, use \code{"all"} 
+#'  for robust distane bootstrap (not implemented yet). Or, use \code{"all"} 
 #'  to use all methods. Default: \code{c("leverage")}.
 #' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
 #'  is \code{TRUE}.
@@ -508,22 +508,22 @@ clever = function(
 
     out_fun_ii <- switch(out_ii_name,
       leverage = out_measures.leverage,
+      #robdist_bootstrap = out_measures.robdist_bootstrap,
       robdist = out_measures.robdist,
-      robdist_bootstrap = out_measures.robdist_bootstrap
     )
     if (id_outliers) {
       cutoff_ii <- switch(out_ii_name,
         leverage=lev_cutoff,
-        robdist=rbd_cutoff,
-        robdist_bootstrap=rbd_cutoff
+        #robdist_bootstrap=rbd_cutoff,
+        robdist=rbd_cutoff
       )
     } else {
       cutoff_ii <- NULL
     }
     out_kwargs_ii <- switch(out_ii_name,
       leverage = list(median_cutoff=cutoff_ii),
-      robdist = list(quantile_cutoff=cutoff_ii),
-      robdist_bootstrap = list(R_true=R_true, quantile_cutoff=cutoff_ii)
+      #robdist_bootstrap = list(R_true=R_true, quantile_cutoff=cutoff_ii),
+      robdist = list(quantile_cutoff=cutoff_ii)
     )
     out_kwargs_ii <- c(list(U = U_meas), out_kwargs_ii)
     out_ii <- do.call(out_fun_ii, out_kwargs_ii)

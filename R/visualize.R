@@ -22,6 +22,8 @@
 clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
   args <- list(...)
 
+  xmin <- xmax <- ymin <- ymax <- idx <- method <- inMCD <- NULL
+
   # Extra colors:
   ## "#E78AC3"
   ## "#FFD92F"
