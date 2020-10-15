@@ -124,8 +124,8 @@ clever_plot_indiv_panel <- function(meas, cuts, name, robdist_info=NULL, ...){
         if(any(d[[n]]$out)){
           any_outs <- TRUE
           drop_line[[n]] <- d[[n]][d[[n]]$out,]
-          drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - 0.5
-          drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + 0.5
+          drop_line[[n]]$xmin <- as.numeric(rownames(drop_line[[n]])) - .5
+          drop_line[[n]]$xmax <- as.numeric(rownames(drop_line[[n]])) + .5
           drop_line[[n]]$ymin <- min(0, min(data.frame(meas)))
           drop_line[[n]]$ymax <- ylim_max
         }
