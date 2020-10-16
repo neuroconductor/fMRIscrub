@@ -50,5 +50,6 @@ Suggests:
     testthat (>= 2.1.0),
     covr
 Remotes:
-    glmgen/glmgen/R_pkg/glmgen
+    glmgen/glmgen/R_pkg/glmgen,
+    mandymejia/ciftiTools
 VignetteBuilder: knitr
