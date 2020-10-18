@@ -10,7 +10,8 @@
 #' @export
 choose_PCs.variance <- function(svd){
   var <- svd$d^2
-  1:sum(var > mean(var))
+  n_keep <- max(1, sum(var > mean(var)))
+  1:n_keep
 }
 
 #' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
@@ -71,7 +72,7 @@ choose_PCs.kurtosis <- function(svd, kurt_quantile = 0.9, detrend = TRUE,
   }
 
   # Identify how many PCs will be kept.
-  n_keep <- sum(kurt > cut)
+  n_keep <- max(1, sum(kurt > cut))
 
   # The PCs with greatest kurtosis are chosen.
   indices <- order(-kurt)[1:n_keep]
