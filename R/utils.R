@@ -121,3 +121,19 @@ est_trend <- function(ts, robust=TRUE){
 
   trend
 }
+
+#' Wrapper to common functions for reading NIFTIs
+#' 
+#' @param nifti_fname The file name of the NIFTI.
+#' @return The NIFTI.
+#' @keywords internal
+read_nifti <- function(nifti_fname){
+  if (requireNamespace("RNifti", quietly = TRUE)) {
+    return(RNifti::readNifti(nifti_fname))
+  } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
+    return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
+  } else {
+    stop("Package \"ciftiTools\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
+  }
+  nifti
+}

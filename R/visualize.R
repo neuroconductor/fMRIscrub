@@ -409,3 +409,15 @@ Matrix_to_VolumeTimeSeries <- function(mat, mask, out_of_mask_value=NA, sliced_d
 
   return(vts)
 }
+
+#'  \item{lev_images}{
+#'    \describe{
+#'      \item{mean}{The average of the PC directions, weighted by the unscaled
+#'        PC scores at each outlying time point (U[i,] * V^T). Row names are
+#'        the corresponding time points.}
+#'      \item{top}{The PC direction with the highest PC score at each outlying
+#'        time point. Row names are the corresponding time points.}
+#'      \item{top_dir}{The index of the PC direction with the highest PC score
+#'        at each outlying time point. Named by timepoint.}
+#'    }
+#'  }

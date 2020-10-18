@@ -2,169 +2,255 @@
 #' 
 #' Calculates PCA leverage or robust distance and identifies outliers.
 #'
-#' \code{clever} will use all combinations of the requested projection and 
-#'  out_meas methods that make sense. For example, if  
+#' \code{clever} will use all combinations of the requested projections and 
+#'  outlyingness measures which make sense. For example, if  
 #'  \code{projection=c("PCATF", "PCA_var", "PCA_kurt")} and 
 #'  \code{out_meas=c("leverage", "robdist")} then these five
 #'  combinations will be used: PCATF with leverage, PCA + variance with 
 #'  leverage, PCA + variance with robust distance, PCA + kurtosis with leverage,
 #'  and PCA + kurtosis with robust distance. Each method combination will yield 
-#'  its own out_meas time series.
+#'  its own results.
 #' 
-#' @param X Numerical data matrix. Should be wide (N observations x P variables, 
-#'  \eqn{N >> P}).
-#' @param projection Character vector indicating the projection methods
-#'  to use. Choose at least one of the following: \code{"PCA_var"} for 
-#'  PCA + variance, \code{"PCA_kurt"} for PCA + kurtosis, and \code{"PCATF"} for
-#'  PCA Trend Filtering + variance. Or, use \code{"all"} to use all projection 
-#'  methods. Default: \code{c("PCA_kurt")}.
-#' @param out_meas Character vector indicating the outlyingness measures to 
-#'  compute. Choose at least one of the following: \code{"leverage"} for 
-#'  leverage, \code{"robdist"} for robust distance, or \code{"robdist_bootstrap"}
-#'  for robust distane bootstrap (not implemented yet). Or, use \code{"all"} 
-#'  to use all methods. Default: \code{c("leverage")}.
-#' @param DVARS Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
-#'  is \code{TRUE}.
-#' @param detrend Detrend the PCs before measuring kurtosis or computing 
+#' Each voxel timecourse is centered on its median and scaled by 1.4826 times
+#'  the median of the absolute values (a robust measure of standard deviation).
+#'  This differs from the centering method of DVARS (Afyouni and Nichols, 2018),
+#'  so results may differ.
+#' 
+#' @param X Wide numerical data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
+#'  For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
+#'  of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
+#' 
+#'  Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I \times J \times K \times T} 
+#'  observations), in which case \code{ROI_data} must be provided.
+#' 
+#'  Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
+#'  (\eqn{V_{left} + V_{right} + V_{subcortical} \times T observations}).
+#' @param measures Character vector indicating the outlyingness measures to 
+#'  compute. Choose at least one of the following: 
+#' 
+#'  \describe{
+#'    \item{\code{"leverage"}}{PCA leverage (the mean of the squared PC scores)}
+#'    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
+#'    \item{\code{"CompCor"}}{anatomical CompCor based on the ROIs. \code{X} must
+#'      be a 4D array or NIFTI, and \code{ROI_data} and \code{ROI_noise} are required.}
+#'    \item{\code{"DVARS"}}{traditional-DVARS, as well as Delta-percent-DVARS and
+#'      z-score-DVARS (Afyouni and Nichols, 2018)}
+#'    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
+#'  }
+#' 
+#'  Use \code{"all"} to select all outlyingness measures. Default: \code{"leverage", "DVARS"}.
+#' @param ROI_data Indicates the data ROI. 
+#' 
+#'  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
+#'  the data ROI is indicated by \code{TRUE} values. If not provided, all 
+#'  columns of \code{X} will be included in the data ROI (all \code{TRUE}).
+#' 
+#'  If \code{X} is an array or NIFTI, this must be either a vector of values
+#'  to expect for out-of-mask voxels in \code{X}, or a (file path to a) 3D NIFTI.
+#'  In the latter case, each of the volume dimensions should match the first
+#'  three dimension of \code{X}. Voxels in the data ROI should be indicated by
+#'  \code{TRUE} and all other voxels by \code{FALSE}. If not provided,
+#'  will be set to \code{c(0, NA, NaN)} (include all voxels which are not constant
+#'  \code{0}, \code{NA}, or \code{NaN}).
+#' 
+#'  If \code{X} is a \code{"xifti"} this should not be used. All data locations
+#'  will be used. 
+#' @param ROI_noise Indicates the noise ROI. Only used if the \code{"CompCor"} 
+#'  measure is requested.
+#'  
+#'  If \code{X} is a matrix, this must be a list of length \eqn{V} logical
+#'  vectors, or a list of matrices with \code{T} rows. The names of each entry should
+#'  indicate the name of the noise ROI, e.g. \code{"white_matter"} and \code{"csf"}.
+#'  In the first case, \code{TRUE} values should indicate the locations of \code{X} 
+#'  within that noise ROI. Since the ROIs must not overlap, the masks must be 
+#'  mutually exclusive with each other, and with \code{ROI_data}. In the second
+#'  case, the rows of the matrix must represent noise brainordinate timecourses,
+#'  separate from \code{X}. 
+#' 
+#'  If \code{X} is an array or NIFTI, this must be a list of (file paths to) 3D 
+#'  NIFTIs or arrays, or a list of matrices with \code{T} rows. The names of 
+#'  each entry should indicate the name of the noise ROI, e.g. 
+#'  \code{"white_matter"} and \code{"csf"}. In the first case, each of the volume 
+#'  dimensions should match the first three dimensions of \code{X}. Voxels in 
+#'  each noise ROI should be indicated by \code{TRUE} and all other voxels by 
+#'  \code{FALSE}. Since the ROIs must not overlap, the masks must be mutually 
+#'  exclusive with each other, and with \code{ROI_data}. In the second case,
+#'  the rows of the matrix must represent noise brainordinate timecourses,
+#'  separate from \code{X}. 
+#' 
+#'  If \code{X} is a \code{"xifti"}, this must be a list of matrices with 
+#'  \code{T} rows. The names of each entry should indicate the name of the noise
+#'  ROI, e.g. \code{"white_matter"} and \code{"csf"}. The rows of the matrix 
+#'  must represent noise brainordinate timecourses, separate from \code{X}. 
+#' @param X_motion Only used if the \code{"FD"} measure is requested. An 
+#'  \eqn{N \times 6} matrix in which the first three columns represent the
+#'  translational realignment parameters (mm), and the second three columns represent
+#'  the rotational realignment parameters in (radians). To convert radians to mm,
+#'  the displacement on a sphere of radius 50 mm will be computed.
+#' @param projections Only applies to the \code{"leverage"} and \code{"robdist"} 
+#'  measures. These work by projecting the data onto directions likely to 
+#'  contain outlier information. Choose at least one of the following:
+#' 
+#'  \describe{
+#'    \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with only leverage.}
+#'  }
+#'  
+#'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
+#'  
+#'  Each compatible measure + projection combination will yield its own result.
+#'  For example, if all projections are used and both leverage and robust distance
+#'  are requested, the results will be: leverage of high-variance PCs, leverage
+#'  of high-kurtosis PCs, leverage of trend-filtered PCs, robust distance of
+#'  high-variance PCs, and robust distance of high-kurtosis PCs.
+#' @param compute_PC_dirs Only applies to the \code{"leverage"} and \code{"robdist"} 
+#'  measures. Should the PCA and PCATF principal directions be computed? 
+#'  Default: \code{FALSE} (conserves memory). Required to use \code{\link{leverage_images}}.
+#' @param detrend Only applies to the \code{"leverage"} and \code{"robdist"} 
+#'  measures. Detrend the PCs before measuring kurtosis and before measuring
 #'  leverage or robust distance? Default: \code{TRUE}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
-#'  are many time points or evolving circumstances affecting the data. There are
-#'  two reasons: first, temporal trends induce positive or negative kurtosis, 
+#'  are many time points or evolving circumstances affecting the data. Additionally,
+#'  for the kurtosis-based projection, trends can induce positive or negative kurtosis,
 #'  contaminating the connection between high kurtosis and outlier presence. 
-#'  Second, trends tend to reduce the size of the in-MCD subset for the robust 
-#'  distance method causing many false positives.
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
 #' 
-#'  In addition to \code{TRUE} and \code{FALSE}, a third option \code{kurtosis}
+#'  In addition to \code{TRUE} and \code{FALSE}, a third option \code{"kurtosis"}
 #'  can be used to only detrend the PCs for the purpose of measuring kurtosis, 
 #'  and not for the actual outlyingness measurement.
 #' 
-#'  This option will not affect the PCATF projection, which is never detrended.
-#' @param PCATF_kwargs Named list of arguments for PCATF projection method.
-#'  Only applies if \code{("PCATF" \%in\% projection)}.
-#' 
-#'  Valid entries are: 
+#'  This option will not affect the PCATF PCs, which are never detrended.
+#' @param noise_erosion Only applies to the \code{"CompCor"} measure. The number
+#'  of voxel layers to erode the noise ROIs by. Should be a list or numeric
+#'  vector with the same length as \code{ROI_noise}. It will be matched to each
+#'  ROI based on the name of each entry, or if the names do not match or are missing,
+#'  the order of entries. If it is an unnamed vector, its elements will be recycled.
+#'  Default: \code{NULL}, which will use a value of 0 (do not erode the noise ROIs).
+#' @param noise_nPC Only applies to the \code{"CompCor"} measure. The number of 
+#'  principal components to compute for each noise ROI. Should be a list or numeric
+#'  vector with the same length as \code{ROI_noise}. It will be matched to each
+#'  ROI based on the name of each entry, or if the names do not match or are missing,
+#'  the order of entries. If it is an unnamed vector, its elements will be recycled.
+#'  Default: \code{5} (compute the top 5 PCs for each noise ROI).
+#' @param PCATF_kwargs Options for the \code{"PCATF"} projection. Valid entries 
+#'  are: 
 #'  
 #'  \describe{
-#'    \item{K}{maximum number of PCs to compute (Default: \code{1000})}
-#'    \item{lambda}{trend filtering parameter (Default: \code{0.05})}
-#'    \item{niter_max}{maximum number of iterations (Default: \code{1000})}
-#'    \item{verbose}{Print updates? (Default: \code{FALSE})}
+#'    \item{K}{Maximum number of PCs to compute. Default: \code{100}. Cannot be set above 100.}
+#'    \item{lambda}{Trend-filtering parameter. Default: \code{0.05}.}
+#'    \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+#'    \item{verbose}{Print updates? Default: \code{FALSE}.}
 #'  }
-#' @param kurt_quantile What cutoff quantile for kurtosis should be used? Only 
-#'  applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{0.95}.
-#' @param id_outliers Should the outliers be identified? Default: \code{TRUE}.
-#' @param lev_cutoff The outlier cutoff value for leverage, as a multiple of the
-#'  median leverage. Only used if 
-#'  \code{"leverage" \%in\% projection} and \code{id_outliers}. Default: 
-#'  \code{4}, or \eqn{4 * median}.
-#' @param rbd_cutoff The outlier cutoff quantile for MCD distance. Only used if 
-#'  \code{"robdist" \%in\% projection} and \code{id_outliers}. Default: 
-#'  \code{0.9999}, for the \eqn{0.9999} quantile.
+#' @param kurt_quantile Only applies to \code{"PCA_kurt"} projection. 
+#'  What cutoff quantile for kurtosis should be used to select the PCs? 
+#'  Default: \code{0.95}.
+#' @param get_outliers Should outliers be flagged based on cutoffs? Default: \code{TRUE}.
+#' @param outlier_cutoffs Named list indicating the cutoff for each outlyingness measure.
+#'  Only used if \code{get_outliers}. Each cutoff is specified in a particular way:
 #' 
-#'  The quantile is computed from the estimated F distribution.
-#' @param R_true The N x N correlation matrix, if known. Used for the bootstrap
-#'  robust distance method.
-#' @param lev_images Should leverage images be computed? If \code{FALSE} memory
-#'  is conserved. Default: \code{FALSE}.
+#'  \describe{
+#'    \item{\code{"leverage"}}{Minimum leverage value, in multiples of the median leverage. Default: \code{4} (will flag leverage scores more than four times the median).}
+#'    \item{\code{"robdist"}}{Minimum robust distance quantile, based on the estimated F distribution. Default: \code{.9999} (will flag robust distance scores above the 99.99th percentile).}
+#'    \item{\code{"CompCor"}}{Not applicable: not used for outlier detection. Should not be specified.}
+#'    \item{\code{"DVARS"}}{Minimum traditional-DVARS value, or "Afyouni_Nichols" (default), in which case
+#'      their dual cutoff will be used (Delta-percent-DVARS of more than +5\% or 
+#'      less than -5\% AND z-score=DVARS greater than the right-tail
+#'      5\% significance level with Bonferroni FWER correction).}
+#'    \item{\code{"FD"}}{Minimum FD. Default: 0.5 mm (will flag FD scores greater than 0.5 mm).}
+#'  }
+# @param R_true The N x N correlation matrix, if known. Used for the bootstrap
+#  robust distance method.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
-#' @return A clever object, i.e. a list with components
+#' @return A \code{"clever"} object, i.e. a list with components
 #' \describe{
-#'  \item{params}{A list of all the arguments used.}
-#'  \item{projections}{
+#'  \item{measures}{
+#'    A list of the outlyingness measures (only those requested will be included):
 #'    \describe{
-#'      \item{PC_var}{
-#'        \describe{
-#'          \item{indices}{The indices retained from the original SVD 
-#'            projection to make the variance-based PC projection.} 
-#'          \item{PCs}{The PC projection.}  
-#'        }
-#'      }
-#'      \item{PC_kurt}{
-#'        \describe{
-#'          \item{indices}{The indices retained from the original SVD 
-#'            projection to make the kurtosis-based PC projection. They are 
-#'            ordered from highest kurtosis to lowest kurtosis.}  
-#'          \item{PCs}{The PC projection. PCs are ordered in the standard
-#'            way, from highest variance to lowest variance, instead of by 
-#'            kurtosis.}  
-#'        }
-#'      }
-#'      \item{PCATF}{
-#'        \describe{
-#'          \item{indices}{The indices of the trend-filtered PCs used to make the
-#'            projection.}  
-#'          \item{PCs}{The PCATF result.}  
-#'        }
-#'      }
-#'    }
-#'  }
-#'  \item{outlier_measures}{
-#'    \describe{
-#'      \item{PC_var__lev}{The leverage values for the PC_var projection.}
-#'      \item{PC_kurt__lev}{The leverage values for the PC_kurt projection.}
-#'      \item{PCATF__lev}{The leverage values for the PCATF projection.}
-#'      \item{PC_var__rbd}{The robust MCD distance values for the PC_var projection.}
-#'      \item{PC_kurt__rbd}{The robust MCD distance values for the PC_kurt projection.}
-#'      \item{DVARS_DPD}{The Delta percent DVARS values.}
-#'      \item{DVARS_ZD}{The DVARS z-scores.}
+#'      \item{leverage__PCA_var}{Leverage values of the "PCA_var" projection.}
+#'      \item{leverage__PCA_kurt}{Leverage values of the "PCA_kurt" projection.}
+#'      \item{leverage__PCATF}{Leverage values of the "PCATF" projection.}
+#'      \item{robdist__PCA_var}{Robust distance values of the "PCA_var" projection.}
+#'      \item{robdist__PCA_kurt}{Robust distance values of the "PCA_kurt" projection.}
+#'      \item{CompCor_[Noise1]_PC1}{First PC of the first noise ROI.}
+#'      \item{...}{...}
+#'      \item{CompCor_[Noisek]_PCn}{nth PC of the kth (last) noise ROI.}
+#'      \item{DVARS}{Traditional DVARS values.}
+#'      \item{DVARS_DPD}{Delta-percent-DVARS values.}
+#'      \item{DVARS_ZD}{z-score-DVARS values.}
+#'      \item{FD}{Framewise Displacement values}
 #'    }
 #'  }
 #'  \item{outlier_cutoffs}{
+#'    A list of the outlier cutoffs for each measure (see the \code{outlier_cutoffs}
+#'    argument; only those requested will be included):
 #'    \describe{
-#'      \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff} times
-#'        the median leverage.}
-#'      \item{MCD}{The robust distance cutoff for outlier detection: the 
-#'        \code{rbd_cutoff} quantile of the estimated F distribution.}
-#'      \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5 percent}
-#'      \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5 percent 
-#'        significance level with Bonferroni FWER correction.}
+#'      \item{leverage__PCA_var}{Minimum leverage.}
+#'      \item{leverage__PCA_kurt}{Minimum leverage.}
+#'      \item{leverage__PCATF}{Minimum leverage.}
+#'      \item{robdist__PCA_var}{Minimum robust distance.}
+#'      \item{robdist__PCA_kurt}{Minimum robust distance.}
+#'      \item{DVARS}{Minimum DVARS.}
+#'      \item{DVARS_DPD}{Minimum absolute value of the Delta-percent-DVARS.}
+#'      \item{DVARS_ZD}{Minimum z-score-DVARS.}
+#'      \item{FD}{Minimum Framewise Displacement.}
 #'    }
 #'  }
 #'  \item{outlier_flags}{
+#'    Applies \code{outlier_cutoffs} to \code{measures}: each is a logical vector
+#'    with \code{TRUE} values indicating suspected outlier presence. 
+#'  }
+#'  \item{ROIs}{
 #'    \describe{
-#'      \item{PC_var__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{PC_kurt__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{PCATF__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{PC_var__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{PC_kurt__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{DVARS_DPD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-#'      \item{DVARS_ZD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
+#'      \item{data}{The mask of locations in the data ROI.}
+#'      \item{[Noise1]}{The mask of locations in the first noise ROI, if it was relative to \code{X}.}
+#'      \item{...}{...}
+#'      \item{[Noisek]}{The mask of locations in the kth (last) noise ROI, if it was relative to \code{X}.}
 #'    }
 #'  }
-#'  \item{robdist_info}{
+#'  \item{PCA}{
+#'    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
 #'    \describe{
-#'      \item{PC_var__robdist}{
+#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
+#'      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
+#'      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+#'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{!compute_PC_dirs}}
+#'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
+#'        (among those of above-average variance) and \code{NA} indicating a PC with kurtosis below
+#'        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
+#'    }
+#'  }
+#'  \item{PCATF}{
+#'    If the "PCATF" projection was used, this will be a list with components:
+#'    \describe{
+#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
+#'      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+#'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{!compute_PC_dirs}}
+#'    }
+#'  }
+#'  \item{robdist}{
+#'    If the "robdist" method was used, this will be a list with components:
+#'    \describe{
+#'      \item{PCA_var}{
+#'      If the "PCA_var" projection was used, this will be a list with components:
 #'        \describe{
 #'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
 #'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
-#'          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
 #'        }
 #'      }
-#'      \item{PC_var__robdist}{
+#'      \item{PCA_kurt}{
+#'      If the "PCA_kurt" projection was used, this will be a list with components:
 #'        \describe{
 #'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
 #'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
-#'          \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
+#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
 #'        }
 #'      }
-#'    }
-#'  }
-#'  \item{MCD_scale}{The scale value for out-of-MCD observations, and NA for
-#'    in-MCD observations. NULL if \code{method} is not robust distance.}
-#'  \item{lev_images}{
-#'    \describe{
-#'      \item{mean}{The average of the PC directions, weighted by the unscaled
-#'        PC scores at each outlying time point (U[i,] * V^T). Row names are
-#'        the corresponding time points.}
-#'      \item{top}{The PC direction with the highest PC score at each outlying
-#'        time point. Row names are the corresponding time points.}
-#'      \item{top_dir}{The index of the PC direction with the highest PC score
-#'        at each outlying time point. Named by timepoint.}
 #'    }
 #'  }
 #' }
@@ -182,39 +268,52 @@
 #' clev = clever(X)
 clever = function(
   X,
-  projection = "PCA_kurt",
-  out_meas = "leverage",
-  DVARS = TRUE,
-  detrend = TRUE,
-  PCATF_kwargs = NULL,
-  kurt_quantile = .95,
-  id_outliers = TRUE,
-  lev_cutoff = 4,
-  rbd_cutoff = 0.9999,
-  R_true = NULL,
-  lev_images = FALSE,
-  verbose = FALSE) {
+  measures=c("leverage", "DVARS"),
+  ROI_data=c(NA, NaN), ROI_noise=NULL, X_motion=NULL,
+  projections = "PCA_kurt", compute_PC_dirs=FALSE,
+  detrend=TRUE,
+  noise_nPC=5, noise_erosion=NULL,
+  PCATF_kwargs=NULL, kurt_quantile=.95,
+  get_outliers=TRUE, 
+  outlier_cutoffs=list(leverage=4, robdist=.9999, DVARS="Afyouni_Nichols", FD=.5),
+  verbose=FALSE){
+
+  # Define the cutoff value for detecting zero variance/MAD voxels
+  TOL <- 1e-8
 
   # ----------------------------------------------------------------------------
   # Check arguments. -----------------------------------------------------------
   # ----------------------------------------------------------------------------
 
-  # Define the valid `projection` and `out_meas`, and their valid combos.
-  all_projection <- c("PCA_var", "PCA_kurt", "PCATF")
-  all_out_meas <- c("leverage", "robdist")#, "robdist_bootstrap")
-  all_valid_methods <- c(
-    "PCA_var__leverage", "PCA_kurt__leverage", 
-    "PCA_var__robdist", "PCA_kurt__robdist", 
-    #"PCA_var__robdist_bootstrap", "PCA_kurt__robdist_bootstrap",
-    "PCATF__leverage"
-  )
+  valid_measures <- c("leverage", "robdist", "CompCor", "DVARS", "FD") # robdist_bootstrap
+  valid_projections <- c("PCA_var", "PCA_kurt", "PCATF")
 
-  # Define the cutoff value for detecting zero variance/MAD voxels
-  TOL <- 1e-8
+  if ("all" %in% measures) {
+    measures <- valid_measures
+  } else {
+    measures <- unique(match.arg(measures, valid_measures, several.ok=TRUE))
+  }
 
-  # Check arguments.
-  if(!is.matrix(X)){ X <- as.matrix(X) }
-  class(X) <- "numeric"
+  if ("all" %in% projections) {
+    projections <- valid_projections
+  } else {
+    projections <- unique(match.arg(projections, valid_projections, several.ok=TRUE))
+  }
+
+  use_PCA <- FALSE
+  use_PCATF <- FALSE
+  if ("leverage" %in% measures) {
+    if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
+    if ("PCATF" %in% projections) { use_PCATF <- TRUE }
+    measures <- measures[measures != "leverage"]
+    measures <- c(measures, paste0(leverage, "__", projections))
+  }
+  if ("robdist" %in% measures) {
+    if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
+    measures <- measures[measures != "robdist"]
+    measures <- c(measures, paste0(robdist, "__", projections))
+    measures <- measures[measures != "robdist__PCATF"] # not compatible
+  }
 
   if(identical(projection, "all")){
     projection <- all_projection
@@ -229,9 +328,8 @@ clever = function(
   }
 
   is.TRUEorFALSE <- function(x) { length(x)==1 && is.logical(x) }
-  stopifnot(is.TRUEorFALSE(DVARS))
-  stopifnot(is.TRUEorFALSE(id_outliers))
-  stopifnot(is.TRUEorFALSE(lev_images))
+  stopifnot(is.TRUEorFALSE(compute_PC_dirs))
+  stopifnot(is.TRUEorFALSE(get_outliers))
   stopifnot(is.TRUEorFALSE(verbose))
 
   stopifnot(length(detrend)==1)
@@ -251,27 +349,193 @@ clever = function(
   }
 
   stopifnot((kurt_quantile < 1) & (kurt_quantile > 0))
-  
-  if((lev_images) && (!id_outliers)){
-    stop(
-      "Invalid argument: computing leverage images requires\
-      `id_outliers==TRUE`."
-    )
+
+  outlier_cutoffs <- as.list(outlier_cutoffs)
+  outlier_cutoffs_defaults <- list(leverage=4, robdist=.9999, DVARS="Afyouni_Nichols", FD=.5)
+  for (meas in names(outlier_cutoffs_defaults)) {
+    if (!(meas %in% names(outlier_cutoffs_defaults))) { 
+      outlier_cutoffs[[meas]] <- outlier_cutoffs_defaults[[meas]]
+    }
+  }
+  stopifnot(all(sapply(outlier_cutoffs, length) == 1))
+  stopifnot(is.numeric(outlier_cutoffs$leverage) & outlier_cutoffs$leverage > 0)
+  stopifnot(is.numeric(outlier_cutoffs$robdist))
+  stopifnot((outlier_cutoffs$robdist > 0) & (outlier_cutoffs$robdist < 1))
+  stopifnot(is.numeric(outlier_cutoffs$DVARS) | outlier_cutoffs_defaults$DVARS=="Afyouni_Nichols")
+  stopifnot(is.numeric(outlier_cutoffs$FD) & outlier_cutoffs$FD > 0)
+
+  # ----------------------------------------------------------------------------
+  # Check data. ----------------------------------------------------------------
+  # ----------------------------------------------------------------------------
+
+  # X
+  if (is.matrix(X)) {
+    Vpre_ <- ncol(X); T_ <- nrow(X)
+    if(Vpre_ < T_){
+      warning(
+        "Data matrix has more rows than columns. Check that observations\
+        are in rows and variables are in columns."
+      )
+    }
+    X_type <- "vectorized"
+  } else if (is.array(X) && length(dim(X))==4) {
+    T_ <- dim(X)[4]
+    X_type <- "volume"
+  } else if (is.character(X)) {
+    if (endsWith(X, ".dtseries.nii") | endsWith(X, ".dscalar.nii")) {
+      if (!requireNamespace("ciftiTools", quietly = TRUE)) {
+        stop("Package \"ciftiTools\" needed to read `X`. Please install it", call. = FALSE)
+      }
+      X_cifti <- read_cifti(X, brainstructures="all")
+      X <- t(do.call(rbind, X_cifti$data))
+      Vpre_ <- ncol(X); T_ <- nrow(X)
+      X_type <- "cifti"
+    } else {
+      X <- read_nifti(X)
+      X_type <- "volume"
+    }
+  } else if (inherits(X, "xifti")) {
+    X_cifti <- X
+    X <- t(do.call(rbind, X_cifti$data))
+    Vpre_ <- ncol(X); T_ <- nrow(X)
+    X_type <- "cifti"
+  } else {
+    stop("`X` must be a matrix, array, NIFTI, path to a NIFTI, CIFTI, or path to a CIFTI.")
   }
 
-  stopifnot(is.numeric(lev_cutoff)); stopifnot(lev_cutoff > 0)
+  # ROI_data
+  ROI_data_was_null <- is.null(ROI_data)
+  if (X_type == "vectorized") {
+    if (ROI_data_was_null) { ROI_data <- rep(TRUE, Vpre_) }
+    ROI_data <- as.vector(ROI_data)
+    stopifnot(length(ROI_data) == Vpre_)
+    ROI_data <- as.logical(ROI_data)
+  } else if (X_type == "volume") {
+    if (ROI_data_was_null) { ROI_data <- c(0, NA, NaN) }
+    if (is.character(ROI_data)) {
+      ROI_data <- read_nifti(ROI_data)
+    }
+    if (is.vector(ROI_data)) {
+      ROI_data <- X
+      ROI_data[,,] <- X %in% ROI_data
+    } else if (is.array(ROI_data)) {
+      stopifnot(all(dim(ROI_data) == dim(X)[1:3]))
+      ROI_data <- ROI_data
+      ROI_data[,,] <- as.logical(ROI_data)
+    }
+  } else if (X_type == "xifti") {
+    ROI_data <- rep(TRUE, Vpre_)
+  } else { stop("Internal error: unrecognized `X_type`") }
 
-  stopifnot((rbd_cutoff > 0) & (rbd_cutoff < 1))
+  # ROI_noise
+  if ("CompCor" %in% measures) {
+    if (is.null(ROI_noise)) { stop("`CompCor` requires the noise ROIs.") }
+    if (!is.list(ROI_noise)) { ROI_noise <- list(Noise1=ROI_noise) }
+    if (is.null(names(ROI_noise))) { names(ROI_noise) <- paste0("Noise", 1:length(ROI_noise)) }
+    stopifnot(length(names(ROI_noise)) == length(unique(names(ROI_noise))))
+
+    # noise_nPC
+    noise_nPC <- as.list(noise_nPC)
+    if (is.null(names(noise_nPC))) {
+      noise_nPC <- noise_nPC[rep(1:length(noise_nPC), length(ROI_noise))[1:length(ROI_noise)]]
+      names(noise_nPC) <- names(ROI_noise)
+    } else {
+      stopifnot(all(sorted(names(noise_nPC)) == sorted(names(ROI_noise))))
+    }  
+
+    # noise_erosion
+    if (is.null(noise_erosion)) { 
+      noise_erosion = 0
+    } else {
+      if (!any(sapply(ROI_noise, is.array))) {
+        warning("`noise_erosion` was provided, but there are no array/NIFTI noise ROIs to erode.")
+      }
+    }
+    noise_erosion <- as.list(noise_erosion)
+    if (is.null(names(noise_erosion))) {
+      noise_erosion <- noise_erosion[rep(1:length(noise_erosion), length(ROI_noise))[1:length(ROI_noise)]]
+      names(noise_erosion) <- names(ROI_noise)
+    } else {
+      stopifnot(all(sorted(names(noise_erosion)) == sorted(names(ROI_noise))))
+    }
+
+    X_noise <- vector("list", length(ROI_noise)); names(X_noise) <- names(ROI_noise)
+    for (ii in 1:length(ROI_noise)) {
+      if (is.null(ROI_noise[[ii]])) { ROI_noise[[ii]] <- NULL; next }
+      if (X_type == "vectorized") {
+        if (is.vector(ROI_noise[[ii]])) {
+          stopifnot(length(ROI_noise[[ii]]) == Vpre_)
+          ROI_noise[[ii]] <- as.logical(ROI_noise[[ii]])
+          X_noise[[ii]] <- X[,ROI_noise[[ii]]]
+        } else if (is.matrix(ROI_noise[[ii]])) {
+          stopifnot(nrow(ROI_noise[[ii]]) == T_)
+          X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+        } else {
+          stop("Each entry in `ROI_noise` must be a logical vector, or matrix with the same number of rows as `X`.")
+        }
+      } else if (X_type == "volume") {
+        if (is.character(ROI_noise[[ii]])) {
+          if (!file.exists(ROI_noise[[ii]])) { stop(paste("The `ROI_noise` entry", ROI_noise[[ii]], "is not an existing file.")) }
+          ROI_noise[[ii]] <- read_nifti(ROI_noise[[ii]])
+        }
+        if (is.array(ROI_noise[[ii]])) {
+          stopifnot(all(dim(ROI_noise[[ii]]) == dim(X)[1:3]))
+          ROI_noise[[ii]][,,] <- as.logical(ROI_noise[[ii]])
+          X_noise[[ii]] <- t(matrix(X[ROI_noise[[ii]]],ncol=dim(X)[4]))
+        } else if (is.matrix(ROI_noise[[ii]])) {
+          stopifnot(nrow(ROI_noise[[ii]]) == T_)
+          X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+        } else {
+          stop("Each entry in `ROI_noise` must be a logical array, or matrix with the same number of rows as `X`.") 
+        }
+      } else if (X_type == "xifti") {
+        stopifnot(is.matrix(ROI_noise[[ii]]))
+        stopifnot(nrow(ROI_noise[[ii]]) == T_)
+        X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+      } else { stop("Internal error: unrecognized `X_type`") }
+    }
+  }
+
+  if (!all(sapply(ROI_noise, is.null))) {
+    # check that ROI are mutually exclusive
+    all_noise_ROIs <- apply(do.call(rbind, ROI_noise), 2, sum)
+    if (!all(all_noise_ROIs < 2)) {
+      stop("The noise ROIs must all be mutually exclusive.")
+    }
+    all_noise_ROIs <- all_noise_ROIs > 0
+    if (ROI_data_was_null) { 
+      if (X_type == "matrix") {
+        ROI_data[all_noise_ROIs] <- FALSE
+      } else if (X_type == "array") {
+        ROI_data[,,][all_noise_ROIs] <- FALSE
+      }
+    } else {
+      if (any(all_noise_ROIs & as.vector(ROI_data))) {
+        stop("The noise ROIs must not overlap with the data ROI.")
+      }
+    }
+  }
+
+  if (X_type == "array") {
+    X <- t(matrix(X[!all_noise_ROIs], ncol=dim(X)[4]))
+  }
+
+  # make sure nPCs greater than the rank of the noise ROIs!
+  # similarly for data
+  # ...
 
   # Get data dimensions.
-  Npre_ <- ncol(X)
-  T_ <- nrow(X)
-  if(Npre_ < T_){
+  Vpre_ <- ncol(X); T_ <- nrow(X)
+  if(Vpre_ < T_){
     warning(
       "Data matrix has more rows than columns. Check that observations\
       are in rows and variables are in columns."
     )
   }
+
+  return(list(
+    X=X, ROI_data=ROI_data, ROI_noise=ROI_noise
+  ))
 
   # Collect all the methods to compute.
   methods <- all_valid_methods[
@@ -284,7 +548,7 @@ clever = function(
     )
   }
   outlier_measures <- outlier_lev_imgs <- setNames(vector("list", length(methods)), methods)
-  if(id_outliers){
+  if(get_outliers){
     outlier_cutoffs <- outlier_flags <- setNames(vector("list", length(methods)), methods)
   }
   robdist_info <- vector("list")
@@ -329,7 +593,7 @@ clever = function(
     outlier_measures$DVARS_DPD <- X_DVARS$DPD
     outlier_measures$DVARS_ZD <- X_DVARS$ZD
 
-    if(id_outliers){
+    if(get_outliers){
       outlier_cutoffs$DVARS_DPD <- 5
       outlier_cutoffs$DVARS_ZD <- qnorm(1-.05/T_)
       
@@ -456,7 +720,7 @@ clever = function(
     
     if (verbose) { 
       cat(paste0("Method ", method_ii)) 
-      if (id_outliers) { cat(":") }
+      if (get_outliers) { cat(":") }
     }
 
     # Adjust PC number if using robust distance.
@@ -511,7 +775,7 @@ clever = function(
       #robdist_bootstrap = out_measures.robdist_bootstrap,
       robdist = out_measures.robdist,
     )
-    if (id_outliers) {
+    if (get_outliers) {
       cutoff_ii <- switch(out_ii_name,
         leverage=lev_cutoff,
         #robdist_bootstrap=rbd_cutoff,
@@ -528,7 +792,7 @@ clever = function(
     out_kwargs_ii <- c(list(U = U_meas), out_kwargs_ii)
     out_ii <- do.call(out_fun_ii, out_kwargs_ii)
     outlier_measures[[method_ii]] <- out_ii$meas
-    if (id_outliers) {
+    if (get_outliers) {
       outlier_cutoffs[[method_ii]] <- out_ii$cut
       outlier_flags[[method_ii]] <- out_ii$flag
     }
@@ -540,7 +804,7 @@ clever = function(
     # Make leverage images.-----------------------------------------------------
     # --------------------------------------------------------------------------
 
-    if (id_outliers) {
+    if (get_outliers) {
       if (sum(out_ii$flag) > 0) {
         if (verbose) {
           cat(" Outliers detected.")
@@ -584,7 +848,7 @@ clever = function(
   if ("robdist" %in% out_meas) {
     result$robdist_info <- robdist_info
   }
-  if (id_outliers) {
+  if (get_outliers) {
     result$outlier_cutoffs <- outlier_cutoffs
     result$outlier_flags <- outlier_flags
   }
@@ -596,7 +860,7 @@ clever = function(
     detrend = detrend,
     PCATF_kwargs = PCATF_kwargs,
     kurt_quantile = kurt_quantile,
-    id_outliers = id_outliers,
+    get_outliers = get_outliers,
     lev_cutoff = lev_cutoff,
     rbd_cutoff = rbd_cutoff,
     lev_images = lev_images,
