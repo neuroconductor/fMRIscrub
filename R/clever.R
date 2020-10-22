@@ -38,7 +38,10 @@
 #'    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
 #'  }
 #' 
-#'  Use \code{"all"} to select all outlyingness measures. Default: \code{"leverage", "DVARS"}.
+#'  Use \code{"all"} to select all available outlyingness measures. (CompCor will
+#'  only be computed if the ROIs are provided, and FD will only be computed if 
+#'  the motion realignment parameters are provided.) Default: 
+#'  \code{"leverage", "DVARS"}.
 #' @param ROI_data Indicates the data ROI. 
 #' 
 #'  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
@@ -269,7 +272,7 @@
 clever = function(
   X,
   measures=c("leverage", "DVARS"),
-  ROI_data=c(NA, NaN), ROI_noise=NULL, X_motion=NULL,
+  ROI_data=NULL, ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", compute_PC_dirs=FALSE,
   detrend=TRUE,
   noise_nPC=5, noise_erosion=NULL,
@@ -289,7 +292,9 @@ clever = function(
   valid_projections <- c("PCA_var", "PCA_kurt", "PCATF")
 
   if ("all" %in% measures) {
-    measures <- valid_measures
+    measures <- c("leverage", "robdist", "DVARS")
+    if (!is.null(ROI_data) && !is.null(ROI_noise)) { measures <- c(measures, "CompCor") }
+    if (!is.null(X_motion)) { measures <- c(measures, "FD") }
   } else {
     measures <- unique(match.arg(measures, valid_measures, several.ok=TRUE))
   }
@@ -306,25 +311,19 @@ clever = function(
     if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
     if ("PCATF" %in% projections) { use_PCATF <- TRUE }
     measures <- measures[measures != "leverage"]
-    measures <- c(measures, paste0(leverage, "__", projections))
+    measures <- c(measures, paste0("leverage__", projections))
   }
   if ("robdist" %in% measures) {
     if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
     measures <- measures[measures != "robdist"]
-    measures <- c(measures, paste0(robdist, "__", projections))
+    measures <- c(measures, paste0("robdist__", projections))
     measures <- measures[measures != "robdist__PCATF"] # not compatible
   }
 
-  if(identical(projection, "all")){
-    projection <- all_projection
+  if(identical(projections, "all")){
+    projections <- valid_projections
   } else {
-    projection <- match.arg(projection, all_projection, several.ok=TRUE)
-  }
-
-  if(identical(out_meas, "all")){
-    out_meas <- all_out_meas
-  } else {
-    out_meas <- match.arg(out_meas, all_out_meas, several.ok=TRUE)
+    projections <- match.arg(projections, valid_projections, several.ok=TRUE)
   }
 
   is.TRUEorFALSE <- function(x) { length(x)==1 && is.logical(x) }
@@ -389,7 +388,7 @@ clever = function(
       X_cifti <- read_cifti(X, brainstructures="all")
       X <- t(do.call(rbind, X_cifti$data))
       Vpre_ <- ncol(X); T_ <- nrow(X)
-      X_type <- "cifti"
+      X_type <- "xifti"
     } else {
       X <- read_nifti(X)
       X_type <- "volume"
@@ -398,17 +397,21 @@ clever = function(
     X_cifti <- X
     X <- t(do.call(rbind, X_cifti$data))
     Vpre_ <- ncol(X); T_ <- nrow(X)
-    X_type <- "cifti"
+    X_type <- "xifti"
   } else {
     stop("`X` must be a matrix, array, NIFTI, path to a NIFTI, CIFTI, or path to a CIFTI.")
   }
+
+  if (T_ < 1) { stop("There is only one timepoint.") }
 
   # ROI_data
   ROI_data_was_null <- is.null(ROI_data)
   if (X_type == "vectorized") {
     if (ROI_data_was_null) { ROI_data <- rep(TRUE, Vpre_) }
     ROI_data <- as.vector(ROI_data)
-    stopifnot(length(ROI_data) == Vpre_)
+    if (length(ROI_data) != Vpre_) { 
+      stop("The `ROI_data` must be a logical vector with the same length as columns in the data.") 
+    }
     ROI_data <- as.logical(ROI_data)
   } else if (X_type == "volume") {
     if (ROI_data_was_null) { ROI_data <- c(0, NA, NaN) }
@@ -419,7 +422,9 @@ clever = function(
       ROI_data <- X
       ROI_data[,,] <- X %in% ROI_data
     } else if (is.array(ROI_data)) {
-      stopifnot(all(dim(ROI_data) == dim(X)[1:3]))
+      if (all(dim(ROI_data) != dim(X)[1:3])) { 
+        stop("The `ROI_data` must have the same dimensions as the first three dimensions of `X`.")
+      }
       ROI_data <- ROI_data
       ROI_data[,,] <- as.logical(ROI_data)
     }
@@ -432,7 +437,9 @@ clever = function(
     if (is.null(ROI_noise)) { stop("`CompCor` requires the noise ROIs.") }
     if (!is.list(ROI_noise)) { ROI_noise <- list(Noise1=ROI_noise) }
     if (is.null(names(ROI_noise))) { names(ROI_noise) <- paste0("Noise", 1:length(ROI_noise)) }
-    stopifnot(length(names(ROI_noise)) == length(unique(names(ROI_noise))))
+    if (length(names(ROI_noise)) != length(unique(names(ROI_noise)))) {
+      stop("The `ROI_noise` names must be unique.")
+    }
 
     # noise_nPC
     noise_nPC <- as.list(noise_nPC)
@@ -440,7 +447,9 @@ clever = function(
       noise_nPC <- noise_nPC[rep(1:length(noise_nPC), length(ROI_noise))[1:length(ROI_noise)]]
       names(noise_nPC) <- names(ROI_noise)
     } else {
-      stopifnot(all(sorted(names(noise_nPC)) == sorted(names(ROI_noise))))
+      if (all(sorted(names(noise_nPC)) != sorted(names(ROI_noise)))) {
+        stop("The names of `noise_nPC` do not match those of `ROI_noise`.")
+      }
     }  
 
     # noise_erosion
@@ -456,7 +465,9 @@ clever = function(
       noise_erosion <- noise_erosion[rep(1:length(noise_erosion), length(ROI_noise))[1:length(ROI_noise)]]
       names(noise_erosion) <- names(ROI_noise)
     } else {
-      stopifnot(all(sorted(names(noise_erosion)) == sorted(names(ROI_noise))))
+      if (all(sorted(names(noise_erosion)) != sorted(names(ROI_noise)))) {
+        stop("The names of `noise_erosion` do not match those of `ROI_noise`.")
+      }
     }
 
     X_noise <- vector("list", length(ROI_noise)); names(X_noise) <- names(ROI_noise)
@@ -539,7 +550,7 @@ clever = function(
 
   # Collect all the methods to compute.
   methods <- all_valid_methods[
-    all_valid_methods %in% outer(projection, out_meas, paste, sep='__')
+    all_valid_methods %in% outer(projections, out_meas, paste, sep='__')
   ]
   if(length(methods) < 1){
     stop(
@@ -608,14 +619,14 @@ clever = function(
   # ----------------------------------------------------------------------------
 
   # Compute the PC scores (and directions, if leverage images or PCATF are desired).
-  solve_dirs <- (lev_images) || ("PCATF" %in% projection)
+  solve_dirs <- (lev_images) || ("PCATF" %in% projections)
   if(verbose){
     cat(paste0(
       "Computing the",
       ifelse(
-        ("PCA_var" %in% projection) | ("PCA_kurt" %in% projection),
-        ifelse("PCATF" %in% projection, " normal and trend-filtered", ""),
-        ifelse("PCATF" %in% projection, " trend-filtered", "INTERNAL ERROR")
+        ("PCA_var" %in% projections) | ("PCA_kurt" %in% projections),
+        ifelse("PCATF" %in% projections, " normal and trend-filtered", ""),
+        ifelse("PCATF" %in% projections, " trend-filtered", "INTERNAL ERROR")
       ),
       " PC scores",
       ifelse(solve_dirs, " and directions", ""), ".\n"
@@ -623,11 +634,11 @@ clever = function(
   }
   if(solve_dirs){
     X.svd <- svd(X)
-    if(!("PCATF" %in% projection)){ rm(X) }
+    if(!("PCATF" %in% projections)){ rm(X) }
   } else {
     # Conserve memory by using `XXt`
     XXt <- tcrossprod(X)
-    if(!("PCATF" %in% projection)){ rm(X) }
+    if(!("PCATF" %in% projections)){ rm(X) }
     X.svd <- svd(XXt)
     rm(XXt)
     X.svd$d <- sqrt(X.svd$d)
@@ -635,7 +646,7 @@ clever = function(
   }
 
   # Compute PCATF, if requested.
-  if("PCATF" %in% projection){
+  if("PCATF" %in% projections){
     X.svdtf <- do.call(
       PCATF, 
       c(list(X=X, X.svd=X.svd, solve_directions=solve_dirs), PCATF_kwargs)
@@ -663,9 +674,9 @@ clever = function(
   gc()
 
   # Choose which PCs to retain for each projection.
-  projection <- setNames(vector("list", length(projection)), projection)
-  for (ii in 1:length(projection)) {
-    proj_ii_name <- names(projection)[ii]
+  projections <- setNames(vector("list", length(projections)), projections)
+  for (ii in 1:length(projections)) {
+    proj_ii_name <- names(projections)[ii]
 
     if(verbose){
       cat(switch(proj_ii_name,
@@ -700,7 +711,7 @@ clever = function(
       attributes(proj_ii_svd$u_detrended)$dimnames <- NULL
     } 
     if(lev_images){ proj_ii_svd$v <- proj_ii_svd$v[,chosen_PCs_ordered,drop=FALSE] }
-    projection[[proj_ii_name]] = list(indices=chosen_PCs, svd=proj_ii_svd)
+    projections[[proj_ii_name]] = list(indices=chosen_PCs, svd=proj_ii_svd)
   }
 
   # ----------------------------------------------------------------------------
@@ -716,7 +727,7 @@ clever = function(
     method_ii <- methods[ii]
     method_ii_split <- unlist(strsplit(method_ii, "__"))
     proj_ii_name <- method_ii_split[1]; out_ii_name <- method_ii_split[2]
-    proj_ii <- projection[[proj_ii_name]]
+    proj_ii <- projections[[proj_ii_name]]
     
     if (verbose) { 
       cat(paste0("Method ", method_ii)) 
@@ -842,7 +853,7 @@ clever = function(
   if (verbose) { cat("Done!\n\n") }
   result <- list(
     params = NULL, 
-    projections = projection, 
+    projections = projections, 
     outlier_measures = outlier_measures
   )
   if ("robdist" %in% out_meas) {
@@ -853,19 +864,7 @@ clever = function(
     result$outlier_flags <- outlier_flags
   }
   if (lev_images) { result$outlier_lev_imgs <- outlier_lev_imgs }
-  result$params <- list(
-    projection = names(projection),
-    out_meas = out_meas,
-    DVARS = DVARS,
-    detrend = detrend,
-    PCATF_kwargs = PCATF_kwargs,
-    kurt_quantile = kurt_quantile,
-    get_outliers = get_outliers,
-    lev_cutoff = lev_cutoff,
-    rbd_cutoff = rbd_cutoff,
-    lev_images = lev_images,
-    verbose = verbose
-  )
+  result$call <- match.call()
 
   structure(result, class="clever")
 }

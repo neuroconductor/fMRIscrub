@@ -7,7 +7,7 @@
 clever(
   X,
   measures = c("leverage", "DVARS"),
-  ROI_data = c(NA, NaN),
+  ROI_data = NULL,
   ROI_noise = NULL,
   X_motion = NULL,
   projections = "PCA_kurt",
@@ -47,7 +47,10 @@ clever(
    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
  }
 
- Use \code{"all"} to select all outlyingness measures. Default: \code{"leverage", "DVARS"}.}
+ Use \code{"all"} to select all available outlyingness measures. (CompCor will
+ only be computed if the ROIs are provided, and FD will only be computed if 
+ the motion realignment parameters are provided.) Default: 
+ \code{"leverage", "DVARS"}.}
 
 \item{ROI_data}{Indicates the data ROI. 
 
