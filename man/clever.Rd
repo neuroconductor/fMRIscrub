@@ -11,15 +11,15 @@ clever(
   ROI_noise = NULL,
   X_motion = NULL,
   projections = "PCA_kurt",
-  compute_PC_dirs = FALSE,
+  solve_PC_dirs = FALSE,
   detrend = TRUE,
   noise_nPC = 5,
   noise_erosion = NULL,
   PCATF_kwargs = NULL,
   kurt_quantile = 0.95,
   get_outliers = TRUE,
-  outlier_cutoffs = list(leverage = 4, robdist = 0.9999, DVARS = "Afyouni_Nichols", FD
-    = 0.5),
+  outlier_cutoffs = list(leverage = 4, robdist = 0.9999, DVARS = 5, dualDVARS =
+    "Afyouni-Nichols", FD = 0.5),
   verbose = FALSE
 )
 }
@@ -34,23 +34,29 @@ clever(
  Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
  (\eqn{V_{left} + V_{right} + V_{subcortical} \times T observations}).}
 
-\item{measures}{Character vector indicating the outlyingness measures to 
- compute. Choose at least one of the following: 
+\item{measures}{Character vector indicating the measures to compute. Choose 
+ at least one of the following: 
 
  \describe{
    \item{\code{"leverage"}}{PCA leverage (the mean of the squared PC scores)}
    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-   \item{\code{"CompCor"}}{anatomical CompCor based on the ROIs. \code{X} must
-     be a 4D array or NIFTI, and \code{ROI_data} and \code{ROI_noise} are required.}
    \item{\code{"DVARS"}}{traditional-DVARS, as well as Delta-percent-DVARS and
      z-score-DVARS (Afyouni and Nichols, 2018)}
    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
+   \item{\code{"motion"}}{Translation and rotation realignment parameters. 
+     \code{X_motion} is required.}
+   \item{\code{"CompCor"}}{anatomical CompCor based on the ROIs. \code{ROI_data} 
+     and \code{ROI_noise} are required.}
+   \item{\code{"GSR"}}{Global Signal of the data.}
  }
 
- Use \code{"all"} to select all available outlyingness measures. (CompCor will
- only be computed if the ROIs are provided, and FD will only be computed if 
- the motion realignment parameters are provided.) Default: 
- \code{"leverage", "DVARS"}.}
+ Use \code{"all"} to select all available measures. (CompCor will
+ only be computed if the ROIs are provided, and FD and motion will only be 
+ computed if the motion realignment parameters are provided.) Default: 
+ \code{"leverage", "DVARS"}.
+
+ Note that motion, CompCor and GSR are not direct measures of outlyingness,
+ so they do not have corresponding \code{outlier_cutoffs}.}
 
 \item{ROI_data}{Indicates the data ROI. 
 
@@ -69,7 +75,7 @@ clever(
  If \code{X} is a \code{"xifti"} this should not be used. All data locations
  will be used.}
 
-\item{ROI_noise}{Indicates the noise ROI. Only used if the \code{"CompCor"} 
+\item{ROI_noise}{Indicates the noise ROIs. Only used if the \code{"CompCor"} 
  measure is requested.
  
  If \code{X} is a matrix, this must be a list of length \eqn{V} logical
@@ -98,10 +104,14 @@ clever(
  must represent noise brainordinate timecourses, separate from \code{X}.}
 
 \item{X_motion}{Only used if the \code{"FD"} measure is requested. An 
-\eqn{N \times 6} matrix in which the first three columns represent the
-translational realignment parameters (mm), and the second three columns represent
-the rotational realignment parameters in (radians). To convert radians to mm,
-the displacement on a sphere of radius 50 mm will be computed.}
+ \eqn{N \times 6} matrix in which the first three columns represent the
+ translational realignment parameters (mm), and the second three columns represent
+ the rotational realignment parameters in (radians). To convert radians to mm,
+ the displacement on a sphere of radius 50 mm will be computed.
+
+ Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
+ read with \code{\link{read.table}} (fields separated by white-space; no
+ header).}
 
 \item{projections}{Only applies to the \code{"leverage"} and \code{"robdist"} 
  measures. These work by projecting the data onto directions likely to 
@@ -121,7 +131,7 @@ the displacement on a sphere of radius 50 mm will be computed.}
  of high-kurtosis PCs, leverage of trend-filtered PCs, robust distance of
  high-variance PCs, and robust distance of high-kurtosis PCs.}
 
-\item{compute_PC_dirs}{Only applies to the \code{"leverage"} and \code{"robdist"} 
+\item{solve_PC_dirs}{Only applies to the \code{"leverage"} and \code{"robdist"} 
 measures. Should the PCA and PCATF principal directions be computed? 
 Default: \code{FALSE} (conserves memory). Required to use \code{\link{leverage_images}}.}
 
@@ -143,19 +153,26 @@ Default: \code{FALSE} (conserves memory). Required to use \code{\link{leverage_i
 
  This option will not affect the PCATF PCs, which are never detrended.}
 
-\item{noise_nPC}{Only applies to the \code{"CompCor"} measure. The number of 
-principal components to compute for each noise ROI. Should be a list or numeric
-vector with the same length as \code{ROI_noise}. It will be matched to each
-ROI based on the name of each entry, or if the names do not match or are missing,
-the order of entries. If it is an unnamed vector, its elements will be recycled.
-Default: \code{5} (compute the top 5 PCs for each noise ROI).}
+\item{noise_nPC}{Only applies to the CompCor measure.
+ The number of principal components to compute for each noise
+ ROI. Alternatively, values between 0 and 1, in which case they will 
+ represent the minimum proportion of variance explained by the PCs used for
+ each noise ROI. The smallest number of PCs will be used to achieve this 
+ proportion of variance explained. 
 
-\item{noise_erosion}{Only applies to the \code{"CompCor"} measure. The number
-of voxel layers to erode the noise ROIs by. Should be a list or numeric
-vector with the same length as \code{ROI_noise}. It will be matched to each
-ROI based on the name of each entry, or if the names do not match or are missing,
-the order of entries. If it is an unnamed vector, its elements will be recycled.
-Default: \code{NULL}, which will use a value of 0 (do not erode the noise ROIs).}
+ Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+ It will be matched to each ROI based on the name of each entry, or if the 
+ names are missing, the order of entries. If it is an unnamed vector, its
+ elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
+ each noise ROI).}
+
+\item{noise_erosion}{Only applies to the CompCor measure.
+The number of voxel layers to erode the noise ROIs by. 
+Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+It will be matched to each ROI based on the name of each entry, or if the 
+names are missing, the order of entries. If it is an unnamed vector, its 
+elements will be recycled. Default: \code{NULL}, which will use a value of
+0 (do not erode the noise ROIs).}
 
 \item{PCATF_kwargs}{Options for the \code{"PCATF"} projection. Valid entries 
 are: 
@@ -179,11 +196,14 @@ Default: \code{0.95}.}
  \describe{
    \item{\code{"leverage"}}{Minimum leverage value, in multiples of the median leverage. Default: \code{4} (will flag leverage scores more than four times the median).}
    \item{\code{"robdist"}}{Minimum robust distance quantile, based on the estimated F distribution. Default: \code{.9999} (will flag robust distance scores above the 99.99th percentile).}
-   \item{\code{"CompCor"}}{Not applicable: not used for outlier detection. Should not be specified.}
-   \item{\code{"DVARS"}}{Minimum traditional-DVARS value, or "Afyouni_Nichols" (default), in which case
-     their dual cutoff will be used (Delta-percent-DVARS of more than +5\% or 
-     less than -5\% AND z-score=DVARS greater than the right-tail
-     5\% significance level with Bonferroni FWER correction).}
+   \item{\code{"DVARS"}}{Minimum traditional-DVARS value}
+   \item{\code{"dualDVARS"}}{A length-2 numeric vector representing a dual 
+     Delta-percent-DVARS and z-score-DVARS cutoff. Both must be met for a 
+     timepoint to be flagged. The Delta-percent-DVARS cutoff should be given
+     in percentages; the z-score-DVARS cutoff should be given as a z-score. 
+     Or, set this to "Afyouni-Nichols" (default) to require a
+     Delta-percent-DVARS of more than 5\% and a z-score-DVARS greater than
+     the right-tail 5\% significance level with Bonferroni FWER correction).}
    \item{\code{"FD"}}{Minimum FD. Default: 0.5 mm (will flag FD scores greater than 0.5 mm).}
  }}
 
@@ -193,33 +213,40 @@ Default: \code{0.95}.}
 A \code{"clever"} object, i.e. a list with components
 \describe{
  \item{measures}{
-   A list of the outlyingness measures (only those requested will be included):
+   A list of the measures (only those requested will be included):
    \describe{
      \item{leverage__PCA_var}{Leverage values of the "PCA_var" projection.}
      \item{leverage__PCA_kurt}{Leverage values of the "PCA_kurt" projection.}
      \item{leverage__PCATF}{Leverage values of the "PCATF" projection.}
      \item{robdist__PCA_var}{Robust distance values of the "PCA_var" projection.}
      \item{robdist__PCA_kurt}{Robust distance values of the "PCA_kurt" projection.}
+     \item{DVARS}{Traditional DVARS values.}
+     \item{DVARS__DPD}{Delta-percent-DVARS values.}
+     \item{DVARS_ZD}{z-score-DVARS values.}
+     \item{FD}{Framewise Displacement values}
+     \item{motion_t1}{First translation realignment parameter.}
+     \item{motion_t2}{Second translation realignment parameter.}
+     \item{motion_t3}{Third translation realignment parameter.}
+     \item{motion_r1}{First rotation realignment parameter.}
+     \item{motion_r2}{Second rotation realignment parameter.}
+     \item{motion_r3}{Third rotation realignment parameter.}
      \item{CompCor_[Noise1]_PC1}{First PC of the first noise ROI.}
      \item{...}{...}
      \item{CompCor_[Noisek]_PCn}{nth PC of the kth (last) noise ROI.}
-     \item{DVARS}{Traditional DVARS values.}
-     \item{DVARS_DPD}{Delta-percent-DVARS values.}
-     \item{DVARS_ZD}{z-score-DVARS values.}
-     \item{FD}{Framewise Displacement values}
+     \item{GSR}{The global signal of the data.}
    }
  }
  \item{outlier_cutoffs}{
-   A list of the outlier cutoffs for each measure (see the \code{outlier_cutoffs}
-   argument; only those requested will be included):
+   A list of the outlier cutoffs for each outlyingness measure (see the 
+   \code{outlier_cutoffs} argument; only those requested will be included):
    \describe{
      \item{leverage__PCA_var}{Minimum leverage.}
      \item{leverage__PCA_kurt}{Minimum leverage.}
      \item{leverage__PCATF}{Minimum leverage.}
      \item{robdist__PCA_var}{Minimum robust distance.}
      \item{robdist__PCA_kurt}{Minimum robust distance.}
-     \item{DVARS}{Minimum DVARS.}
-     \item{DVARS_DPD}{Minimum absolute value of the Delta-percent-DVARS.}
+     \item{DVARS}{Minimum traditional DVARS.}
+     \item{DVARS__DPD}{Minimum Delta-percent-DVARS.}
      \item{DVARS_ZD}{Minimum z-score-DVARS.}
      \item{FD}{Minimum Framewise Displacement.}
    }
@@ -242,7 +269,7 @@ A \code{"clever"} object, i.e. a list with components
      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
-     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{!compute_PC_dirs}}
+     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
        (among those of above-average variance) and \code{NA} indicating a PC with kurtosis below
        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
@@ -253,11 +280,11 @@ A \code{"clever"} object, i.e. a list with components
    \describe{
      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
-     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{!compute_PC_dirs}}
+     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
    }
  }
- \item{robdist}{
-   If the "robdist" method was used, this will be a list with components:
+ \item{robdist_info}{
+   If the "robdist" measure was used, this will be a list with components:
    \describe{
      \item{PCA_var}{
      If the "PCA_var" projection was used, this will be a list with components:
@@ -277,6 +304,7 @@ A \code{"clever"} object, i.e. a list with components
      }
    }
  }
+ \item{call}{The call to this function.}
 }
 }
 \description{

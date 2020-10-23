@@ -119,6 +119,7 @@ est_trend <- function(ts, robust=TRUE){
     trend <- lm(ts~p1+p2+p3+p4, df)$fitted.values
   }
 
+  names(trend) <- NULL
   trend
 }
 

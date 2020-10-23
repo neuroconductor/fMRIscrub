@@ -66,7 +66,8 @@ out_measures.robdist <- function(U, quantile_cutoff=NA){
   Fparam <- fit.F(Q, n, sum(inMCD))
   Fparam <- c(Fparam$c, Fparam$m, Fparam$df[1], Fparam$df[2])
   names(Fparam) <- c("c", "m", "df1", "df2")
-  outMCD_scale <- Fparam["c"] * (Fparam["m"] - Q + 1) / (Q * Fparam["m"]) 
+  outMCD_scale <- Fparam["c"] * (Fparam["m"] - Q + 1) / (Q * Fparam["m"])   
+  names(outMCD_scale) <- NULL
   
   out <- list(
     meas=RD, 

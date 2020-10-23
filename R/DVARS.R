@@ -79,6 +79,5 @@ DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
     (DV2-mu_0)/sigma_0  # avoid overflow by approximating
   )
 
-  out <- list(D=D, DVARS=DVARS_, DPD=DPD, ZD=ZD)
-  return(out)
+  data.frame(D=c(0,D), DVARS=c(0,DVARS_), DPD=c(0,DPD), ZD=c(0,ZD))
 }

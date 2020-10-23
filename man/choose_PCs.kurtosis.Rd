@@ -4,10 +4,19 @@
 \alias{choose_PCs.kurtosis}
 \title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
 \usage{
-choose_PCs.kurtosis(svd, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000)
+choose_PCs.kurtosis(
+  svd,
+  svd_is_varcut = FALSE,
+  kurt_quantile = 0.9,
+  detrend = TRUE,
+  n_sim = 5000
+)
 }
 \arguments{
 \item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
+
+\item{svd_is_varcut}{Have the below-average-variance PCs been removed already?
+Default: \code{FALSE}}
 
 \item{kurt_quantile}{PCs with kurtosis of at least this quantile are kept.}
 

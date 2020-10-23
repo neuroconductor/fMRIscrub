@@ -4,10 +4,12 @@
 \alias{neighbor_counts}
 \title{Count each voxel's neighbors with value \code{TRUE}}
 \usage{
-neighbor_counts(arr)
+neighbor_counts(arr, pad = FALSE)
 }
 \arguments{
 \item{arr}{The 3D logical array.}
+
+\item{pad}{Pad value for edge.}
 }
 \value{
 An array with the same dimensions as \code{arr}. Each voxel value

@@ -9,6 +9,7 @@
 #'
 #' @export
 choose_PCs.variance <- function(svd){
+  names(svd) <- tolower(names(svd))
   var <- svd$d^2
   n_keep <- max(1, sum(var > mean(var)))
   1:n_keep
@@ -24,6 +25,8 @@ choose_PCs.variance <- function(svd){
 #'  distribution if the PCs are long enough.
 #'
 #' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
+#' @param svd_is_varcut Have the below-average-variance PCs been removed already?
+#'  Default: \code{FALSE}
 #' @param kurt_quantile PCs with kurtosis of at least this quantile are kept.
 #' @param detrend Should PCs be detrended before measuring kurtosis? Default is
 #'  \code{TRUE}. Recommended if observations represent a time series.
@@ -38,15 +41,17 @@ choose_PCs.variance <- function(svd){
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choose_PCs.kurtosis <- function(svd, kurt_quantile = 0.9, detrend = TRUE,
+choose_PCs.kurtosis <- function(svd, svd_is_varcut = FALSE, kurt_quantile = 0.9, detrend = TRUE,
   n_sim = 5000){
+  names(svd) <- tolower(names(svd))
   U <- svd$u
-  m <- nrow(U)
+  m <- nrow(U); n <- ncol(U)
 
   # First get the high-variance PCs.
-  n <- length(choose_PCs.variance(svd))
-  U <- U[,1:n]
-  if(n==1){U <- matrix(U, ncol=1)}
+  if (!svd_is_varcut) {
+    n <- length(choose_PCs.variance(svd))
+    U <- U[,1:n, drop=FALSE]
+  }
 
   # Compute the kurtosis of the PCs, detrending if applicable.
   if(detrend){

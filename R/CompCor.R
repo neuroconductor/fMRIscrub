@@ -4,15 +4,16 @@
 #'  with value \code{TRUE}.
 #'
 #' @param arr The 3D logical array.
+#' @param pad Pad value for edge.
 #' 
 #' @return An array with the same dimensions as \code{arr}. Each voxel value
 #'  will be the number of its immediate neighbors (0 to 6) which are \code{TRUE}.
 #' 
 #' @keywords internal
-neighbor_counts <- function(arr){
+neighbor_counts <- function(arr, pad=FALSE){
   stopifnot(length(dim(arr)) == 3)
   stopifnot(all(unique(arr) %in% c(TRUE, FALSE)))
-  arrPad <- ciftiTools:::pad_vol(arr, matrix(1, 3, 2), fill=FALSE)
+  arrPad <- ciftiTools:::pad_vol(arr, matrix(1, 3, 2), fill=pad)
   dPad <- dim(arrPad)
   # Look up, down, left, right, forward, behind (not diagonally)
   arrPad[1:(dPad[1]-2),2:(dPad[2]-1),2:(dPad[3]-1)] +
@@ -49,7 +50,7 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
   if (n_erosion==0) {return(vol)}
   mask <- !array(vol %in% out_of_mask_val, dim=dim(vol))
   for(ii in 1:n_erosion){
-    to_erode <- mask & neighbor_counts(mask) < 6
+    to_erode <- mask & neighbor_counts(mask, pad=TRUE) < 6
     mask[to_erode] <- FALSE
     vol[to_erode] <- out_of_mask_val[1]
   }
@@ -75,84 +76,275 @@ hat_mat <- function(X){
   X %*% solve(t(X) %*% X, t(X))
 }
 
-#' CompCor
+#' Format data for clever and CompCor
 #'
-#' The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+#' @inheritParams data_clever_CompCor_Params
+#' @param noise_nPC The number of principal components to compute for each noise
+#'  ROI. Alternatively, values between 0 and 1, in which case they will 
+#'  represent the minimum proportion of variance explained by the PCs used for
+#'  each noise ROI. The smallest number of PCs will be used to achieve this 
+#'  proportion of variance explained. 
 #' 
-#' The data are centered on each voxel timecourse's median.
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its
+#'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
+#'  each noise ROI).
+#' @param noise_erosion The number of voxel layers to erode the noise ROIs by. 
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its 
+#'  elements will be recycled. Default: \code{NULL}, which will use a value of
+#'  0 (do not erode the noise ROIs).
 #'
-#' @param vol The \eqn{I x J x K x T} volumetric fMRI timeseries, including both
-#'  the data voxels (unless \code{data} is provided) and the noise voxels.
-#' @param data_ROI A logical mask for \code{vol} where \code{TRUE} values
-#'  indicate data voxels, from which the noise components will be regressed. Up
-#'  to one of \code{data_ROI} or \code{data} should be provided.
-#' @param data A \eqn{V x T} data matrix from which the noise components
-#'  will be regressed. Up to one of \code{data_ROI} or \code{data} should be 
-#'  provided.
-#' @param noise_ROI A list of logical masks for \code{vol} where \code{TRUE} 
-#'  values indicate voxels in a certain "noise ROI" (e.g. the WM or CSF). Noise
-#'  components will be obtained separately for each noise ROI.
-#' @param noise_nPC A vector the same length as \code{noise_ROI} indicating
-#'  the number of PCs from each noise ROI to use. If this vector is a shorter
-#'  length its elements will be recycled. The values can also be between 0 and
-#'  1, in which case they will represent the minimum proportion of variance 
-#'  explained by the PCs used for each noise ROI. The smallest number of PCs
-#'  will be used to achieve this proportion of variance explained. Default:
-#'  \code{5}.
-#' @param noise_erosion The number of layers to erode from each of the 
-#'  \code{noise_ROI}. Default: \code{0}.
+#' @return A list with components "X", "X_noise", "ROI_data", and "ROI_noise"
 #'
-#' @return A list with entries \code{"data"}, \code{"noise"}, \code{"noise_mask"}
-#'  and \code{"noise_var"}.
-#'
-#'  If \code{data_ROI} or \code{data} was provided, the entry \code{"data"} will be a 
-#'  \code{V x T} matrix where each row is a data voxel (if \code{data_ROI} was 
-#'  provided, the voxels are in spatial order; if \code{data} was provided, the 
-#'  voxels are in the same order) time series with each noise PC regressed from
-#'  it. Otherwise, this entry will be \code{NULL}.
-#'
-#'  The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC 
-#'  scores, one for each \code{noise_ROI}.
-#'
-#' @importFrom robustbase rowMedians
-#'
-#' @export
-CompCor <- function(vol, data_ROI=NULL, data=NULL, noise_ROI, noise_nPC=5, noise_erosion=0){
-  stopifnot(length(dim(vol)) == 4)
-  T_ <- dim(vol)[4]
+#' @keywords internal
+format_data_clever_CompCor <- function(X, ROI_data=NULL, ROI_noise=NULL, noise_nPC=5, noise_erosion=NULL){
 
-  if (!is.null(data_ROI)) {
-    stopifnot(dim(data_ROI)==dim(vol)[1:3])
-    stopifnot(all(unique(data_ROI) %in% c(TRUE, FALSE)))
-    data <- matrix(vol[data_ROI], ncol=T_)
-  }
-  if (!is.null(data)) {
-    stopifnot(is.matrix(data))
-    stopifnot(ncol(data)==T_)
+  # if X is a file, read it.
+  if (is.character(X)) {
+    if (endsWith(X, ".dtseries.nii") | endsWith(X, ".dscalar.nii")) {
+      if (!requireNamespace("ciftiTools", quietly = TRUE)) {
+        stop("Package \"ciftiTools\" needed to read `X`. Please install it", call. = FALSE)
+      }
+      X <- read_cifti(X, brainstructures="all")
+    } else {
+      X <- read_nifti(X)
+    }
+  } 
+
+  # X must be a matrix, array, or "xifti"
+  if (is.matrix(X)) {
+    T_ <- nrow(X); V_ <- ncol(X)
+    if (T_ > V_) {
+      warning(
+        "Data matrix has more rows than columns. Check that observations\
+        are in rows and variables are in columns."
+      )
+    }
+    X_type <- "vector"
+  } else if (is.array(X)) {
+    if (length(dim(X))==3) { X <- array(X, dim=c(dim(X)[1:2], 1, dim(X)[3])) }
+    stopifnot(length(dim(X))==4)
+    T_ <- dim(X)[4]
+    X_type <- "volume"
+  } else if (inherits(X, "xifti")) {
+    xifti_meta <- X$meta
+    X <- t(do.call(rbind, X$data))
+    T_ <- nrow(X); V_ <- ncol(X)
+    X_type <- "xifti"
+  } else {
+    stop("`X` must be a matrix, array, NIFTI, path to a NIFTI, CIFTI, or path to a CIFTI.")
   }
 
-  # Get noise components.
-  if (is.array(noise_ROI)) { noise_ROI <- list(noise_ROI) }
-  stopifnot(is.list(noise_ROI))
-  stopifnot(all(noise_nPC > 0))
-  N <- length(noise_ROI)
-  noise_nPC <- rep(noise_nPC, ceiling(N/length(noise_nPC)))
-  noise_erosion <- rep(noise_erosion, ceiling(N/length(noise_erosion)))
-  noise_comps <- vector("list", N); names(noise_comps) <- names(noise_ROI)
-  noise_var <- vector("list", N); names(noise_var) <- names(noise_ROI)
+  if (T_ < 2) { stop("There are less than two timepoints.") }
+
+  # ROI_data
+  ROI_data_was_null <- is.null(ROI_data)
+  if (X_type == "vector") {
+    if (ROI_data_was_null) { ROI_data <- rep(TRUE, V_) }
+    ROI_data <- as.vector(ROI_data)
+    if (length(ROI_data) != V_) { 
+      stop("The `ROI_data` must be a logical vector with the same length as columns in the data.") 
+    }
+    ROI_data <- as.logical(ROI_data)
+  } else if (X_type == "volume") {
+    if (ROI_data_was_null) { ROI_data <- c(0, NA, NaN) }
+    if (is.character(ROI_data)) {
+      ROI_data <- read_nifti(ROI_data)
+    }
+    if (is.vector(ROI_data)) {
+      if (length(ROI_data) != length(unique(ROI_data))) {
+        stop(
+          "`X` is a volume, and `ROI_data` is a vector, so `ROI_data` should be\
+          values which out-of-mask voxels take on. But, the values of `ROI_data`\
+          are not unique."
+        )
+      }
+      ROI_data <- apply(array(X %in% ROI_data, dim=dim(X)), 1:3, function(x){!all(x)})
+    } else if (is.array(ROI_data)) {
+      if (length(dim(ROI_data))==2) { ROI_data <- array(ROI_data, dim=c(dim(ROI_data), 1)) }
+      if (all(dim(ROI_data) != dim(X)[1:3])) { 
+        stop("The `ROI_data` must have the same dimensions as the first three dimensions of `X`.")
+      }
+      ROI_data[,,] <- as.logical(ROI_data)
+    }
+  } else if (X_type == "xifti") {
+    ROI_data <- rep(TRUE, V_)
+  } else { stop("Internal error: unrecognized `X_type`") }
+  stopifnot(sum(ROI_data) > 0)
+
+  # ROI_noise
+  if (!is.null(ROI_noise)) {
+    if (!is.list(ROI_noise)) { ROI_noise <- list(Noise1=ROI_noise) }
+    if (is.null(names(ROI_noise))) { names(ROI_noise) <- paste0("Noise", 1:length(ROI_noise)) }
+    if (length(names(ROI_noise)) != length(unique(names(ROI_noise)))) {
+      stop("The `ROI_noise` names must be unique.")
+    }
+    stopifnot(!any(names(ROI_noise) == "data"))
+
+    # noise_nPC
+    noise_nPC <- as.list(noise_nPC)
+    if (is.null(names(noise_nPC))) {
+      noise_nPC <- noise_nPC[rep(1:length(noise_nPC), length(ROI_noise))[1:length(ROI_noise)]]
+      names(noise_nPC) <- names(ROI_noise)
+    }     
+    else {
+      if (all(sorted(names(noise_nPC)) != sorted(names(ROI_noise)))) {
+        stop("The names of `noise_nPC` do not match those of `ROI_noise`.")
+      }
+    }  
+    noise_nPC <- noise_nPC[names(ROI_noise)]
+
+    # noise_erosion
+    if (X_type == "volume") {
+      if (is.null(noise_erosion)) { 
+        noise_erosion = 0
+      } else {
+        if (!all(noise_erosion==0) & !any(sapply(ROI_noise, is.array))) {
+          warning("`noise_erosion` was provided, but there are no array/NIFTI noise ROIs to erode.")
+        }
+      }
+      noise_erosion <- as.list(noise_erosion)
+      if (is.null(names(noise_erosion))) {
+        noise_erosion <- noise_erosion[rep(1:length(noise_erosion), length(ROI_noise))[1:length(ROI_noise)]]
+        names(noise_erosion) <- names(ROI_noise)
+      } else {
+        if (all(sorted(names(noise_erosion)) != sorted(names(ROI_noise)))) {
+          stop("The names of `noise_erosion` do not match those of `ROI_noise`.")
+        }
+      }
+      noise_erosion <- noise_erosion[names(ROI_noise)]
+      
+    } else {
+      if (!is.null(noise_erosion)) { 
+        warning(
+          "Erosion requires volumetric data, but the data is not volumetric.\
+          No erosion will happen."
+        ) 
+      }
+    }
+
+    X_noise <- vector("list", length(ROI_noise)); names(X_noise) <- names(ROI_noise)
+    for (ii in 1:length(ROI_noise)) {
+      if (is.null(ROI_noise[[ii]])) { ROI_noise[[ii]] <- NULL; next }
+      if (X_type == "vector") {
+        if (is.vector(ROI_noise[[ii]])) {
+          stopifnot(length(ROI_noise[[ii]]) == V_)
+          ROI_noise[[ii]] <- as.logical(ROI_noise[[ii]])
+          X_noise[[ii]] <- X[,ROI_noise[[ii]]]
+        } else if (is.matrix(ROI_noise[[ii]])) {
+          stopifnot(nrow(ROI_noise[[ii]]) == T_)
+          X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+        } else {
+          stop(
+            "Each entry in `ROI_noise` must be a logical vector, or matrix\
+            with the same number of rows as timepoints in `X`."
+          )
+        }
+      } else if (X_type == "volume") {
+        if (is.character(ROI_noise[[ii]])) {
+          if (!file.exists(ROI_noise[[ii]])) { 
+            stop(paste(
+              "The `ROI_noise` entry", ROI_noise[[ii]], "is not an existing file."
+            )) 
+          }
+          ROI_noise[[ii]] <- read_nifti(ROI_noise[[ii]])
+        }
+        if (is.matrix(ROI_noise[[ii]])) { 
+          ROI_noise[[ii]] <- array(ROI_noise[[ii]], dim=c(dim(ROI_noise[[ii]], 1)))
+        }
+        if (is.array(ROI_noise[[ii]])) {
+          stopifnot(all(dim(ROI_noise[[ii]]) == dim(X)[1:3]))
+          ROI_noise[[ii]][,,] <- as.logical(ROI_noise[[ii]]) * 1
+          ROI_noise[[ii]] <- erode_vol(ROI_noise[[ii]], noise_erosion[[ii]], c(-1, 0, NA))
+          X_noise[[ii]] <- matrix(X[ROI_noise[[ii]] > 0], ncol=T_)
+
+        } else if (is.matrix(ROI_noise[[ii]])) {
+          stopifnot(nrow(ROI_noise[[ii]]) == T_)
+          X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+        } else {
+          stop(
+            "Each entry in `ROI_noise` must be a logical array, or matrix\
+            with the same number of rows as timepoints in `X`."
+          ) 
+        }
+      } else if (X_type == "xifti") {
+        stopifnot(is.matrix(ROI_noise[[ii]]))
+        stopifnot(nrow(ROI_noise[[ii]]) == T_)
+        X_noise[[ii]] <- ROI_noise[[ii]]; ROI_noise[[ii]] <- NULL
+      } else { stop("Internal error: unrecognized `X_type`") }
+      if (ncol(X_noise[[ii]]) == 0) { 
+        warning(paste("The noise ROI", names(ROI_noise)[ii], "is empty."))
+      }
+    }
+
+    if (!all(sapply(ROI_noise, is.null))) {
+      # check that ROI are mutually exclusive
+      all_ROI_noises <- apply(do.call(rbind, ROI_noise) > 0, 2, sum)
+      if (!all(all_ROI_noises < 2)) {
+        stop("The noise ROIs must all be mutually exclusive.")
+      }
+      all_ROI_noises <- all_ROI_noises > 0
+      if (ROI_data_was_null) { 
+        if (X_type == "volume") {
+          ROI_data[,,][all_ROI_noises] <- FALSE
+        } else {
+          ROI_data[all_ROI_noises] <- FALSE
+        }
+      } else {
+        if (any(all_ROI_noises & as.vector(ROI_data))) {
+          stop("The noise ROIs must not overlap with the data ROI.")
+        }
+      }
+    }
+
+    if (X_type == "volume") {
+      X <- t(matrix(X[!all_ROI_noises], ncol=dim(X)[4]))
+    } else {
+      X <- X[,!all_ROI_noises]
+    }
+
+  } else {
+    X_noise <- NULL
+  }
+
+  # make sure nPCs greater than the rank of the noise ROIs!
+  # similarly for data
+  # ...
+
+  list(
+    X=X, X_noise=X_noise, 
+    ROI_data=ROI_data, ROI_noise=ROI_noise, 
+    noise_nPC=noise_nPC, noise_erosion=noise_erosion
+  )
+}
+
+#' CompCor: get noise components
+#'
+#' @param X_noise The noise ROIs data
+#' @param noise_nPC Number of PCs to obtain for each noise ROI
+#'
+#' @return A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
+#'  noise_erosion, noise_comps, and noise_var.
+#' 
+#' @keywords internal
+CompCor.noise_comps <- function(X_noise, noise_nPC){
+
+  noise_comps <- vector("list", N); names(noise_comps) <- names(X_noise)
+  noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
+
   for (ii in 1:N) {
-    noise_ROI[[ii]] <- erode_vol(noise_ROI[[ii]], noise_erosion[ii], FALSE)
-    stopifnot(is.array(noise_ROI[[ii]]) && dim(noise_ROI[[ii]])==dim(vol)[1:3])
-    # Vectorize noise ROI.
-    noise_ii <- matrix(vol[noise_ROI[[ii]]], ncol=T_)
-    noise_ii <- noise_ii - robustbase::rowMedians(noise_ii, na.rm=TRUE)
+    if (ncol(X_noise[[ii]]) == 0) { next }
+    X_noise[[ii]] <- t(t(X_noise[[ii]]) - robustbase::rowMedians(t(X_noise[[ii]]), na.rm=TRUE))
     # Compute the PC scores.
     if (noise_nPC[ii] >= 1) {
-      x <- svd(crossprod(noise_ii), nu=noise_nPC[ii], nv=0)
+      x <- svd(tcrossprod(X_noise[[ii]]), nu=noise_nPC[ii], nv=0)
       noise_comps[[ii]] <- x$u
       noise_var[[ii]] <- ((x$d^2)/sum(x$d^2))[1:noise_nPC[ii]]
     } else {
-      x <- svd(crossprod(noise_ii))
+      x <- svd(tcrossprod(X_noise[[ii]]))
       noise_var[[ii]] <- (x$d^2)/sum(x$d^2)
       # Use enough PCs to explain the desired proportion of variance.
       noise_nPC[ii] <- min(length(x$d), sum(cumsum(noise_var[[ii]]) < noise_nPC[ii]) + 1)
@@ -161,18 +353,63 @@ CompCor <- function(vol, data_ROI=NULL, data=NULL, noise_ROI, noise_nPC=5, noise
     }
   }
 
-  # Regress.
-  if (!is.null(data)) {
-    # Project each row of the data (which is why we transpose) on 
-    #   the PCs (and the vector of ones for the intercept).
-    noise_mat <- do.call(cbind, noise_comps)
-    I_minus_H <- diag(nrow(noise_mat)) - hat_mat(noise_mat)
-    data <- t(I_minus_H %*% t(data))
-  } else {
-    data <- NULL
-  }
+  list(noise_comps=noise_comps, noise_var=noise_var)
+}
 
-  list(data=data, noise=list(PCs=noise_comps, var=noise_var, ROI=noise_ROI))
+#' CompCor: regress
+#'
+#' @param X The data
+#' @param noise_comps The noise components
+#'
+#' @return The data with the noise components regressed from it.
+#' 
+#' @keywords internal
+CompCor.regress <- function(X, noise_comps){
+  # Project each row of the data (which is why we transpose) on 
+  #   the PCs (and the vector of ones for the intercept).
+  noise_mat <- do.call(cbind, noise_comps)
+  I_minus_H <- diag(nrow(noise_mat)) - hat_mat(noise_mat)
+  t(I_minus_H %*% t(X))
+}
+
+#' CompCor
+#'
+#' The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+#' 
+#' The data are centered on each voxel timecourse's median.
+#'
+#' @inheritParams data_clever_CompCor_Params
+#' @inheritParams noise_Params
+#'
+#' @return A list with entries \code{"data"} and \code{"noise"}
+#'
+#'  The entry \code{"data"} will be a \code{V x T} matrix where each row is a 
+#'  data voxel (if it was originally an array, the voxels will be in spatial
+#'  order) time series with each noise PC regressed from it. Otherwise, this 
+#'  entry will be \code{NULL}.
+#'
+#'  The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC 
+#'  scores, one for each \code{ROI_noise}.
+#'
+#' @importFrom robustbase rowMedians
+#'
+#' @export
+CompCor <- function(X, ROI_data=NULL, ROI_noise=NULL, noise_nPC=5, noise_erosion=NULL){
+
+  out1 <- format_data_clever_CompCor(
+    X=X, ROI_data=ROI_data, ROI_noise=ROI_noise, noise_nPC=noise_nPC, noise_erosion=noise_erosion
+  )
+
+  out2 <- CompCor.noise_comps(
+    X_noise=out1$X_noise, noise_nPC=out1$noise_nPC
+  )
+
+  out1$X <- CompCor.regress(out1$X, out2$noise_comps)
+
+  list(
+    X=out1$X, 
+    noise=list(PCs=out2$noise_comps, var=out2$noise_var, ROI=out1$ROI_noise)
+  )
 }
 
 #' CompCor for HCP data
@@ -203,7 +440,7 @@ CompCor <- function(vol, data_ROI=NULL, data=NULL, noise_ROI, noise_nPC=5, noise
 #' @param data_cii \code{"cifti"} object from which the noise ROI
 #'  components will be regressed. If \code{data_cii} is provided 
 #'  \code{data_labs} is ignored.
-#' @param noise_ROI List of numeric vectors, where each entry contains the label
+#' @param ROI_noise List of numeric vectors, where each entry contains the label
 #'  values in \code{labs} corresponding to a noise ROI e.g. the white matter 
 #'  (WM) or cerebrospinal fluid (CSF). If \code{NULL} (default), use these:
 #'
@@ -226,10 +463,10 @@ CompCor <- function(vol, data_ROI=NULL, data=NULL, noise_ROI, noise_nPC=5, noise
 #'  object but with the noise components regressed from each brainordinate. 
 #'
 #'  The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC 
-#'  scores, one for each \code{noise_ROI}.
+#'  scores, one for each \code{ROI_noise}.
 #'
 #' @export
-CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI=NULL, noise_nPC=5, noise_erosion=0, verbose=TRUE){
+CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, ROI_noise=NULL, noise_nPC=5, noise_erosion=0, verbose=TRUE){
   # Check `vol`.
   if (is.character(vol)) {
     cat("Reading NIFTI.\n")
@@ -275,8 +512,8 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
     } else {
       stop("`data_labs` argument is not in a recognized form.")
     }
-    data_ROI <- array(labs %in% do.call(c, data_labs), dim=dim(labs))
-    data <- list(matrix(vol[data_ROI], ncol=dim(vol)[4]))
+    ROI_data <- array(labs %in% do.call(c, data_labs), dim=dim(labs))
+    data <- list(matrix(vol[ROI_data], ncol=dim(vol)[4]))
   } else {
     if (is.character(data_cii)) { 
       if (requireNamespace("ciftiTools", quietly = TRUE)) {
@@ -286,28 +523,28 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
       }
     }
     data <- data_cii$data
-    data_ROI <- NULL
+    ROI_data <- NULL
   }
 
-  # Check `noise_ROI`.
+  # Check `ROI_noise`.
   if (verbose) { cat("Preparing noise ROIs (to use as regressors).\n") }
-  noise_ROI.default <- list(
+  ROI_noise.default <- list(
     wm_cort = c(3000:4035, 5001, 5002), 
     csf = c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255)
   )
-  if (is.null(noise_ROI)) {
-    noise_ROI <- noise_ROI.default
-  } else if (is.character(noise_ROI)) {
-    stopifnot(all(noise_ROI %in% c("wm_cort", "csf")))
-    noise_ROI <- noise_ROI.default[unique(noise_ROI)]
-  } else if (is.list(noise_ROI)) {
-    noise_ROI <- noise_ROI
+  if (is.null(ROI_noise)) {
+    ROI_noise <- ROI_noise.default
+  } else if (is.character(ROI_noise)) {
+    stopifnot(all(ROI_noise %in% c("wm_cort", "csf")))
+    ROI_noise <- ROI_noise.default[unique(ROI_noise)]
+  } else if (is.list(ROI_noise)) {
+    ROI_noise <- ROI_noise
     stopifnot(is.numeric(do.call(c, data_labs)))
   } else {
-    stop("`noise_ROI` argument is not in a recognized form.")
+    stop("`ROI_noise` argument is not in a recognized form.")
   }
-  noise_ROI <- lapply(noise_ROI, function(x){array(labs %in% x, dim=dim(labs))})
-  x <- CompCor(vol, noise_ROI=noise_ROI, noise_nPC=noise_nPC, noise_erosion=noise_erosion)
+  ROI_noise <- lapply(ROI_noise, function(x){array(labs %in% x, dim=dim(labs))})
+  x <- CompCor(vol, ROI_noise=ROI_noise, noise_nPC=noise_nPC, noise_erosion=noise_erosion)
 
   # Project each row of the data (which is why we transpose) on 
   #   the PCs (and the vector of ones for the intercept).
@@ -326,5 +563,5 @@ CompCor.HCP <- function(vol, labs=NULL, data_labs=NULL, data_cii=NULL, noise_ROI
     data <- data_cii
   }
 
-  list(data=data, data_ROI=data_ROI, noise=list(x$noise))
+  list(data=data, ROI_data=ROI_data, noise=list(x$noise))
 }

@@ -9,7 +9,7 @@ CompCor.HCP(
   labs = NULL,
   data_labs = NULL,
   data_cii = NULL,
-  noise_ROI = NULL,
+  ROI_noise = NULL,
   noise_nPC = 5,
   noise_erosion = 0,
   verbose = TRUE
@@ -42,7 +42,7 @@ be the file path to this NIFTI.}
 components will be regressed. If \code{data_cii} is provided 
 \code{data_labs} is ignored.}
 
-\item{noise_ROI}{List of numeric vectors, where each entry contains the label
+\item{ROI_noise}{List of numeric vectors, where each entry contains the label
  values in \code{labs} corresponding to a noise ROI e.g. the white matter 
  (WM) or cerebrospinal fluid (CSF). If \code{NULL} (default), use these:
 
@@ -68,7 +68,7 @@ A list with entries \code{"data"} and \code{"noise"}.
  object but with the noise components regressed from each brainordinate. 
 
  The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC 
- scores, one for each \code{noise_ROI}.
+ scores, one for each \code{ROI_noise}.
 }
 \description{
 Wrapper to \code{\link{CompCor}} for HCP data. Can perform CompCor on a
