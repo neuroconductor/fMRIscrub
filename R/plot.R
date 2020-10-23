@@ -53,7 +53,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     GSR = "#B8B8B8" # light-grey
   )
   colors_extra <- c(
-    "#FFD92F", # yellow
+    "#FFD92F" # yellow
   )
   name_formatted <- list(
     # Leverage or RobDist
@@ -102,7 +102,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
   # Log values if applicable.
   if(log_meas){
-    meas$value <- log(meas$value, base=10)
+    meas$measure <- log(meas$measure, base=10)
     if(id_outs){
       cuts <- log(cuts, base=10)
     }
@@ -112,12 +112,12 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   ylim_max <- ifelse(
     name=="Leverage" & (!("leverage__PCATF" %in% meas_subnames)),
     1, 
-    max(max(cuts), max(meas$value))
+    max(max(cuts), max(meas$measure))
   )
   ylim_max <- ylim_max*1.05
 
   # Get the lower y-axis limit.
-  ylim_min <- ifelse(name %in% c("DVARS", "GSR"), min(meas$value), 0)
+  ylim_min <- ifelse(name %in% c("DVARS", "GSR"), min(meas$measure), 0)
 
   # Check if any outliers were detected.
   if(id_outs){
@@ -125,6 +125,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     drop_line <- vector("list", nrow(flag)); names(drop_line) <- names(flag)
     for (ii in 1:length(drop_line)) {
       flag_ii <- which(flag[flag$name==names(drop_line)[ii], "isOutlier"])
+      if (length(flag_ii) == 0) { next }
       drop_line[[ii]] <- data.frame(
         xmin = flag_ii - 0.5, 
         xmax = flag_ii + 0.5,
@@ -164,12 +165,13 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
   # Draw drop-down lines for outliers.
   if(any_outs){
-    for(i in 1:length(drop_line)){
+    for (ii in 1:length(drop_line)) {
+      if (is.null(drop_line[[ii]])) { next }
       n <- names(drop_line)[i]
       plt <- plt +
         geom_rect(
           data=drop_line[[n]],
-          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n]
+          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, #fill=colors[n]
         )
       #Text label if any outlier is detected.
     }
@@ -180,8 +182,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     n <- names(cuts)[i]
     plt <- plt + 
       geom_hline(
-        yintercept=cuts[[n]], linetype="dashed", 
-        color=ifelse(length(cuts)==1, "black", colors[n])
+        yintercept=cuts[[n]], linetype="dashed" #, color=ifelse(length(cuts)==1, "black", colors[n])
       )
   }
 
@@ -193,8 +194,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   } else {
     plt <- plt + geom_point(data=meas, aes(x=idx, y=measure, color=name))
   }
-  plt <- plt +
-    scale_color_manual(values=colors, labels=name_formatted)
+  # plt <- plt + scale_color_manual(values=colors, labels=name_formatted)
 
   # Use an optimal spacing between the x-ticks.
   xticks_width <- c(1, 2, 2.5, 3, 5)
@@ -239,9 +239,6 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   outlyingness_methods = x$params$outlyingness_methods
   DVARS = x$params$DVARS
 
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package \"ggplot2\" needed to use `plot.clever`. Please install it.", call. = FALSE)
-  }
   if (!requireNamespace("cowplot", quietly = TRUE)) {
     stop("Package \"cowplot\" needed to use `plot.clever`. Please install it.", call. = FALSE)
   }
@@ -290,10 +287,20 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
 
   # Remove empty or unwanted subplots
   measures_to_plot <- lapply(measures_to_plot, function(y){y[y %in% names(x$measures)]})
+  outcuts_to_plot <- lapply(outcuts_to_plot, function(y){y[y %in% names(x$measures)]})
+  outflag_to_plot <- lapply(
+    outflag_to_plot, 
+    function(y){y[y %in% names(x$measures) | (y=="DVARS__dual" & ("DVARS__DPD" %in% x$measures && "DVARS__ZD" %in% x$measures))] }
+  )
   if (!("all" %in% measures)) {
     measures_to_plot <- lapply(measures_to_plot, function(y){y[y %in% measures]})
+    outcuts_to_plot <- lapply(outcuts_to_plot, function(y){y[y %in% measures]})
+    outflag_to_plot <- lapply(
+      outflag_to_plot, 
+      function(y) { y[y %in% measures | (y=="DVARS__dual" & ("DVARS__DPD" %in% measures && "DVARS__ZD" %in% measures))] }
+    )
   }
-  meaures_to_plot <- measures_to_plot[sapply(measures_to_plot, length) > 0]
+  measures_to_plot <- measures_to_plot[sapply(measures_to_plot, length) > 0]
 
   plots <- vector("list", length(measures_to_plot))
   for (ii in 1:length(measures_to_plot)) {
@@ -314,11 +321,11 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
 
-  plt <- plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
+  plt <- cowplot::plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
 
   # Add title if provided.
   if(!is.null(title)){
-    plt <- plot_grid(
+    plt <- cowplot::plot_grid(
       ggdraw() + 
         draw_label(title, fontface='bold', x=0, hjust=0) +
         theme(plot.margin = margin(0, 0, 0, 7)),
