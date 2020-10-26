@@ -43,7 +43,11 @@ PCATF <- function(
 
   # Check arguments.
   stopifnot(is.numeric(X))
-  if(is.null(X.svd)){ X.svd <- svd(X) }
+  if(is.null(X.svd)){ 
+    X.svd <- svd(X)
+  } else {
+    names(X.svd) <- tolower(names(X.svd))
+  }
   stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){

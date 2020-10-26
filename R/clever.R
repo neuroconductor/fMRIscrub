@@ -249,7 +249,7 @@
 clever = function(
   X,
   measures=c("leverage", "DVARS"),
-  ROI_data=NULL, ROI_noise=NULL, X_motion=NULL,
+  ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_PC_dirs=FALSE,
   detrend=TRUE,
   noise_nPC=5, noise_erosion=NULL,
@@ -287,9 +287,13 @@ clever = function(
     projections <- unique(match.arg(projections, valid_projections, several.ok=TRUE))
   }
 
-  # Data -----------------------------------------------------------------------
+  if ("CompCor" %in% measures) {
+    if (is.null(ROI_noise)) { stop("`CompCor` requires the noise ROIs.") }
+  }
 
-  temp <- format_data_clever_CompCor(
+
+  # Data -----------------------------------------------------------------------
+  temp <- format_data(
     X=X, ROI_data=ROI_data, ROI_noise=ROI_noise, 
     noise_nPC=noise_nPC, noise_erosion=noise_erosion
   )
@@ -332,12 +336,12 @@ clever = function(
     measures <- c(measures, paste0("motion_t", 1:3), paste0("motion_r", 1:3))
   }
   if ("CompCor" %in% measures) {
-    if (is.null(ROI_noise)) { stop("`CompCor` requires the noise ROIs.") }
-    for (ii in 1:length(ROI_noise)) {
+    for (ii in seq_len(length(X_noise))) {
       new_measures <- paste0(
-        "CompCor_", names(ROI_noise)[ii], "__PC", 1:ROI_nPC[names(ROI_noise)[ii]]
+        "CompCor_", names(X_noise)[ii], "__PC", seq_len(noise_nPC[[names(X_noise)[ii]]])
       )
       measures <- c(measures, new_measures)
+      measures <- measures[measures != "CompCor"]
     }
   }
 
@@ -518,12 +522,17 @@ clever = function(
   # Compute CompCor. -----------------------------------------------------------
   # ----------------------------------------------------------------------------
 
-  if ("CompCor" %in% measures) {
+  if (any(grepl("CompCor", measures, fixed=TRUE))) {
     if (verbose) { cat("Computing CompCor.\n") }
     X_CompCor <- CompCor.noise_comps(X_noise, noise_nPC)
-    for (ii in 1:length(X_CompCor)) {
-      cols_ii <- paste0("CompCor_", names(X_CompCor)[ii], "__PC", 1:nrow(X_CompCor[[ii]]))
-      out$measures[cols_ii] <- X_CompCor[[ii]]
+    for (ii in seq_len(length(X_CompCor$noise_comps))) {
+      cols_ii <- paste0(
+        "CompCor_", names(X_CompCor$noise_comps)[ii], 
+        "__PC", seq_len(ncol(X_CompCor$noise_comps[[ii]]))
+      )
+      for (jj in seq_len(length(cols_ii))) {
+        out$measures[[cols_ii[jj]]] <- X_CompCor$noise_comps[[ii]][,jj]
+      }
     }
   }
 
@@ -573,11 +582,11 @@ clever = function(
     if("PCATF" %in% projections){
       out$PCATF <- do.call(
         PCATF, 
-        c(list(X=X, X.svd=X.svd, solve_directions=solve_PC_dirs), PCATF_kwargs)
+        c(list(X=X, X.svd=out$PCA, solve_directions=solve_PC_dirs), PCATF_kwargs)
       )
-      if(!solve_PC_dirs){ X.svd$v <- NULL }
+      if(!solve_PC_dirs){ out$PCA$V <- NULL }
 
-      tf_zero_var <- apply(X.svdtf$u, 2, var) < TOL
+      tf_zero_var <- apply(out$PCATF$u, 2, var) < TOL
       if(any(tf_zero_var)){
         if(all(tf_zero_var)){
           stop("Error: All trend-filtered PC scores are zero-variance.")
@@ -608,14 +617,15 @@ clever = function(
   # ----------------------------------------------------------------------------
 
   measures_proj <- measures[grepl("PCA", measures, fixed=TRUE)]
-  for(ii in 1:length(measures_proj)){
+  for (ii in seq_len(length(measures_proj))) {
     meas_ii <- unlist(strsplit(measures_proj[ii], "__"))
     proj_ii <- meas_ii[2]; meas_ii <- meas_ii[1]
     U_ii <- switch(proj_ii,
-      PCA_lev = out$PCA[[ifelse("PCA" %in% detrend, "U_dt", "U")]],
+      PCA_var = out$PCA[[ifelse("PCA" %in% detrend, "U_dt", "U")]],
       PCA_kurt = out$PCA[[ifelse("PCA" %in% detrend, "U_dt", "U")]][,out$PCA$kurt_idx,drop=FALSE],
       PCATF = out$PCATF$U
     )
+    stopifnot(is.matrix(U_ii))
     if (verbose) { 
       cat(paste("Computing", meas_ii, "with", proj_ii, "projection."))
     }
@@ -638,7 +648,7 @@ clever = function(
         cat(paste0(
           " Reducing number of PCs from ", ncol(U_ii), " to ", max_keep, "."
         ))
-        U_ii <- U_ii[,1:max_keep,drop=FALSE]
+        U_ii <- U_ii[,seq_len(max_keep),drop=FALSE]
       }
     }
 
