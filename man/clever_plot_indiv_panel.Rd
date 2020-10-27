@@ -20,7 +20,7 @@ outlyingness measure. Column names should be the same as those provided for \cod
 outlyingness measure.}
 
 \item{name}{The name of the type of outlyingness measure being plotted:
-\code{Leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.}
+\code{leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.}
 
 \item{robdist_info}{A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
 Fparam. Not required if robust distance-based measures are not being plottted.}

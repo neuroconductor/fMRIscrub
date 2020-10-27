@@ -414,7 +414,7 @@ clever = function(
       names(flag_list)[names(flag_list) == "DVARS__DPD"] <- "DVARS__dual"
       flag_list <- flag_list[names(flag_list) != "DVARS__ZD"]
     }
-    out <- c(out, list(outlier_cutoffs = outlier_cutoffs, outlier_flags=flag_list))
+    out <- c(out, list(outlier_cutoffs = list(), outlier_flags=flag_list))
     rm(flag_list)
   }
   rm(meas_list)
