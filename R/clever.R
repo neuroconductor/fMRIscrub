@@ -72,6 +72,10 @@
 #'  measures. Should the PCA and PCATF principal directions be computed? 
 #'  Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
 #'  for PCA.
+#' @param center,scale Center the columns of the data by median, and scale the
+#'  columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
+#'  for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
+#'  must already be centered.
 #' @param detrend Only applies to the \code{"leverage"} and \code{"robdist"} 
 #'  measures. Detrend the PCs/ICs before measuring kurtosis and before measuring
 #'  leverage or robust distance? Default: \code{TRUE}.
@@ -289,7 +293,7 @@ clever = function(
   measures=c("leverage", "DVARS"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_PC_dirs=FALSE,
-  detrend=TRUE,
+  center=TRUE, scale=TRUE, detrend=TRUE,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -525,7 +529,7 @@ clever = function(
   # Transpose.
   X <- t(X)
   #	Center.
-  X <- X - c(rowMedians(X, na.rm=TRUE))
+  if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Scale.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -544,7 +548,7 @@ clever = function(
     out$ROIs <- c(out$ROIs["data"], list(constant=ROI_constant), out$ROIs[names(out$ROIs) != "data"])
   }
   mad <- mad[!X_constant]; X <- X[!X_constant,]
-  X <- X/c(mad)
+  if (scale) { X <- X/c(mad) }
   # Revert transpose.
   X <- t(X)
   V_ <- ncol(X)

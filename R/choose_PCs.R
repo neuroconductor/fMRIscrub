@@ -39,8 +39,8 @@ choose_PCs.variance <- function(var){
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choose_PCs.kurtosis <- function(
-  Comps, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000){
+choose_PCs.kurtosis <- function(Comps, 
+  kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000){
 
   m <- nrow(Comps); n <- ncol(Comps)
 
