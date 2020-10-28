@@ -1,6 +1,6 @@
 #' Identify outliers with \code{clever}
 #' 
-#' Calculates PCA leverage or robust distance and identifies outliers.
+#' Calculates PCA/ICA leverage or robust distance and identifies outliers.
 #'
 #' \code{clever} will use all combinations of the requested projections and 
 #'  outlyingness measures which make sense. For example, if  
@@ -57,20 +57,23 @@
 #'    \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance. Compatible with both leverage and robust distance.}
 #'    \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
 #'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with only leverage.}
+#'    \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance. Compatible with both leverage and robust distance.}
+#'    \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
 #'  }
 #'  
 #'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
 #'  
 #'  Each compatible measure + projection combination will yield its own result.
-#'  For example, if all projections are used and both leverage and robust distance
+#'  For example, if all PCA-related projections are used and both leverage and robust distance
 #'  are requested, the results will be: leverage of high-variance PCs, leverage
 #'  of high-kurtosis PCs, leverage of trend-filtered PCs, robust distance of
 #'  high-variance PCs, and robust distance of high-kurtosis PCs.
 #' @param solve_PC_dirs Only applies to the \code{"leverage"} and \code{"robdist"} 
 #'  measures. Should the PCA and PCATF principal directions be computed? 
-#'  Default: \code{FALSE} (conserves memory). Required to use \code{\link{leverage_images}}.
+#'  Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
+#'  for PCA.
 #' @param detrend Only applies to the \code{"leverage"} and \code{"robdist"} 
-#'  measures. Detrend the PCs before measuring kurtosis and before measuring
+#'  measures. Detrend the PCs/ICs before measuring kurtosis and before measuring
 #'  leverage or robust distance? Default: \code{TRUE}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
@@ -82,7 +85,7 @@
 #'  observations are not temporally related.
 #' 
 #'  In addition to \code{TRUE} and \code{FALSE}, a third option \code{"kurtosis"}
-#'  can be used to only detrend the PCs for the purpose of measuring kurtosis, 
+#'  can be used to only detrend the PCs/ICs for the purpose of measuring kurtosis, 
 #'  and not for the actual outlyingness measurement.
 #' 
 #'  This option will not affect the PCATF PCs, which are never detrended.
@@ -95,7 +98,7 @@
 #'    \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
 #'    \item{verbose}{Print updates? Default: \code{FALSE}.}
 #'  }
-#' @param kurt_quantile Only applies to \code{"PCA_kurt"} projection. 
+#' @param kurt_quantile Only applies to the \code{"PCA_kurt"} and \code{"ICA_kurt"} projections. 
 #'  What cutoff quantile for kurtosis should be used to select the PCs? 
 #'  Default: \code{0.95}.
 #' @param noise_nPC Only applies to the CompCor measure.
@@ -146,8 +149,12 @@
 #'      \item{leverage__PCA_var}{Leverage values of the "PCA_var" projection.}
 #'      \item{leverage__PCA_kurt}{Leverage values of the "PCA_kurt" projection.}
 #'      \item{leverage__PCATF}{Leverage values of the "PCATF" projection.}
+#'      \item{leverage__ICA_var}{Leverage values of the "ICA_var" projection.}
+#'      \item{leverage__ICA_kurt}{Leverage values of the "ICA_kurt" projection.}
 #'      \item{robdist__PCA_var}{Robust distance values of the "PCA_var" projection.}
 #'      \item{robdist__PCA_kurt}{Robust distance values of the "PCA_kurt" projection.}
+#'      \item{robdist__ICA_var}{Robust distance values of the "ICA_var" projection.}
+#'      \item{robdist__ICA_kurt}{Robust distance values of the "ICA_kurt" projection.}
 #'      \item{DVARS}{Traditional DVARS values.}
 #'      \item{DVARS__DPD}{Delta-percent-DVARS values.}
 #'      \item{DVARS_ZD}{z-score-DVARS values.}
@@ -171,8 +178,12 @@
 #'      \item{leverage__PCA_var}{Minimum leverage.}
 #'      \item{leverage__PCA_kurt}{Minimum leverage.}
 #'      \item{leverage__PCATF}{Minimum leverage.}
+#'      \item{leverage__ICA_var}{Minimum leverage.}
+#'      \item{leverage__ICA_kurt}{Minimum leverage.}
 #'      \item{robdist__PCA_var}{Minimum robust distance.}
 #'      \item{robdist__PCA_kurt}{Minimum robust distance.}
+#'      \item{robdist__ICA_var}{Minimum robust distance.}
+#'      \item{robdist__ICA_kurt}{Minimum robust distance.}
 #'      \item{DVARS}{Minimum traditional DVARS.}
 #'      \item{DVARS__DPD}{Minimum Delta-percent-DVARS.}
 #'      \item{DVARS_ZD}{Minimum z-score-DVARS.}
@@ -211,6 +222,17 @@
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'    }
 #'  }
+#'  \item{ICA}{
+#'    If the "ICA_var" or "ICA_kurt" projections were used, this will be a list with components:
+#'    \describe{
+#'      \item{S}{The \eqn{P x Q} source signals matrix.} 
+#'      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance will be included.}
+#'      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
+#'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
+#'        (among those of above-average variance) and \code{NA} indicating an IC with kurtosis below
+#'        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+#'    }
+#'  }
 #'  \item{robdist_info}{
 #'    If the "robdist" measure was used, this will be a list with components:
 #'    \describe{
@@ -230,13 +252,29 @@
 #'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
 #'        }
 #'      }
+#'      \item{ICA_var}{
+#'      If the "ICA_var" projection was used, this will be a list with components:
+#'        \describe{
+#'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
+#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
+#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
+#'        }
+#'      }
+#'      \item{ICA_kurt}{
+#'      If the "ICA_kurt" projection was used, this will be a list with components:
+#'        \describe{
+#'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
+#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
+#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
+#'        }
+#'      }
 #'    }
 #'  }
 #'  \item{call}{The call to this function.}
 #' }
 #'
 #' @importFrom robustbase rowMedians
-#' @import stats
+#' @importFrom stats mad qnorm var setNames
 #'
 #' @export
 #'
@@ -280,7 +318,15 @@ clever = function(
     measures0 <- unique(match.arg(measures0, valid_measures0, several.ok=TRUE))
   }
 
-  valid_projections <- c("PCA_var", "PCA_kurt", "PCATF")
+  valid_projections <- c("PCA_var", "PCA_kurt", "PCATF", "ICA_var", "ICA_kurt")
+  if ("PCA" %in% projections) {
+    projections <- c(projections, c("PCA_var", "PCA_kurt"))
+    projections <- projections[projections == "PCA"]
+  }
+  if ("ICA" %in% projections) {
+    projections <- c(projections, c("ICA_var", "ICA_kurt"))
+    projections <- projections[projections == "ICA"]
+  }
   if ("all" %in% projections) {
     projections <- valid_projections
   } else {
@@ -314,15 +360,17 @@ clever = function(
   # Full enumeration of measures -----------------------------------------------
 
   measures <- measures0
-  use_PCA <- use_PCATF <- FALSE
+  use_PCA <- use_PCATF <- use_ICA <- FALSE
   if ("leverage" %in% measures) {
     if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
+    if ("ICA_var" %in% projections | "ICA_kurt" %in% projections) { use_ICA <- TRUE }
     if ("PCATF" %in% projections) { use_PCATF <- TRUE }
     measures <- measures[measures != "leverage"]
     measures <- c(measures, paste0("leverage__", projections))
   }
   if ("robdist" %in% measures) {
     if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
+    if ("ICA_var" %in% projections | "ICA_kurt" %in% projections) { use_ICA <- TRUE }
     measures <- measures[measures != "robdist"]
     measures <- c(measures, paste0("robdist__", projections))
     measures <- measures[measures != "robdist__PCATF"] # not compatible
@@ -388,7 +436,7 @@ clever = function(
 
   stopifnot(length(detrend)==1)
   detrend <- switch(as.character(detrend),
-    `TRUE` = c("PCs", "kurtosis"),
+    `TRUE` = c("components", "kurtosis"),
     kurtosis = "kurtosis",
     `FALSE` = NULL
   )
@@ -420,6 +468,7 @@ clever = function(
   rm(meas_list)
   if (use_PCA) { out <- c(out, list(PCA=NULL)) }
   if (use_PCATF) { out <- c(out, list(PCATF=NULL)) }
+  if (use_ICA) { out <- c(out, list(ICA=NULL)) }
   with_robdist <- grepl("robdist", measures, fixed=TRUE)
   if (any(with_robdist)) {
     with_robdist <- gsub("robdist__", "", measures[with_robdist], fixed=TRUE)
@@ -449,7 +498,7 @@ clever = function(
       cat(paste0("Computing ", what, ".\n"))
     }
 
-    stopifnot(!isnull(X_motion))
+    stopifnot(!is.null(X_motion))
     X_motion <- FD(X_motion)
     stopifnot(nrow(X_motion) == T_)
   }
@@ -563,7 +612,7 @@ clever = function(
     } else {
       # Conserve memory by using `XXt`.
       XXt <- tcrossprod(X)
-      out$PCA <- svd(X)
+      out$PCA <- svd(XXt)
       names(out$PCA) <- toupper(names(out$PCA))
       if(!("PCATF" %in% projections)){ rm(X) }
       rm(XXt)
@@ -571,7 +620,7 @@ clever = function(
       out$PCA$V <- NULL
     }
     # Keep only the above-average variance PCs.
-    PCs_keep <- choose_PCs.variance(out$PCA)
+    PCs_keep <- choose_PCs.variance(out$PCA$D)
     out$PCA$U <- out$PCA$U[,PCs_keep,drop=FALSE]
     out$PCA$D <- out$PCA$D[PCs_keep,drop=FALSE]
     if (solve_PC_dirs | "PCATF" %in% projections) { 
@@ -599,16 +648,50 @@ clever = function(
     }
     gc()
 
-    if ("PCs" %in% detrend) {
+    if ("components" %in% detrend) {
       out$PCA$U_dt <- out$PCA$U - apply(out$PCA$U, 2, est_trend)
       #attributes(out$PCA$U_dt)$dimnames <- NULL
     }
 
-    if (any(grepl("kurt", measures, fixed = TRUE))) {
-      out$PCA$kurt_idx <- choose_PCs.kurtosis(
-        out$PCA, svd_is_varcut = TRUE, 
-        kurt_quantile = kurt_quantile, detrend = "kurtosis" %in% detrend
-      )
+    if (any(grepl("PCA_kurt", measures, fixed = TRUE))) {
+      if ("components" %in% detrend) {
+        out$PCA$kurt_idx <- choose_PCs.kurtosis(
+          out$PCA$U_dt, kurt_quantile=kurt_quantile, detrend=FALSE
+        )
+      } else {
+        out$PCA$kurt_idx <- choose_PCs.kurtosis(
+          out$PCA$U, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
+        )
+      }
+    }
+  }
+
+  # Compute ICA
+  if (any(grepl("ICA", measures, fixed=TRUE))) {
+    if (verbose) { cat(paste0( "Computing ICA.\n" )) }
+
+    if (!requireNamespace("ica", quietly = TRUE)) {
+      stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
+    }
+
+    TEMPORARY_N_ICS <- 30
+    out$ICA <- ica::icaimax(t(X), TEMPORARY_N_ICS, center=FALSE)[c("S", "M")]
+
+    if ("components" %in% detrend) {
+      out$ICA$M_dt <- out$ICA$M - apply(out$ICA$M, 2, est_trend)
+      #attributes(out$ICA$M_dt)$dimnames <- NULL
+    }
+
+    if (any(grepl("ICA_kurt", measures, fixed = TRUE))) {
+      if ("components" %in% detrend) {
+        out$ICA$kurt_idx <- choose_PCs.kurtosis(
+          out$ICA$M_dt, kurt_quantile=kurt_quantile, detrend=FALSE
+        )
+      } else {
+        out$ICA$kurt_idx <- choose_PCs.kurtosis(
+          out$ICA$M, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
+        )
+      }
     }
   }
 
@@ -616,16 +699,18 @@ clever = function(
   # Compute projection-based measures. -----------------------------------------
   # ----------------------------------------------------------------------------
 
-  measures_proj <- measures[grepl("PCA", measures, fixed=TRUE)]
+  measures_proj <- measures[grepl("PCA", measures, fixed=TRUE) | grepl("ICA", measures, fixed=TRUE)]
   for (ii in seq_len(length(measures_proj))) {
     meas_ii <- unlist(strsplit(measures_proj[ii], "__"))
     proj_ii <- meas_ii[2]; meas_ii <- meas_ii[1]
-    U_ii <- switch(proj_ii,
-      PCA_var = out$PCA[[ifelse("PCA" %in% detrend, "U_dt", "U")]],
-      PCA_kurt = out$PCA[[ifelse("PCA" %in% detrend, "U_dt", "U")]][,out$PCA$kurt_idx,drop=FALSE],
-      PCATF = out$PCATF$U
+    Comps_ii <- switch(proj_ii,
+      PCA_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]],
+      PCA_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][,out$PCA$kurt_idx,drop=FALSE],
+      PCATF = out$PCATF$U,
+      ICA_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]],
+      ICA_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][,out$ICA$kurt_idx,drop=FALSE]
     )
-    stopifnot(is.matrix(U_ii))
+    stopifnot(is.matrix(Comps_ii))
     if (verbose) { 
       cat(paste("Computing", meas_ii, "with", proj_ii, "projection."))
     }
@@ -644,18 +729,18 @@ clever = function(
       # 100.
       q <- 1/3
       max_keep = min(100, ceiling(T_*q))
-      if (max_keep < ncol(U_ii)) {
+      if (max_keep < ncol(Comps_ii)) {
         cat(paste0(
-          " Reducing number of PCs from ", ncol(U_ii), " to ", max_keep, "."
+          " Reducing number of components from ", ncol(Comps_ii), " to ", max_keep, "."
         ))
-        U_ii <- U_ii[,seq_len(max_keep),drop=FALSE]
+        Comps_ii <- Comps_ii[,seq_len(max_keep),drop=FALSE]
       }
     }
 
     # Compute the outlyingness measure.
     result_ii <- switch(meas_ii,
-      leverage = out_measures.leverage(U=U_ii, median_cutoff=outlier_cutoffs$leverage),
-      robdist = out_measures.robdist(U=U_ii, quantile_cutoff=outlier_cutoffs$robdist)
+      leverage = out_measures.leverage(Comps=Comps_ii, median_cutoff=outlier_cutoffs$leverage),
+      robdist = out_measures.robdist(Comps=Comps_ii, quantile_cutoff=outlier_cutoffs$robdist)
     )
     
     out$measures[[measures_proj[ii]]] <- result_ii$meas
@@ -666,7 +751,7 @@ clever = function(
     if (meas_ii == "robdist") {
       out$robdist_info[[proj_ii]] <- result_ii$info
     }
-    if (verbose) {  cat("\n") }
+    if (verbose) { cat("\n") }
   }
 
   # ----------------------------------------------------------------------------

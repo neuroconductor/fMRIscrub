@@ -19,7 +19,7 @@
 #'  sphere of radius \code{brain_radius} \code{trans_units}.
 #'
 #'  Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
-#'  read with \code{\link{read.table}} (fields separated by white-space; no
+#'  read with \code{\link[utils]{read.table}} (fields separated by white-space; no
 #'  header).
 #' @param trans_units \code{"mm"} for millimeters (default), \code{"cm"} 
 #'  for centimeters, or \code{"in"} for inches.
@@ -35,6 +35,7 @@
 #'  Default: \code{FALSE}.
 #' @return A length \eqn{N} vector of FD values in \code{trans_units}.
 #'
+#' @importFrom utils read.table
 #' @export
 FD <- function(
   X, trans_units = c("mm", "cm", "in"), rot_units = c("rad", "deg", "mm", "cm", "in"), 
@@ -75,7 +76,7 @@ FD <- function(
   }
 
   # Compute FD.
-  Xdiff <- rbind(matrix(0, nrow=1, ncol=6), apply(X, 2, diff))
+  Xdiff <- apply(X, 2, diff)
   FD <- c(0, apply(abs(Xdiff), 1, sum))
 
   # Revert units to `trans_units`.

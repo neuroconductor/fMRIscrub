@@ -1,7 +1,7 @@
 Package: clever
 Type: Package
 Title: Calculate Leverage of Component Models
-Version: 0.2.1
+Version: 0.3.0
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -25,25 +25,26 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-    cowplot,
     expm,
-    ggplot2,
-    ggrepel,
     MASS,
     e1071,
     far,
     glmgen,
     robustbase,
-    stats
+    stats,
+    utils
 RoxygenNote: 7.1.1
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
 Suggests:
+    cowplot,
     ciftiTools,
     knitr,
     rmarkdown,
     RNifti,
+    ggplot2,
     ggpubr,
+    ica,
     neurobase,
     oro.nifti,
     gridExtra,

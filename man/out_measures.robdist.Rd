@@ -4,10 +4,10 @@
 \alias{out_measures.robdist}
 \title{Computes MCD distances.}
 \usage{
-out_measures.robdist(U, quantile_cutoff = NA)
+out_measures.robdist(Comps, quantile_cutoff = NA)
 }
 \arguments{
-\item{U}{An n x Q matrix of PC scores.}
+\item{Comps}{An n x Q matrix of PC scores.}
 
 \item{quantile_cutoff}{The F-distribution quantile cutoff. Default: 
 \code{NA} (do not compute outliers).}

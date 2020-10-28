@@ -2,26 +2,19 @@
 % Please edit documentation in R/choose_PCs.R
 \name{choose_PCs.kurtosis}
 \alias{choose_PCs.kurtosis}
-\title{Selects the principle components (PCs) of sufficient kurtosis from a SVD.}
+\title{Selects the components of sufficient kurtosis.}
 \usage{
-choose_PCs.kurtosis(
-  svd,
-  svd_is_varcut = FALSE,
-  kurt_quantile = 0.9,
-  detrend = TRUE,
-  n_sim = 5000
-)
+choose_PCs.kurtosis(Comps, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000)
 }
 \arguments{
-\item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
+\item{Comps}{A matrix; each column is a component. For PCA, this is the U
+matrix. For ICA, this is the M matrix.}
 
-\item{svd_is_varcut}{Have the below-average-variance PCs been removed already?
-Default: \code{FALSE}}
+\item{kurt_quantile}{components with kurtosis of at least this quantile are kept.}
 
-\item{kurt_quantile}{PCs with kurtosis of at least this quantile are kept.}
-
-\item{detrend}{Should PCs be detrended before measuring kurtosis? Default is
-\code{TRUE}. Recommended if observations represent a time series.}
+\item{detrend}{Should components be detrended before measuring kurtosis? Default is
+\code{TRUE}. Recommended if observations represent a time series. Use
+\code{FALSE} if they have already been detrended.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis. Only used if a new simulation is performed. (If
@@ -29,14 +22,13 @@ distribution of kurtosis. Only used if a new simulation is performed. (If
 If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)}
 }
 \value{
-The original indices of the PCs which were retained, in order of
+The original indices of the components which were retained, in order of
  decreasing kurtosis.
 }
 \description{
-First, the largest PCs which together explain 90% of the variance are
- retained, and smaller components are removed. Each PC is detrended (this can
- be disabled). The kurtosis cutoff is then the 90% quantile of the sampling
- distribution of kurtosis for Normal data of the same length as the PCs; it
- is estimated by simulation or calculated from the theoretical asymptotic
- distribution if the PCs are long enough.
+Each component is detrended (this can be disabled) before computing kurtosis. 
+ The kurtosis cutoff is the 90% quantile of the sampling distribution of 
+ kurtosis for Normal data of the same length as the components; it is
+ estimated by simulation or calculated from the theoretical asymptotic
+ distribution if the components are long enough.
 }

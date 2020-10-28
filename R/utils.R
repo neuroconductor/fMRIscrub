@@ -55,6 +55,7 @@ scale_med <- function(mat){
 #'  scale.
 #'
 #' @return A list containing the estimated F distribution's c, m, and df.
+#' @importFrom stats pchisq qchisq
 #' @export
 fit.F <- function(Q, n, h){
   # Estimate c.
@@ -91,7 +92,7 @@ fit.F <- function(Q, n, h){
 #'
 #' @return The estimated trend.
 #'
-#' @importFrom stats mad
+#' @importFrom stats mad lm
 #' @importFrom robustbase lmrob
 #' @importFrom robustbase lmrob.control
 #' @export
@@ -136,5 +137,4 @@ read_nifti <- function(nifti_fname){
   } else {
     stop("Package \"ciftiTools\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
   }
-  nifti
 }

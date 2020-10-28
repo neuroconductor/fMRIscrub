@@ -7,27 +7,37 @@
 #'  outlyingness measure. Column names should identify the method as one of the following:
 #'  \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
 #'  \code{PCA_var__robdist}, \code{PCA_kurt__robdist};
+#'  \code{ICA_var__leverage}, \code{ICA_kurt__leverage};
+#'  \code{ICA_var__robdist}, \code{ICA_kurt__robdist};
 #'  \code{DVARS}, \code{DVARS_DPD}, \code{DVARS_ZD}; or \code{FD}.
 #' @param cuts An \eqn{m} length vector with each value being the cutoff for a 
 #'  outlyingness measure. Column names should be the same as those provided for \code{meas}.
 #' @param flag An \eqn{T_ x m} data.frame with each column being the flags for an
 #'  outlyingness measure.
 #' @param name The name of the type of outlyingness measure being plotted:
-#'  \code{leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.
-#' @param robdist_info A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
-#'  Fparam. Not required if robust distance-based measures are not being plottted.
+#'  \code{PCA_leverage}, \code{PCA_robdist}, \code{ICA_leverage}, 
+#'  \code{ICA_robdist}, \code{FD}, \code{DVARS}.
+#' @param robdist_info A list containing information related to the robust 
+#'  distance measure: inMCD, outMCD_scale, and Fparam. Not used if robust 
+#'  distance-based measures are not being plottted.
 #' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
 #' 
-#' @import ggplot2
-#' @importFrom cowplot theme_cowplot
+#' @importFrom utils stack
 #' 
 #' @keywords internal
 clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, ...){
   colnames(meas) <- gsub("^.*__", "", colnames(meas))
 
-  xmin <- xmax <- ymin <- ymax <- idx <- method <- inMCD <- NULL
+  if (!requireNamespace("cowplot", quietly = TRUE)) {
+    stop("Package \"cowplot\" needed to use `clever_plot_indiv_panel`. Please install it.", call. = FALSE)
+  }
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed to use `clever_plot_indiv_panel`. Please install it.", call. = FALSE)
+  }
+
+  xmin <- xmax <- ymin <- ymax <- idx <- measure <- inMCD <- NULL
 
   # Extra colors:
   colors_grey <- c("#494949", "#808080", "#b8b8b8", "#cdcdcd")
@@ -36,6 +46,8 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     PCA_var = "#8DA0CB", # blue
     PCA_kurt = "#FC8D62", # orange
     PCATF = "#A6D854", # green
+    ICA_var = "#8DA0CB", # blue
+    ICA_kurt = "#FC8D62", # orange
     # DVARS
     traditional = "#66C2A5", # aqua 
     DPD = "#927c5b", # dark-tan
@@ -61,6 +73,8 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     PCA_var = "High-variance PCs",
     PCA_kurt = "High-kurtosis PCs" ,
     PCATF = "Trend-filtered PCs",
+    ICA_var = "High-variance ICs",
+    ICA_kurt = "High-kurtosis ICs" ,
     # DVARS
     traditional = "Traditional DVARS",
     DPD = "DVARS Delta % D",
@@ -76,8 +90,10 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     FD = "Framewise Displacement"
   )
   ylab_formatted <- list(
-    leverage="Leverage",
-    robdist="Robust Dist.",
+    PCA_leverage="PCA Leverage",
+    PCA_robdist="PCA Robust Dist.",
+    ICA_leverage="ICA Leverage",
+    ICA_robdist="ICA Robust Dist.",
     DVARS="DVARS",
     motion="Motion",
     CompCor_wm_cort="CompCor: Cortical WM",
@@ -142,7 +158,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
   # Get the upper y-axis limit.
   ylim_max <- ifelse(
-    name=="Leverage" & (!("leverage__PCATF" %in% meas_subnames)),
+    grepl("Leverage", name) & (!("leverage__PCATF" %in% meas_subnames)),
     1, 
     ifelse(length(cuts) < 1, max(meas$measure), max(max(cuts), max(meas$measure)))
   )
@@ -196,7 +212,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
 
   # Make ggplot.
-  plt <- ggplot()
+  plt <- ggplot2::ggplot()
 
   # Draw drop-down lines for outliers.
   if(any_outs){
@@ -204,9 +220,9 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
       if (is.null(drop_line[[ii]])) { next }
       n <- names(drop_line)[ii]
       plt <- plt +
-        geom_rect(
+        ggplot2::geom_rect(
           data=drop_line[[n]],
-          aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n]
+          ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[n]
         )
       #Text label if any outlier is detected.
     }
@@ -216,7 +232,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   for (ii in seq_len(length(cuts))) {
     n <- names(cuts)[ii]
     plt <- plt + 
-      geom_hline(
+      ggplot2::geom_hline(
         yintercept=cuts[n], linetype="dashed", color=ifelse(length(cuts)==1, "black", colors[n])
       )
   }
@@ -224,25 +240,25 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   # Draw data points (after drop-down lines, so they are drawn on top).
   if(mcd_meas){
     plt <- plt + 
-      geom_point(data=meas, aes(x=idx, y=measure, color=name, shape=inMCD)) +
-      scale_shape_manual(values=c(3, 16))
+      ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name, shape=inMCD)) +
+      ggplot2::scale_shape_manual(values=c(3, 16))
   } else if (grepl("CompCor", name)) {
     max_nPC <- max(as.numeric(gsub("PC", "", colnames(meas))))
     for (ii in seq(max_nPC, 1)) {
       plt <- plt + 
-        geom_line(
+        ggplot2::geom_line(
           data=subset(meas, name==paste0("PC", ii)), 
-          aes(x=idx, y=measure, group=name, color=name), size=1
+          ggplot2::aes(x=idx, y=measure, group=name, color=name), size=1
         )
     }
   } else if (name=="GSR") {
     plt <- plt + 
-      geom_line(data=meas, aes(x=idx, y=measure, group=name, color=name), size=1)
+      ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, group=name, color=name), size=1)
   } else {
     plt <- plt + 
-      geom_point(data=meas, aes(x=idx, y=measure, color=name))
+      ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name))
   }
-  plt <- plt + scale_color_manual(values=colors, labels=name_formatted)
+  plt <- plt + ggplot2::scale_color_manual(values=colors, labels=name_formatted)
 
   # Use an optimal spacing between the x-ticks.
   xticks_width <- c(1, 2, 2.5, 3, 5)
@@ -251,15 +267,15 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   xticks_width <- max(xticks_width[xticks_width*2 < T_*.9])
   xticks <- c(seq(from=0, to=floor(T_*.9), by=xticks_width), T_)
 
-  plt <- plt + labs(y=ylab, color="Method") +
-    theme_cowplot() +
+  plt <- plt + ggplot2::labs(y=ylab, color="Method") +
+    cowplot::theme_cowplot() +
     #coord_cartesian(xlim=c(0, floor(max(d$index)*1.02)), ylim=c(0, ylim_max*1.2)) + #fix this line
-    theme(
-      axis.title.x=element_blank(),
+    ggplot2::theme(
+      axis.title.x=ggplot2::element_blank(),
       legend.position=legend.position,
-      panel.spacing.y=unit(1.5, "lines")) +
-    scale_x_continuous(expand=expansion(mult = c(.01, .01)), breaks=xticks) +
-    scale_y_continuous(expand=expansion(mult = c(0, .01)))
+      panel.spacing.y=ggplot2::unit(1.5, "lines")) +
+    ggplot2::scale_x_continuous(expand=ggplot2::expansion(mult = c(.01, .01)), breaks=xticks) +
+    ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult = c(0, .01)))
 
   # [TO-DO]: implement dual axis for DVARS.
 
@@ -293,8 +309,10 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
 
   # Define all the subplots: measures
   measures_to_plot <- list(
-    leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
   )
@@ -313,14 +331,18 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
 
   # Define all the subplots: outliers
   outcuts_to_plot <- list(
-    leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = "FD"
   )
   outflag_to_plot <- list(
-    leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__dual"),
     motion = "FD"
   )
@@ -366,8 +388,8 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
 
   # Add x-axis label to bottom plot.
   plots[[length(plots)]] <- plots[[length(plots)]] + 
-    theme(axis.title.x=element_text()) + 
-    xlab(ifelse("xlab" %in% names(list(...)), list(...)$xlab, "Index (Time Point)"))
+    ggplot2::theme(axis.title.x=ggplot2::element_text()) + 
+    ggplot2::xlab(ifelse("xlab" %in% names(list(...)), list(...)$xlab, "Index (Time Point)"))
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
 
@@ -378,7 +400,7 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     plt <- cowplot::plot_grid(
       cowplot::ggdraw() + 
         cowplot::draw_label(title, fontface='bold', x=0, hjust=0) +
-        ggplot2::theme(plot.margin = margin(0, 0, 0, 7)),
+        ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 7)),
       plt,
       ncol=1,
       rel_heights=c(.15, length(plots))

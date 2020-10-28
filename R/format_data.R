@@ -79,7 +79,7 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 #'  0 (do not erode the noise ROIs).
 #'
 #' @return A list with components "X", "X_noise", "ROI_data", and "ROI_noise"
-#'
+#' 
 #' @keywords internal
 format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_erosion=NULL){
 
@@ -91,7 +91,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
       if (!requireNamespace("ciftiTools", quietly = TRUE)) {
         stop("Package \"ciftiTools\" needed to read `X`. Please install it", call. = FALSE)
       }
-      X <- read_cifti(X, brainstructures="all")
+      X <- ciftiTools::read_cifti(X, brainstructures="all")
     } else {
       X <- read_nifti(X)
     }
@@ -184,7 +184,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
       names(noise_nPC) <- names(ROI_noise)
     }
     else {
-      if (all(sorted(names(noise_nPC)) != sorted(names(ROI_noise)))) {
+      if (all(sort(names(noise_nPC)) != sort(names(ROI_noise)))) {
         stop("The names of `noise_nPC` do not match those of `ROI_noise`.")
       }
     }  
@@ -204,7 +204,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
         noise_erosion <- noise_erosion[rep(1:length(noise_erosion), length(ROI_noise))[1:length(ROI_noise)]]
         names(noise_erosion) <- names(ROI_noise)
       } else {
-        if (all(sorted(names(noise_erosion)) != sorted(names(ROI_noise)))) {
+        if (all(sort(names(noise_erosion)) != sort(names(ROI_noise)))) {
           stop("The names of `noise_erosion` do not match those of `ROI_noise`.")
         }
       }
@@ -246,7 +246,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
           ROI_noise[[ii]] <- read_nifti(ROI_noise[[ii]])
         }
         if (is.matrix(ROI_noise[[ii]])) { 
-          ROI_noise[[ii]] <- array(ROI_noise[[ii]], dim=c(dim(ROI_noise[[ii]], 1)))
+          ROI_noise[[ii]] <- array(ROI_noise[[ii]], dim=c(dim(ROI_noise[[ii]]), 1))
         }
         if (is.array(ROI_noise[[ii]])) {
           stopifnot(all(dim(ROI_noise[[ii]]) == dim(X)[1:3]))

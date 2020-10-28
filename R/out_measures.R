@@ -1,9 +1,9 @@
 #' Computes PCA leverage.
 #'
-#' Computes the leverage of each observation, in the PC score matrix (U).
+#' Computes the leverage of each observation, in the PC score / IC mixing matrix (U/M).
 #'  Optionally can identify the outliers.
 #'
-#' @param U An n x Q matrix of PC scores.
+#' @param Comps The n x Q PC score matrix/IC mixing matrix.
 #' @param median_cutoff The outlier cutoff, in multiples of the median leverage.
 #'  Default: \code{NA} (do not compute outliers).
 #' 
@@ -12,10 +12,12 @@
 #'  \code{"flag"} (logical vector indicating the outliers). If 
 #'  \code{!is.null(median_cutoff)}, all entries except \code{"meas"} are omitted.
 #'  
+#' @importFrom stats median
+#' 
 #' @export
-out_measures.leverage <- function(U, median_cutoff=NA){
+out_measures.leverage <- function(Comps, median_cutoff=NA){
   # Below line: same as diag(U %*% t(U)), but faster.
-  lev <- apply(U, 1, function(x){sum(x*x)})
+  lev <- apply(Comps^2, 1, sum)
   out <- list(meas=lev)
   if (!is.null(median_cutoff)){
     out$cut <- median_cutoff * median(lev)
@@ -32,7 +34,7 @@ out_measures.leverage <- function(U, median_cutoff=NA){
 #'  h. The MCD distances are Mahalanobis distances using the estimates of
 #'  center (mean) and scale (covariance matrix) based on that subset.
 #'
-#' @param U An n x Q matrix of PC scores.
+#' @param Comps An n x Q matrix of PC scores.
 #' @param quantile_cutoff The F-distribution quantile cutoff. Default: 
 #'  \code{NA} (do not compute outliers).
 #' 
@@ -48,20 +50,21 @@ out_measures.leverage <- function(U, median_cutoff=NA){
 #' If \code{is.null(quantile_cutoff)} the latter two elements are omitted.
 #'
 #' @importFrom MASS cov.mcd
-#'
+#' @importFrom stats qf
+#' 
 #' @export
-out_measures.robdist <- function(U, quantile_cutoff=NA){ 
-  n <- nrow(U)
-  Q <- ncol(U)
+out_measures.robdist <- function(Comps, quantile_cutoff=NA){ 
+  n <- nrow(Comps)
+  Q <- ncol(Comps)
   
-  best <- c(cov.mcd(U)$best)
+  best <- c(cov.mcd(Comps)$best)
   inMCD <- 1:n %in% best
-  U_in <- matrix(U[best,], ncol=Q) # observations that are used for the MCD estimates calculation
-  xbar_star <- colMeans(U_in) # MCD estimate of mean
-  U_ins <- scale(U_in, center = TRUE, scale = FALSE) 
-  nU <- nrow(U_ins)
-  S_star <- (t(U_ins) %*% U_ins)/(nU-1) # MCD estimate of covariance
-  RD <- apply(U, 1, function(x) {t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)})
+  Comps_in <- matrix(Comps[best,], ncol=Q) # observations that are used for the MCD estimates calculation
+  xbar_star <- colMeans(Comps_in) # MCD estimate of mean
+  Comps_ins <- scale(Comps_in, center = TRUE, scale = FALSE) 
+  nU <- nrow(Comps_ins)
+  S_star <- (t(Comps_ins) %*% Comps_ins)/(nU-1) # MCD estimate of covariance
+  RD <- apply(Comps, 1, function(x) {t(x-xbar_star) %*% solve(S_star) %*% (x-xbar_star)})
   # Scale left-out observations to follow F-distribution.
   Fparam <- fit.F(Q, n, sum(inMCD))
   Fparam <- c(Fparam$c, Fparam$m, Fparam$df[1], Fparam$df[2])

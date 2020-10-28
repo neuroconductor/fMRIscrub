@@ -3,6 +3,9 @@
 #' @param x Numeric vector of data to estimate standard deviation for. 
 #' @param d The scalar power transformation parameter. \eqn{w = x^{1/d}} is
 #'  computed to obtain \eqn{w \sim N(\mu_w, \sigma_w^2)}.
+#' 
+#' @importFrom stats quantile median
+#' 
 #' @return Scalar for the robust estimate of standard deviation.
 #' 
 sd_hIQR <- function(x, d=1){
@@ -33,6 +36,7 @@ sd_hIQR <- function(x, d=1){
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @export
+#' @importFrom stats median pchisq qnorm
 #' 
 DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
   T_ <- nrow(X)

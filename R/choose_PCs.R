@@ -1,65 +1,52 @@
-#' Selects the principle components of above-average variance from a SVD.
+#' Selects the components of above-average variance.
 #'
-#' PCs with above-average variance are retained.
+#' Components with above-average variance are retained.
 #'
-#' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
+#' @param var The variance of each component, in order. For PCA, this is the 
+#'  square of the values on the diagonal of the D matrix.
 #'
-#' @return The original indices of the PCs which were retained, in order of
-#'  decreasing variance (i.e. increasing index).
+#' @return The PC indices to retain, in order of decreasing variance (i.e. 
+#'  increasing index).
 #'
 #' @export
-choose_PCs.variance <- function(svd){
-  names(svd) <- tolower(names(svd))
-  var <- svd$d^2
-  n_keep <- max(1, sum(var > mean(var)))
-  1:n_keep
+choose_PCs.variance <- function(var){
+  seq_len( max(1, sum(var > mean(var))) )
 }
 
-#' Selects the principle components (PCs) of sufficient kurtosis from a SVD.
+#' Selects the components of sufficient kurtosis.
 #'
-#' First, the largest PCs which together explain 90% of the variance are
-#'  retained, and smaller components are removed. Each PC is detrended (this can
-#'  be disabled). The kurtosis cutoff is then the 90% quantile of the sampling
-#'  distribution of kurtosis for Normal data of the same length as the PCs; it
-#'  is estimated by simulation or calculated from the theoretical asymptotic
-#'  distribution if the PCs are long enough.
+#' Each component is detrended (this can be disabled) before computing kurtosis. 
+#'  The kurtosis cutoff is the 90% quantile of the sampling distribution of 
+#'  kurtosis for Normal data of the same length as the components; it is
+#'  estimated by simulation or calculated from the theoretical asymptotic
+#'  distribution if the components are long enough.
 #'
-#' @param svd An SVD decomposition; i.e. a list containing u, d, and v.
-#' @param svd_is_varcut Have the below-average-variance PCs been removed already?
-#'  Default: \code{FALSE}
-#' @param kurt_quantile PCs with kurtosis of at least this quantile are kept.
-#' @param detrend Should PCs be detrended before measuring kurtosis? Default is
-#'  \code{TRUE}. Recommended if observations represent a time series.
+#' @param Comps A matrix; each column is a component. For PCA, this is the U
+#'  matrix. For ICA, this is the M matrix.
+#' @param kurt_quantile components with kurtosis of at least this quantile are kept.
+#' @param detrend Should components be detrended before measuring kurtosis? Default is
+#'  \code{TRUE}. Recommended if observations represent a time series. Use
+#'  \code{FALSE} if they have already been detrended.
 #' @param n_sim The number of simulation data to use for estimating the sampling
 #'  distribution of kurtosis. Only used if a new simulation is performed. (If
 #'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
 #'  If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)
 #'
-#' @return The original indices of the PCs which were retained, in order of
+#' @return The original indices of the components which were retained, in order of
 #'  decreasing kurtosis.
 #'
+#' @importFrom stats quantile qnorm
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choose_PCs.kurtosis <- function(svd, svd_is_varcut = FALSE, kurt_quantile = 0.9, detrend = TRUE,
-  n_sim = 5000){
-  names(svd) <- tolower(names(svd))
-  U <- svd$u
-  m <- nrow(U); n <- ncol(U)
+choose_PCs.kurtosis <- function(
+  Comps, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000){
 
-  # First get the high-variance PCs.
-  if (!svd_is_varcut) {
-    n <- length(choose_PCs.variance(svd))
-    U <- U[,1:n, drop=FALSE]
-  }
+  m <- nrow(Comps); n <- ncol(Comps)
 
-  # Compute the kurtosis of the PCs, detrending if applicable.
-  if(detrend){
-    U.dt <- U - apply(U, 2, est_trend)
-    kurt <- apply(U.dt, 2, kurtosis, type=1)
-  } else {
-    kurt <- apply(U, 2, kurtosis, type=1)
-  }
+  if (detrend) {  Comps <- Comps - apply(Comps, 2, est_trend) }
+
+  kurt <- apply(Comps, 2, kurtosis, type=1)
 
   # Determine the quantile cutoff.
   if(m < 1000){
@@ -80,7 +67,5 @@ choose_PCs.kurtosis <- function(svd, svd_is_varcut = FALSE, kurt_quantile = 0.9,
   n_keep <- max(1, sum(kurt > cut))
 
   # The PCs with greatest kurtosis are chosen.
-  indices <- order(-kurt)[1:n_keep]
-
-  return(indices)
+  indices <- order(-kurt)[seq_len(n_keep)]
 }

@@ -11,6 +11,8 @@ clever_plot_indiv_panel(meas, cuts, flag, name, robdist_info = NULL, ...)
 outlyingness measure. Column names should identify the method as one of the following:
 \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
 \code{PCA_var__robdist}, \code{PCA_kurt__robdist};
+\code{ICA_var__leverage}, \code{ICA_kurt__leverage};
+\code{ICA_var__robdist}, \code{ICA_kurt__robdist};
 \code{DVARS}, \code{DVARS_DPD}, \code{DVARS_ZD}; or \code{FD}.}
 
 \item{cuts}{An \eqn{m} length vector with each value being the cutoff for a 
@@ -20,10 +22,12 @@ outlyingness measure. Column names should be the same as those provided for \cod
 outlyingness measure.}
 
 \item{name}{The name of the type of outlyingness measure being plotted:
-\code{leverage}, \code{RobDist}, \code{FD}, \code{DVARS}.}
+\code{PCA_leverage}, \code{PCA_robdist}, \code{ICA_leverage}, 
+\code{ICA_robdist}, \code{FD}, \code{DVARS}.}
 
-\item{robdist_info}{A list containing information related to the robust distance measure: inMCD, outMCD_scale, and 
-Fparam. Not required if robust distance-based measures are not being plottted.}
+\item{robdist_info}{A list containing information related to the robust 
+distance measure: inMCD, outMCD_scale, and Fparam. Not used if robust 
+distance-based measures are not being plottted.}
 
 \item{...}{Additional arguments to ggplot: main, sub, xlab, ...}
 }

@@ -86,21 +86,19 @@ clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, measures="leverage")
 clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, measures="leverage")
 ```
 
-```{r fig.width=4, fig.height=3}
-plot(clever.Dat1.var.lev, title="Dat1", show.legend=FALSE)
+```{r fig.width=10, fig.height=3}
+p1 <- plot(clever.Dat1.var.lev, title="Dat1", show.legend=FALSE)
+p2 <- plot(clever.Dat2.var.lev, title="Dat2", show.legend=FALSE)
+cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-```{r fig.width=4, fig.height=3}
-plot(clever.Dat2.var.lev, title="Dat2", show.legend=FALSE)
-```
-
-PCA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is mostly artifact-free, PCA leverage does indicate a few potential outliers around the 40th and 110th timepoints.
+PCA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, PCA leverage does indicate a few potential outliers around the 40th and 110th timepoints.
 
 Next, we can run all methods included in `clever` and compare the results:
 
 ```{r}
-clever.Dat1 = clever(Dat1, verbose=TRUE, measures="all")
-clever.Dat2 = clever(Dat2, verbose=TRUE, measures="all")
+clever.Dat1 = clever(Dat1, verbose=TRUE, measures="all", projections="all")
+clever.Dat2 = clever(Dat2, verbose=TRUE, measures="all", projections="all")
 ```
 
 Here are the outliers for the first dataset:

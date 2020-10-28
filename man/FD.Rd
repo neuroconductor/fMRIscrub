@@ -20,7 +20,7 @@ FD(
  sphere of radius \code{brain_radius} \code{trans_units}.
 
  Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
- read with \code{\link{read.table}} (fields separated by white-space; no
+ read with \code{\link[utils]{read.table}} (fields separated by white-space; no
  header).}
 
 \item{trans_units}{\code{"mm"} for millimeters (default), \code{"cm"} 

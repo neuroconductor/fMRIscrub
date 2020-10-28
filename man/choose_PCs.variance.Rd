@@ -2,17 +2,18 @@
 % Please edit documentation in R/choose_PCs.R
 \name{choose_PCs.variance}
 \alias{choose_PCs.variance}
-\title{Selects the principle components of above-average variance from a SVD.}
+\title{Selects the components of above-average variance.}
 \usage{
-choose_PCs.variance(svd)
+choose_PCs.variance(var)
 }
 \arguments{
-\item{svd}{An SVD decomposition; i.e. a list containing u, d, and v.}
+\item{var}{The variance of each component, in order. For PCA, this is the 
+square of the values on the diagonal of the D matrix.}
 }
 \value{
-The original indices of the PCs which were retained, in order of
- decreasing variance (i.e. increasing index).
+The PC indices to retain, in order of decreasing variance (i.e. 
+ increasing index).
 }
 \description{
-PCs with above-average variance are retained.
+Components with above-average variance are retained.
 }
