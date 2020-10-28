@@ -8,7 +8,7 @@ clever_HCP(
   cii,
   nii,
   nii_labels,
-  ROI_noise,
+  ROI_noise = c("wm_cort", "csf"),
   noise_nPC = 5,
   noise_erosion = NULL,
   ...

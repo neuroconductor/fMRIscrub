@@ -38,7 +38,7 @@
 #' @param ... Additional arguments to \code{\link{clever}}.
 #'
 #' @export
-clever_HCP <- function(cii, nii, nii_labels, ROI_noise, noise_nPC=5, noise_erosion=NULL, ...){
+clever_HCP <- function(cii, nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
 
   if (any(c("X", "ROI_data") %in% names(list(...)))) { 
     stop("`X` and `ROI_data` are overriden by the CIFTI/NIFTI file name\
