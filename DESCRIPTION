@@ -30,6 +30,7 @@ Imports:
     e1071,
     far,
     glmgen,
+    pesel,
     robustbase,
     stats,
     utils
@@ -51,6 +52,7 @@ Suggests:
     testthat (>= 2.1.0),
     covr
 Remotes:
+    psobczyk/pesel,
     glmgen/glmgen/R_pkg/glmgen,
     mandymejia/ciftiTools
 VignetteBuilder: knitr

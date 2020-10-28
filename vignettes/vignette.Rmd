@@ -103,13 +103,13 @@ clever.Dat2 = clever(Dat2, verbose=TRUE, measures="all", projections="all")
 
 Here are the outliers for the first dataset:
 
-```{r fig.height=7, fig.width=8}
+```{r fig.height=14, fig.width=8}
 plot(clever.Dat1, "all", title="Dat1")
 ```
 
 And for the second:
 
-```{r fig.height=7, fig.width=8}
+```{r fig.height=14, fig.width=8}
 plot(clever.Dat2, "all", title="Dat2")
 ```
 

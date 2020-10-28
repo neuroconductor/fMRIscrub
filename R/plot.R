@@ -48,6 +48,11 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     PCATF = "#A6D854", # green
     ICA_var = "#8DA0CB", # blue
     ICA_kurt = "#FC8D62", # orange
+    PCA2_var = "#8DA0CB", # blue
+    PCA2_kurt = "#FC8D62", # orange
+    PCATF = "#A6D854", # green
+    ICA2_var = "#8DA0CB", # blue
+    ICA2_kurt = "#FC8D62", # orange
     # DVARS
     traditional = "#66C2A5", # aqua 
     DPD = "#927c5b", # dark-tan
@@ -70,11 +75,15 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   )
   name_formatted <- list(
     # leverage or robdist
-    PCA_var = "High-variance PCs",
-    PCA_kurt = "High-kurtosis PCs" ,
-    PCATF = "Trend-filtered PCs",
-    ICA_var = "High-variance ICs",
-    ICA_kurt = "High-kurtosis ICs" ,
+    PCA_var = "AAV PCs",
+    PCA_kurt = "AAV & high-kurtosis PCs" ,
+    PCATF = "AAV trend-filtered PCs",
+    ICA_var = "AAV ICs",
+    ICA_kurt = "AAV & high-kurtosis ICs" ,
+    PCA2_var = "PESEL PCs",
+    PCA2_kurt = "PESEL & high-kurtosis PCs" ,
+    ICA2_var = "PESEL ICs",
+    ICA2_kurt = "PESEL & high-kurtosis ICs" ,
     # DVARS
     traditional = "Traditional DVARS",
     DPD = "DVARS Delta % D",
@@ -90,10 +99,14 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     FD = "Framewise Displacement"
   )
   ylab_formatted <- list(
-    PCA_leverage="PCA Leverage",
-    PCA_robdist="PCA Robust Dist.",
-    ICA_leverage="ICA Leverage",
-    ICA_robdist="ICA Robust Dist.",
+    PCA_leverage="PCA Lev (AAV)",
+    PCA_robdist="PCA Rob. Dist. (AAV)",
+    ICA_leverage="ICA Lev (AAV)",
+    ICA_robdist="ICA Rob. Dist. (AAV)",
+    PCA2_leverage="PCA Lev (All)",
+    PCA2_robdist="PCA Rob. Dist. (PESEL)",
+    ICA2_leverage="ICA Lev (PESEL)",
+    ICA2_robdist="ICA Rob. Dist. (PESEL)",
     DVARS="DVARS",
     motion="Motion",
     CompCor_wm_cort="CompCor: Cortical WM",
@@ -311,8 +324,12 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   measures_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
     PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
     ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
   )
@@ -333,16 +350,24 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   outcuts_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
     PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
     ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = "FD"
   )
   outflag_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
     PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
     ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__dual"),
     motion = "FD"
   )

@@ -1,19 +1,4 @@
-#' Selects the components of above-average variance.
-#'
-#' Components with above-average variance are retained.
-#'
-#' @param var The variance of each component, in order. For PCA, this is the 
-#'  square of the values on the diagonal of the D matrix.
-#'
-#' @return The PC indices to retain, in order of decreasing variance (i.e. 
-#'  increasing index).
-#'
-#' @export
-choose_PCs.variance <- function(var){
-  seq_len( max(1, sum(var > mean(var))) )
-}
-
-#' Selects the components of sufficient kurtosis.
+#' Identifies the components of sufficient kurtosis.
 #'
 #' Each component is detrended (this can be disabled) before computing kurtosis. 
 #'  The kurtosis cutoff is the 90% quantile of the sampling distribution of 
@@ -32,14 +17,13 @@ choose_PCs.variance <- function(var){
 #'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
 #'  If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)
 #'
-#' @return The original indices of the components which were retained, in order of
-#'  decreasing kurtosis.
+#' @return A logical vector indicating whether each component has high kurtosis.
 #'
 #' @importFrom stats quantile qnorm
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-choose_PCs.kurtosis <- function(Comps, 
+high_kurtosis <- function(Comps, 
   kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000){
 
   m <- nrow(Comps); n <- ncol(Comps)
@@ -63,9 +47,8 @@ choose_PCs.kurtosis <- function(Comps,
     cut <- qnorm(kurt_quantile) * sqrt( (24*m*(m-1)^2) / ((m-3)*(m-2)*(m+3)*(m+5)) )
   }
 
-  # Identify how many PCs will be kept.
-  n_keep <- max(1, sum(kurt > cut))
+  # Constant components will have NaN kurtosis.
+  kurt[kurt %in% c(NA, NaN)] <- -Inf
 
-  # The PCs with greatest kurtosis are chosen.
-  indices <- order(-kurt)[seq_len(n_keep)]
+  kurt > cut
 }

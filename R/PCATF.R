@@ -51,7 +51,7 @@ PCATF <- function(
   stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){
-    K <- length(choose_PCs.variance(X.svd$d))
+    K <- max(1, sum(X.svd$d^2 > mean(X.svd$d^2)))
     K <- min(100, K)
   }
   stopifnot(is.numeric(K))

@@ -5,7 +5,7 @@
 #'
 #' @param Comps The n x Q PC score matrix/IC mixing matrix.
 #' @param median_cutoff The outlier cutoff, in multiples of the median leverage.
-#'  Default: \code{NA} (do not compute outliers).
+#'  Default: \code{NULL} (do not compute outliers).
 #' 
 #' @return A list with entries \code{"meas"} (the leverage values), 
 #'  \code{"cut"} (the leverage cutoff value) and 
@@ -15,7 +15,7 @@
 #' @importFrom stats median
 #' 
 #' @export
-out_measures.leverage <- function(Comps, median_cutoff=NA){
+out_measures.leverage <- function(Comps, median_cutoff=NULL){
   # Below line: same as diag(U %*% t(U)), but faster.
   lev <- apply(Comps^2, 1, sum)
   out <- list(meas=lev)
@@ -36,7 +36,7 @@ out_measures.leverage <- function(Comps, median_cutoff=NA){
 #'
 #' @param Comps An n x Q matrix of PC scores.
 #' @param quantile_cutoff The F-distribution quantile cutoff. Default: 
-#'  \code{NA} (do not compute outliers).
+#'  \code{NULL} (do not compute outliers).
 #' 
 #' @return A list with entries
 #' \describe{
@@ -53,7 +53,7 @@ out_measures.leverage <- function(Comps, median_cutoff=NA){
 #' @importFrom stats qf
 #' 
 #' @export
-out_measures.robdist <- function(Comps, quantile_cutoff=NA){ 
+out_measures.robdist <- function(Comps, quantile_cutoff=NULL){ 
   n <- nrow(Comps)
   Q <- ncol(Comps)
   

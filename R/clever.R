@@ -54,11 +54,11 @@
 #'  contain outlier information. Choose at least one of the following:
 #' 
 #'  \describe{
-#'    \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance. Compatible with both leverage and robust distance.}
-#'    \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
-#'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with only leverage.}
-#'    \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance. Compatible with both leverage and robust distance.}
-#'    \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance/chosen by PESEL. Compatible with only leverage.}
+#'    \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+#'    \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
 #'  }
 #'  
 #'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
@@ -72,7 +72,7 @@
 #'  measures. Should the PCA and PCATF principal directions be computed? 
 #'  Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
 #'  for PCA.
-#' @param center,scale Center the columns of the data by median, and scale the
+#' @param center_X,scale_X Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
 #'  for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
 #'  must already be centered.
@@ -209,20 +209,20 @@
 #'  \item{PCA}{
 #'    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
+#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
-#'      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+#'      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
-#'        (among those of above-average variance) and \code{NA} indicating a PC with kurtosis below
+#'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
 #'        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
 #'    }
 #'  }
 #'  \item{PCATF}{
 #'    If the "PCATF" projection was used, this will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
-#'      \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+#'      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'    }
 #'  }
@@ -230,10 +230,10 @@
 #'    If the "ICA_var" or "ICA_kurt" projections were used, this will be a list with components:
 #'    \describe{
 #'      \item{S}{The \eqn{P x Q} source signals matrix.} 
-#'      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance will be included.}
+#'      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
 #'      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
-#'        (among those of above-average variance) and \code{NA} indicating an IC with kurtosis below
+#'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
 #'        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
 #'    }
 #'  }
@@ -277,6 +277,7 @@
 #'  \item{call}{The call to this function.}
 #' }
 #'
+#' @importFrom pesel pesel
 #' @importFrom robustbase rowMedians
 #' @importFrom stats mad qnorm var setNames
 #'
@@ -293,7 +294,7 @@ clever = function(
   measures=c("leverage", "DVARS"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_PC_dirs=FALSE,
-  center=TRUE, scale=TRUE, detrend=TRUE,
+  center_X=TRUE, scale_X=TRUE, detrend=TRUE,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -322,7 +323,10 @@ clever = function(
     measures0 <- unique(match.arg(measures0, valid_measures0, several.ok=TRUE))
   }
 
-  valid_projections <- c("PCA_var", "PCA_kurt", "PCATF", "ICA_var", "ICA_kurt")
+  valid_projections <- c(
+    "PCA_var", "PCA_kurt", "PCA2_var", "PCA2_kurt", "PCATF", 
+    "ICA_var", "ICA_kurt", "ICA2_var", "ICA2_kurt"
+  )
   if ("PCA" %in% projections) {
     projections <- c(projections, c("PCA_var", "PCA_kurt"))
     projections <- projections[projections == "PCA"]
@@ -331,6 +335,10 @@ clever = function(
     projections <- c(projections, c("ICA_var", "ICA_kurt"))
     projections <- projections[projections == "ICA"]
   }
+
+  # [TEMPORARY]
+  if (any(grepl("ICA", projections))) { stopifnot(any(grepl("PCA", projections))) }
+
   if ("all" %in% projections) {
     projections <- valid_projections
   } else {
@@ -366,15 +374,15 @@ clever = function(
   measures <- measures0
   use_PCA <- use_PCATF <- use_ICA <- FALSE
   if ("leverage" %in% measures) {
-    if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
-    if ("ICA_var" %in% projections | "ICA_kurt" %in% projections) { use_ICA <- TRUE }
+    if (any(grepl("PCA", projections, fixed=TRUE))) { use_PCA <- TRUE }
+    if (any(grepl("ICA", projections, fixed=TRUE))) { use_ICA <- TRUE }
     if ("PCATF" %in% projections) { use_PCATF <- TRUE }
     measures <- measures[measures != "leverage"]
     measures <- c(measures, paste0("leverage__", projections))
   }
   if ("robdist" %in% measures) {
-    if ("PCA_var" %in% projections | "PCA_kurt" %in% projections) { use_PCA <- TRUE }
-    if ("ICA_var" %in% projections | "ICA_kurt" %in% projections) { use_ICA <- TRUE }
+    if (any(grepl("PCA", projections, fixed=TRUE))) { use_PCA <- TRUE }
+    if (any(grepl("ICA", projections, fixed=TRUE))) { use_ICA <- TRUE }
     measures <- measures[measures != "robdist"]
     measures <- c(measures, paste0("robdist__", projections))
     measures <- measures[measures != "robdist__PCATF"] # not compatible
@@ -525,11 +533,21 @@ clever = function(
   # Do it here instead of calling `scale_med` to save memory. ------------------
   # ----------------------------------------------------------------------------
 
-  if (verbose) { cat("Centering and scaling the data matrix.\n") }
+  if (verbose) { 
+    if (center_X) {
+      if (scale_X) {
+        cat("Centering and scaling the data matrix.\n") 
+      } else {
+        cat("Centering the data matrix.\n")
+      }
+    } else if (scale_X) {
+      cat("Scaling the data matrix.\n")
+    }
+  }
   # Transpose.
   X <- t(X)
   #	Center.
-  if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Scale.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -548,7 +566,7 @@ clever = function(
     out$ROIs <- c(out$ROIs["data"], list(constant=ROI_constant), out$ROIs[names(out$ROIs) != "data"])
   }
   mad <- mad[!X_constant]; X <- X[!X_constant,]
-  if (scale) { X <- X/c(mad) }
+  if (scale_X) { X <- X/c(mad) }
   # Revert transpose.
   X <- t(X)
   V_ <- ncol(X)
@@ -593,6 +611,8 @@ clever = function(
   # Make projections. ----------------------------------------------------------
   # ----------------------------------------------------------------------------
 
+  nComps <- NULL
+
   # Compute the PC scores (and directions, if leverage images or PCATF are desired).
   if (any(grepl("PCA", measures, fixed=TRUE))) {
     if ("PCATF" %in% projections) { solve_PC_dirs <- TRUE }
@@ -609,33 +629,38 @@ clever = function(
       ))
     }
 
-    if (solve_PC_dirs | "PCATF" %in% projections) {
+    if (solve_PC_dirs) {
       out$PCA <- svd(X)
       names(out$PCA) <- toupper(names(out$PCA))
-      if (!("PCATF" %in% projections)) { rm(X) }
     } else {
       # Conserve memory by using `XXt`.
       XXt <- tcrossprod(X)
       out$PCA <- svd(XXt)
       names(out$PCA) <- toupper(names(out$PCA))
-      if(!("PCATF" %in% projections)){ rm(X) }
       rm(XXt)
       out$PCA$D <- sqrt(out$PCA$D)
       out$PCA$V <- NULL
     }
-    # Keep only the above-average variance PCs.
-    PCs_keep <- choose_PCs.variance(out$PCA$D)
-    out$PCA$U <- out$PCA$U[,PCs_keep,drop=FALSE]
-    out$PCA$D <- out$PCA$D[PCs_keep,drop=FALSE]
-    if (solve_PC_dirs | "PCATF" %in% projections) { 
-      out$PCA$V <- out$PCA$V[,PCs_keep,drop=FALSE]
+
+    # Keep only the above-average variance/chosen by PESEL PCs (whichever is greater).
+    out$PCA$nPCs_avgvar <- max(1, sum(out$PCA$D^2 > mean(out$PCA$D^2)))
+    out$PCA$nPCs_PESEL <- pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs
+    nComps <- max(1, out$PCA$nPCs_avgvar, out$PCA$nPCs_PESEL)
+
+    out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
+    out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
+    if (solve_PC_dirs) { 
+      out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
     }
 
     # Compute PCATF, if requested.
     if("PCATF" %in% projections){
       out$PCATF <- do.call(
         PCATF, 
-        c(list(X=X, X.svd=out$PCA, solve_directions=solve_PC_dirs), PCATF_kwargs)
+        c(
+          list(X=X, X.svd=out$PCA[c("U", "D", "V")], solve_directions=solve_PC_dirs), 
+          PCATF_kwargs
+        )
       )
       if(!solve_PC_dirs){ out$PCA$V <- NULL }
 
@@ -650,7 +675,6 @@ clever = function(
       }
       names(out$PCATF) <- toupper(names(out$PCATF))
     }
-    gc()
 
     if ("components" %in% detrend) {
       out$PCA$U_dt <- out$PCA$U - apply(out$PCA$U, 2, est_trend)
@@ -659,11 +683,11 @@ clever = function(
 
     if (any(grepl("PCA_kurt", measures, fixed = TRUE))) {
       if ("components" %in% detrend) {
-        out$PCA$kurt_idx <- choose_PCs.kurtosis(
+        out$PCA$highkurt <- high_kurtosis(
           out$PCA$U_dt, kurt_quantile=kurt_quantile, detrend=FALSE
         )
       } else {
-        out$PCA$kurt_idx <- choose_PCs.kurtosis(
+        out$PCA$highkurt <- high_kurtosis(
           out$PCA$U, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
         )
       }
@@ -678,8 +702,18 @@ clever = function(
       stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
     }
 
-    TEMPORARY_N_ICS <- 30
-    out$ICA <- ica::icaimax(t(X), TEMPORARY_N_ICS, center=FALSE)[c("S", "M")]
+    # [TEMPORARY] PCA was required, so `nComps` exists
+    if (is.null(nComps)) { 
+      stop("nComps was NULL.")
+    }
+    out$ICA <- ica::icaimax(t(X), nComps, center=FALSE)[c("S", "M")]
+    # Issue due to rank.
+    if (ncol(out$ICA$M) != nComps) {
+      # [TEMPORARY]
+      print("Rank issue with ICA.")
+      nComps_missing <- nComps - ncol(out$ICA$M)
+      out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=nComps_missing) )
+    }
 
     if ("components" %in% detrend) {
       out$ICA$M_dt <- out$ICA$M - apply(out$ICA$M, 2, est_trend)
@@ -688,16 +722,18 @@ clever = function(
 
     if (any(grepl("ICA_kurt", measures, fixed = TRUE))) {
       if ("components" %in% detrend) {
-        out$ICA$kurt_idx <- choose_PCs.kurtosis(
+        out$ICA$highkurt <- high_kurtosis(
           out$ICA$M_dt, kurt_quantile=kurt_quantile, detrend=FALSE
         )
       } else {
-        out$ICA$kurt_idx <- choose_PCs.kurtosis(
+        out$ICA$highkurt <- high_kurtosis(
           out$ICA$M, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
         )
       }
     }
   }
+
+  rm(X); gc()
 
   # ----------------------------------------------------------------------------
   # Compute projection-based measures. -----------------------------------------
@@ -707,18 +743,37 @@ clever = function(
   for (ii in seq_len(length(measures_proj))) {
     meas_ii <- unlist(strsplit(measures_proj[ii], "__"))
     proj_ii <- meas_ii[2]; meas_ii <- meas_ii[1]
-    Comps_ii <- switch(proj_ii,
-      PCA_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]],
-      PCA_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][,out$PCA$kurt_idx,drop=FALSE],
-      PCATF = out$PCATF$U,
-      ICA_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]],
-      ICA_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][,out$ICA$kurt_idx,drop=FALSE]
-    )
-    stopifnot(is.matrix(Comps_ii))
+
     if (verbose) { 
       cat(paste("Computing", meas_ii, "with", proj_ii, "projection."))
     }
 
+    # [TEMPORARY] PCA was required, so `out$PCA` exists
+    Comps_ii <- switch(proj_ii,
+      PCA_var = seq_len(out$PCA$nPCs_avgvar),
+      PCA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$PCA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
+      PCA2_var = seq_len(out$PCA$nPCs_PESEL),
+      PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$PCA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
+      PCATF = NULL,
+      ICA_var = seq_len(out$PCA$nPCs_avgvar),
+      ICA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$ICA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
+      ICA2_var = seq_len(out$PCA$nPCs_PESEL),
+      ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$ICA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
+    )
+
+    Comps_ii <- switch(proj_ii,
+      PCA_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
+      PCA_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
+      PCA2_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
+      PCA2_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
+      PCATF = out$PCATF$U,
+      ICA_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
+      ICA_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
+      ICA2_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
+      ICA2_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE]
+    )
+    stopifnot(is.matrix(Comps_ii))
+    
     # Adjust PC number if using robust distance.
     if (meas_ii %in% c("robdist", "robdist_bootstrap")) {
       # Let q <- N_/T_ (ncol(U)/nrow(U)). robustbase::covMcd()

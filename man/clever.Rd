@@ -12,8 +12,8 @@ clever(
   X_motion = NULL,
   projections = "PCA_kurt",
   solve_PC_dirs = FALSE,
-  center = TRUE,
-  scale = TRUE,
+  center_X = TRUE,
+  scale_X = TRUE,
   detrend = TRUE,
   noise_nPC = 5,
   noise_erosion = NULL,
@@ -124,11 +124,11 @@ clever(
  contain outlier information. Choose at least one of the following:
 
  \describe{
-   \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with only leverage.}
-   \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
+   \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance/chosen by PESEL. Compatible with only leverage.}
+   \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
  }
  
  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
@@ -144,7 +144,7 @@ measures. Should the PCA and PCATF principal directions be computed?
 Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
 for PCA.}
 
-\item{center, scale}{Center the columns of the data by median, and scale the
+\item{center_X, scale_X}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
 for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
 must already be centered.}
@@ -288,20 +288,20 @@ A \code{"clever"} object, i.e. a list with components
  \item{PCA}{
    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
-     \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+     \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
-       (among those of above-average variance) and \code{NA} indicating a PC with kurtosis below
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
    }
  }
  \item{PCATF}{
    If the "PCATF" projection was used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
-     \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
    }
  }
@@ -309,10 +309,10 @@ A \code{"clever"} object, i.e. a list with components
    If the "ICA_var" or "ICA_kurt" projections were used, this will be a list with components:
    \describe{
      \item{S}{The \eqn{P x Q} source signals matrix.} 
-     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance will be included.}
+     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
-       (among those of above-average variance) and \code{NA} indicating an IC with kurtosis below
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
    }
  }
