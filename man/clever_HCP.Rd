@@ -6,6 +6,7 @@
 \usage{
 clever_HCP(
   cii,
+  brainstructures = c("left", "right"),
   nii,
   nii_labels,
   ROI_noise = c("wm_cort", "csf"),
@@ -18,6 +19,9 @@ clever_HCP(
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
 ROI components will be regressed. In the HCP, the corresponding file is e.g.
 "Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
+
+\item{brainstructures}{Choose among "left", "right", and "subcortical".
+Default: \code{c("left", "right")} (cortical data only)}
 
 \item{nii}{\eqn{I \times J \times \K \times T} 
 NIFTI object or array (or file path to the NIFTI) which contains

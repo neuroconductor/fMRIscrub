@@ -397,8 +397,9 @@ clever = function(
   }
   if ("CompCor" %in% measures) {
     for (ii in seq_len(length(X_noise))) {
+      # max b/c noise_nPC may be decimal (percent var explained): unknown true #
       new_measures <- paste0(
-        "CompCor_", names(X_noise)[ii], "__PC", seq_len(noise_nPC[[names(X_noise)[ii]]])
+        "CompCor_", names(X_noise)[ii], "__PC", seq_len(max(1, noise_nPC[[names(X_noise)[ii]]]))
       )
       measures <- c(measures, new_measures)
       measures <- measures[measures != "CompCor"]
@@ -604,6 +605,7 @@ clever = function(
       for (jj in seq_len(length(cols_ii))) {
         out$measures[[cols_ii[jj]]] <- X_CompCor$noise_comps[[ii]][,jj]
       }
+      out$measures[[paste0("CompCor_", names(X_CompCor$noise_comps)[ii], "__PC")]] <- NULL
     }
   }
 
@@ -655,6 +657,7 @@ clever = function(
 
     # Compute PCATF, if requested.
     if("PCATF" %in% projections){
+      if (verbose) { cat("Computing PCATF.\n") }
       out$PCATF <- do.call(
         PCATF, 
         c(

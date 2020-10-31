@@ -7,6 +7,8 @@
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
 #'  "Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
+#' @param brainstructures Choose among "left", "right", and "subcortical".
+#'  Default: \code{c("left", "right")} (cortical data only)
 #' @param nii \eqn{I \times J \times \K \times T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
 #'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
@@ -38,31 +40,37 @@
 #' @param ... Additional arguments to \code{\link{clever}}.
 #'
 #' @export
-clever_HCP <- function(cii, nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
+clever_HCP <- function(
+  cii, brainstructures=c("left", "right"), 
+  nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
 
   if (any(c("X", "ROI_data") %in% names(list(...)))) { 
     stop("`X` and `ROI_data` are overriden by the CIFTI/NIFTI file name\
     arguments for `clever_HCP`.") 
   }
+  verbose <- ifelse("verbose" %in% names(list(...)), list(...)$verbose, FALSE)
 
   # `cii`
   if (is.character(cii)) { 
     if (requireNamespace("ciftiTools", quietly = TRUE)) {
-      cii <- ciftiTools::read_cifti(cii) 
+      cii <- ciftiTools::read_cifti(cii, brainstructures=brainstructures, verbose=verbose) 
     } else {
-      stop("Package `ciftiTools` required to read the CIFTI file. Please install it from the github repo `mandymejia/ciftiTools`.")
+      stop("Package `ciftiTools` required to read the CIFTI file. Please install\
+      it from the github repo `mandymejia/ciftiTools`.")
     }
   }
   stopifnot(all(names(cii) == c("data", "surf", "meta")))
 
   # `nii`
   if (is.character(nii)) {
+    cat("Reading data NIFTI.\n")
     nii <- read_nifti(nii)
   }
   stopifnot(length(dim(nii))==4)
 
   # `labs`.
   if (is.character(nii_labels)) {
+    cat("Reading labels NIFTI.\n")
     nii_labels <- read_nifti(nii_labels)
   }
   stopifnot(length(dim(nii_labels))==3)
@@ -85,8 +93,12 @@ clever_HCP <- function(cii, nii, nii_labels, ROI_noise=c("wm_cort", "csf"), nois
   } else {
     stop("`ROI_noise` argument is not in a recognized form.")
   }
-  ROI_noise <- lapply(ROI_noise, function(x){array(nii_labels %in% x, dim=dim(nii_labels))})
+  ROI_noise <- lapply(
+    ROI_noise, 
+    function(x){array(nii_labels %in% x, dim=dim(nii_labels))}
+  )
 
+  cat("Formatting HCP data.\n")
   temp <- format_data(
     nii, ROI_data=NULL, ROI_noise = ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC

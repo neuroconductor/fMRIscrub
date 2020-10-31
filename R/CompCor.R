@@ -45,7 +45,7 @@ CompCor.noise_comps <- function(X_noise, noise_nPC){
       noise_var[[ii]] <- (x$d^2)/sum(x$d^2)
       # Use enough PCs to explain the desired proportion of variance.
       noise_nPC[[ii]] <- min(length(x$d), sum(cumsum(noise_var[[ii]]) < noise_nPC[[ii]]) + 1)
-      noise_comps[[ii]] <- x$u[,1:noise_nPC[[ii]]]
+      noise_comps[[ii]] <- x$u[,1:noise_nPC[[ii]],drop=FALSE]
       noise_var[[ii]] <- noise_var[[ii]][1:noise_nPC[[ii]]]
     }
   }

@@ -118,11 +118,15 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   if (!all(colnames(meas) %in% names(colors))) {
     if (grepl("CompCor", name)) {
       max_nPC <- max(as.numeric(gsub("PC", "", colnames(meas))))
-      new_colors <- as.character(as.hexmode(round(seq(0, 200, length.out = max_nPC))))
-      new_colors <- paste0("#", vapply(new_colors, function(x){paste0(rep(x, 3), collapse="")}, ""))
-      names(new_colors) <- paste0("PC", seq_len(max_nPC))
-      new_colors <- as.list(new_colors)
-      colors <- c(colors, new_colors)
+      if (max_nPC <= 1) {
+        colors <- c(colors, list(PC1="#000000"))
+      } else {
+        new_colors <- as.character(as.hexmode(round(seq(0, 200, length.out = max_nPC))))
+        new_colors <- paste0("#", vapply(new_colors, function(x){paste0(rep(x, 3), collapse="")}, ""))
+        names(new_colors) <- paste0("PC", seq_len(max_nPC))
+        new_colors <- as.list(new_colors)
+        colors <- c(colors, new_colors)
+      }
     } else {
       new_colors <- rep(colors_extra, ceiling(sum(!(colnames(meas) %in% names(colors)))/length(colors_extra)))
       new_colors <- new_colors[seq_len(length(colors_extra))]
@@ -256,7 +260,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
       ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name, shape=inMCD)) +
       ggplot2::scale_shape_manual(values=c(3, 16))
   } else if (grepl("CompCor", name)) {
-    max_nPC <- max(as.numeric(gsub("PC", "", colnames(meas))))
+    max_nPC <- max(as.numeric(gsub("PC", "", unique(meas$name))))
     for (ii in seq(max_nPC, 1)) {
       plt <- plt + 
         ggplot2::geom_line(
