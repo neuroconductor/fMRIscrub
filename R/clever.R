@@ -447,7 +447,7 @@ clever = function(
     names(PCATF_kwargs) <- match.arg(
       names(PCATF_kwargs), c("K", "lambda", "niter_max", "TOL", "verbose"),
       several.ok=TRUE)
-    if(length(PCATF_kwargs) != length(unique(unlist(PCATF_kwargs)))){
+    if(length(names(PCATF_kwargs)) != length(unique(names(PCATF_kwargs)))){
       stop("Duplicate PCATF_kwargs were given.")
     }
   }
