@@ -1,22 +1,3 @@
-#' Hat matrix
-#'
-#' Get the hat matrix of X after adding a column of ones (for the intercept).
-#'
-#' @param X Numeric matrix. A column of ones will be added for the intercept.
-#'
-#' @return The hat matrix, a square matrix with the same number of rows/columns
-#'  as the number of rows in \code{X}.
-#'
-#' @keywords internal
-hat_mat <- function(X){
-  X <- cbind(1, X)
-  # The hat matrix is     X * (X^T * X)^(-1) * X^T.
-  # This is identical to  X * solve(t(X) %*% X, t(X))
-  # Could there be a more efficient way? 
-  # https://stackoverflow.com/questions/9071020/compute-projection-hat-matrix-via-qr-factorization-svd-and-cholesky-factoriz/39298028#39298028
-  X %*% solve(t(X) %*% X, t(X))
-}
-
 #' CompCor: get noise components
 #'
 #' @param X_noise The noise ROIs data
@@ -60,12 +41,13 @@ CompCor.noise_comps <- function(X_noise, noise_nPC){
 #'
 #' @return The data with the noise components regressed from it.
 #' 
+#' @importFrom stats hat
 #' @keywords internal
 CompCor.regress <- function(X, noise_comps){
   # Project each row of the data (which is why we transpose) on 
   #   the PCs (and the vector of ones for the intercept).
   noise_mat <- do.call(cbind, noise_comps)
-  I_minus_H <- diag(nrow(noise_mat)) - hat_mat(noise_mat)
+  I_minus_H <- diag(nrow(noise_mat)) - stats::hat(noise_mat)
   t(I_minus_H %*% t(X))
 }
 

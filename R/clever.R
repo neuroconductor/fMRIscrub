@@ -74,11 +74,10 @@
 #'  for PCA.
 #' @param center_X,scale_X Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
-#'  for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
-#'  must already be centered.
-#' @param detrend Only applies to the \code{"leverage"} and \code{"robdist"} 
-#'  measures. Detrend the PCs/ICs before measuring kurtosis and before measuring
-#'  leverage or robust distance? Default: \code{TRUE}.
+#'  for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
+#'  the input data must already be centered.
+#' @param detrend_X Detrend the columns of the data using the DCT? Default: 
+#'  \code{TRUE}. The data must be centered, either before input or with \code{center_X}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,
@@ -87,12 +86,6 @@
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
-#' 
-#'  In addition to \code{TRUE} and \code{FALSE}, a third option \code{"kurtosis"}
-#'  can be used to only detrend the PCs/ICs for the purpose of measuring kurtosis, 
-#'  and not for the actual outlyingness measurement.
-#' 
-#'  This option will not affect the PCATF PCs, which are never detrended.
 #' @param PCATF_kwargs Options for the \code{"PCATF"} projection. Valid entries 
 #'  are: 
 #'  
@@ -210,7 +203,7 @@
 #'    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
 #'    \describe{
 #'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
+#'      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend_X}}
 #'      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
@@ -231,7 +224,7 @@
 #'    \describe{
 #'      \item{S}{The \eqn{P x Q} source signals matrix.} 
 #'      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
-#'      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
+#'      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X}}
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
 #'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
 #'        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
@@ -294,7 +287,7 @@ clever = function(
   measures=c("leverage", "DVARS"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_PC_dirs=FALSE,
-  center_X=TRUE, scale_X=TRUE, detrend=TRUE,
+  center_X=TRUE, scale_X=TRUE, detrend_X=TRUE,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -446,13 +439,9 @@ clever = function(
   stopifnot(is.TRUEorFALSE(solve_PC_dirs))
   stopifnot(is.TRUEorFALSE(get_outliers))
   stopifnot(is.TRUEorFALSE(verbose))
-
-  stopifnot(length(detrend)==1)
-  detrend <- switch(as.character(detrend),
-    `TRUE` = c("components", "kurtosis"),
-    kurtosis = "kurtosis",
-    `FALSE` = NULL
-  )
+  stopifnot(is.TRUEorFALSE(center_X))
+  stopifnot(is.TRUEorFALSE(scale_X))
+  stopifnot(is.TRUEorFALSE(detrend_X))
 
   if(!identical(PCATF_kwargs, NULL)){
     names(PCATF_kwargs) <- match.arg(
@@ -530,26 +519,33 @@ clever = function(
   }
 
   # ----------------------------------------------------------------------------
-  # Center and scale the data. -------------------------------------------------
+  # Center, scale, and detrend the data. ---------------------------------------
   # Do it here instead of calling `scale_med` to save memory. ------------------
   # ----------------------------------------------------------------------------
-
+  
+  # [TO-DO: Skip if only Motion/FD/GSR requested.]
   if (verbose) { 
-    if (center_X) {
-      if (scale_X) {
-        cat("Centering and scaling the data matrix.\n") 
-      } else {
-        cat("Centering the data matrix.\n")
-      }
-    } else if (scale_X) {
-      cat("Scaling the data matrix.\n")
-    }
+    action <- c(
+      "Centering",
+      "Scaling",
+      "Centering and scaling",
+      "Detrending",
+      "Centering and detrending",
+      "Scaling and detrending",
+      "Centering, scaling, and detrending"
+    )[1*center_X + 2*scale_X + 4*detrend_X]
+    cat(action, "the data matrix.\n")
   }
   # Transpose.
   X <- t(X)
   #	Center.
   if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
-  # Scale.
+  # Detrend.
+  if (detrend_X) {
+    B <- dct_bases(T_, 4) / ((T_+1)/2)
+    X <- X - t( B %*% t(B) %*% t(X) )
+  }
+  # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
   if (any(X_constant)) {
@@ -566,11 +562,11 @@ clever = function(
     out$ROIs$data[out$ROIs$data][X_constant] <- FALSE
     out$ROIs <- c(out$ROIs["data"], list(constant=ROI_constant), out$ROIs[names(out$ROIs) != "data"])
   }
-  mad <- mad[!X_constant]; X <- X[!X_constant,]
+  mad <- mad[!X_constant]; X <- X[!X_constant,]; V_ <- ncol(X)
+  # Scale.
   if (scale_X) { X <- X/c(mad) }
   # Revert transpose.
   X <- t(X)
-  V_ <- ncol(X)
 
   # ----------------------------------------------------------------------------
   # Compute DVARS. -------------------------------------------------------------
@@ -679,21 +675,10 @@ clever = function(
       names(out$PCATF) <- toupper(names(out$PCATF))
     }
 
-    if ("components" %in% detrend) {
-      out$PCA$U_dt <- out$PCA$U - apply(out$PCA$U, 2, est_trend)
-      #attributes(out$PCA$U_dt)$dimnames <- NULL
-    }
-
     if (any(grepl("PCA_kurt", measures, fixed = TRUE))) {
-      if ("components" %in% detrend) {
-        out$PCA$highkurt <- high_kurtosis(
-          out$PCA$U_dt, kurt_quantile=kurt_quantile, detrend=FALSE
-        )
-      } else {
-        out$PCA$highkurt <- high_kurtosis(
-          out$PCA$U, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
-        )
-      }
+      out$PCA$highkurt <- high_kurtosis(
+        out$PCA$U, kurt_quantile=kurt_quantile
+      )
     }
   }
 
@@ -718,21 +703,10 @@ clever = function(
       out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=nComps_missing) )
     }
 
-    if ("components" %in% detrend) {
-      out$ICA$M_dt <- out$ICA$M - apply(out$ICA$M, 2, est_trend)
-      #attributes(out$ICA$M_dt)$dimnames <- NULL
-    }
-
     if (any(grepl("ICA_kurt", measures, fixed = TRUE))) {
-      if ("components" %in% detrend) {
-        out$ICA$highkurt <- high_kurtosis(
-          out$ICA$M_dt, kurt_quantile=kurt_quantile, detrend=FALSE
-        )
-      } else {
-        out$ICA$highkurt <- high_kurtosis(
-          out$ICA$M, kurt_quantile=kurt_quantile, detrend="kurtosis" %in% detrend
-        )
-      }
+      out$ICA$highkurt <- high_kurtosis(
+        out$ICA$M, kurt_quantile=kurt_quantile
+      )
     }
   }
 
@@ -765,17 +739,16 @@ clever = function(
     )
 
     Comps_ii <- switch(proj_ii,
-      PCA_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
-      PCA_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
-      PCA2_var = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
-      PCA2_kurt = out$PCA[[ifelse("components" %in% detrend, "U_dt", "U")]][, Comps_ii, drop=FALSE],
+      PCA_var = out$PCA$U[, Comps_ii, drop=FALSE],
+      PCA_kurt = out$PCA$U[, Comps_ii, drop=FALSE],
+      PCA2_var = out$PCA$U[, Comps_ii, drop=FALSE],
+      PCA2_kurt = out$PCA$U[, Comps_ii, drop=FALSE],
       PCATF = out$PCATF$U,
-      ICA_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
-      ICA_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
-      ICA2_var = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE],
-      ICA2_kurt = out$ICA[[ifelse("components" %in% detrend, "M_dt", "M")]][, Comps_ii, drop=FALSE]
+      ICA_var = out$ICA$M[, Comps_ii, drop=FALSE],
+      ICA_kurt = out$ICA$M[, Comps_ii, drop=FALSE],
+      ICA2_var = out$ICA$M[, Comps_ii, drop=FALSE],
+      ICA2_kurt = out$ICA$M[, Comps_ii, drop=FALSE]
     )
-    stopifnot(is.matrix(Comps_ii))
     
     # Adjust PC number if using robust distance.
     if (meas_ii %in% c("robdist", "robdist_bootstrap")) {

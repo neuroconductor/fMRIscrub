@@ -31,7 +31,7 @@
 #' 
 #'  If \code{brain_radius} is \code{NULL} (default), its value will be set to 
 #'  (the equivalent of) 50 mm.
-#' @param detrend Detrend each RP with \code{\link{est_trend}} before computing FD?
+#' @param detrend Detrend each RP with \code{\link{dct_mat}} before computing FD?
 #'  Default: \code{FALSE}.
 #' @return A length \eqn{N} vector of FD values in \code{trans_units}.
 #'
@@ -72,7 +72,7 @@ FD <- function(
 
   # Detrend if requested.
   if (detrend) {
-    X <- X - apply(X, 2, est_trend)
+    X <- dct_mat(X)
   }
 
   # Compute FD.

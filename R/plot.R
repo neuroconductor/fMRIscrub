@@ -141,7 +141,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
   id_outs <- !is.null(flag) && length(flag) > 0
 
-  mcd_meas <- log_meas <- name == "robdist"
+  mcd_meas <- log_meas <- grepl("robdist", name)
 
   meas <- stack(meas)
   names(meas)[names(meas)=="values"] <- "measure"
@@ -151,7 +151,14 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   if (mcd_meas) {
     meas$inMCD <- vector("logical", T_)
     for (ii in 1:length(meas_subnames)) {
-      meas[meas$name==meas_subnames[ii],"inMCD"] <- robdist_info[meas_subnames]$inMCD
+      ii_row <- meas$name==meas_subnames[ii]
+      meas[ii_row,"inMCD"] <- robdist_info[[meas_subnames[ii]]]$inMCD
+      meas[ii_row,"measure"] <- meas[ii_row,"measure"] * 
+        ifelse(
+          meas[ii_row,"inMCD"], 
+          1, 
+          robdist_info[[meas_subnames[ii]]]$outMCD_scale
+        )
     }
   }
 
@@ -182,7 +189,9 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   ylim_max <- ylim_max*1.05
 
   # Get the lower y-axis limit.
-  ylim_min <- ifelse(name %in% c("DVARS", "GSR"), min(meas$measure), 0)
+  ylim_min <- ifelse(name %in% c("DVARS", "GSR"), min(meas$measure), 
+    ifelse(log_meas, min(meas$measure), 0)
+  )
 
   # Check if any outliers were detected.
   if(id_outs){
@@ -258,7 +267,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   if(mcd_meas){
     plt <- plt + 
       ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name, shape=inMCD)) +
-      ggplot2::scale_shape_manual(values=c(3, 16))
+      ggplot2::scale_shape_manual(values=c(16, 3))
   } else if (grepl("CompCor", name)) {
     max_nPC <- max(as.numeric(gsub("PC", "", unique(meas$name))))
     for (ii in seq(max_nPC, 1)) {
@@ -327,13 +336,13 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   # Define all the subplots: measures
   measures_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
     PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
   )
@@ -353,25 +362,25 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   # Define all the subplots: outliers
   outcuts_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
     PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = "FD"
   )
   outflag_to_plot <- list(
     PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste("robdist__", c("PCA_var", "PCA_kurt")),
+    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
     PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste("robdist__", c("PCA2_var", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
     ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste("robdist__", c("ICA_var", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste("robdist__", c("ICA2_var", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
     DVARS = c("DVARS__traditional", "DVARS__dual"),
     motion = "FD"
   )
@@ -411,6 +420,7 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     plots[[ii]] <- clever_plot_indiv_panel(
       meas = x$measures[measures_to_plot[[subplot_name]]],
       cuts = cuts_ii, flag = flag_ii, name = subplot_name,
+      robdist_info = x$robdist_info,
       ...
     )
   }

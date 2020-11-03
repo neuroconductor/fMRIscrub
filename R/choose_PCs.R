@@ -9,9 +9,6 @@
 #' @param Comps A matrix; each column is a component. For PCA, this is the U
 #'  matrix. For ICA, this is the M matrix.
 #' @param kurt_quantile components with kurtosis of at least this quantile are kept.
-#' @param detrend Should components be detrended before measuring kurtosis? Default is
-#'  \code{TRUE}. Recommended if observations represent a time series. Use
-#'  \code{FALSE} if they have already been detrended.
 #' @param n_sim The number of simulation data to use for estimating the sampling
 #'  distribution of kurtosis. Only used if a new simulation is performed. (If
 #'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
@@ -24,11 +21,9 @@
 #' @importFrom MASS mvrnorm
 #' @export
 high_kurtosis <- function(Comps, 
-  kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000){
+  kurt_quantile = 0.9, n_sim = 5000){
 
   m <- nrow(Comps); n <- ncol(Comps)
-
-  if (detrend) {  Comps <- Comps - apply(Comps, 2, est_trend) }
 
   kurt <- apply(Comps, 2, kurtosis, type=1)
 
@@ -50,5 +45,10 @@ high_kurtosis <- function(Comps,
   # Constant components will have NaN kurtosis.
   kurt[kurt %in% c(NA, NaN)] <- -Inf
 
-  kurt > cut
+  high <- kurt > cut
+
+  # Keep at least 1 PC.
+  if (!any(high)) { high <- rep(FALSE, n); high[which(kurt==max(kurt))[1]] <- TRUE }
+
+  high
 }

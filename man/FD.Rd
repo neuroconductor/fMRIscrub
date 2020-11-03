@@ -36,7 +36,7 @@ or one of the \code{trans_units} options.}
  If \code{brain_radius} is \code{NULL} (default), its value will be set to 
  (the equivalent of) 50 mm.}
 
-\item{detrend}{Detrend each RP with \code{\link{est_trend}} before computing FD?
+\item{detrend}{Detrend each RP with \code{\link{dct_mat}} before computing FD?
 Default: \code{FALSE}.}
 }
 \value{

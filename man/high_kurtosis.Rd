@@ -4,17 +4,13 @@
 \alias{high_kurtosis}
 \title{Identifies the components of sufficient kurtosis.}
 \usage{
-high_kurtosis(Comps, kurt_quantile = 0.9, detrend = TRUE, n_sim = 5000)
+high_kurtosis(Comps, kurt_quantile = 0.9, n_sim = 5000)
 }
 \arguments{
 \item{Comps}{A matrix; each column is a component. For PCA, this is the U
 matrix. For ICA, this is the M matrix.}
 
 \item{kurt_quantile}{components with kurtosis of at least this quantile are kept.}
-
-\item{detrend}{Should components be detrended before measuring kurtosis? Default is
-\code{TRUE}. Recommended if observations represent a time series. Use
-\code{FALSE} if they have already been detrended.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis. Only used if a new simulation is performed. (If

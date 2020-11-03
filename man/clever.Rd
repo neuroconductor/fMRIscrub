@@ -14,7 +14,7 @@ clever(
   solve_PC_dirs = FALSE,
   center_X = TRUE,
   scale_X = TRUE,
-  detrend = TRUE,
+  detrend_X = TRUE,
   noise_nPC = 5,
   noise_erosion = NULL,
   PCATF_kwargs = NULL,
@@ -146,12 +146,11 @@ for PCA.}
 
 \item{center_X, scale_X}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
-for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
-must already be centered.}
+for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
+the input data must already be centered.}
 
-\item{detrend}{Only applies to the \code{"leverage"} and \code{"robdist"} 
- measures. Detrend the PCs/ICs before measuring kurtosis and before measuring
- leverage or robust distance? Default: \code{TRUE}.
+\item{detrend_X}{Detrend the columns of the data using the DCT? Default: 
+ \code{TRUE}. The data must be centered, either before input or with \code{center_X}.
 
  Detrending is highly recommended for time-series data, especially if there 
  are many time points or evolving circumstances affecting the data. Additionally,
@@ -159,13 +158,7 @@ must already be centered.}
  contaminating the connection between high kurtosis and outlier presence. 
  
  Detrending should not be used with non-time-series data because the 
- observations are not temporally related.
-
- In addition to \code{TRUE} and \code{FALSE}, a third option \code{"kurtosis"}
- can be used to only detrend the PCs/ICs for the purpose of measuring kurtosis, 
- and not for the actual outlyingness measurement.
-
- This option will not affect the PCATF PCs, which are never detrended.}
+ observations are not temporally related.}
 
 \item{noise_nPC}{Only applies to the CompCor measure.
  The number of principal components to compute for each noise
@@ -289,7 +282,7 @@ A \code{"clever"} object, i.e. a list with components
    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
    \describe{
      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
+     \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend_X}}
      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
@@ -310,7 +303,7 @@ A \code{"clever"} object, i.e. a list with components
    \describe{
      \item{S}{The \eqn{P x Q} source signals matrix.} 
      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
-     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
+     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
