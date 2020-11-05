@@ -23,7 +23,7 @@
 #'  header).
 #' @param trans_units \code{"mm"} for millimeters (default), \code{"cm"} 
 #'  for centimeters, or \code{"in"} for inches.
-#' @param rot_units \code{"rad"} for radians (default), \code{"deg"} for degrees,
+#' @param rot_units \code{"deg"} for degrees (default), \code{"rad"} for radians,
 #'  or one of the \code{trans_units} options.
 #' @param brain_radius If \code{rot_units} measures an angle, the rotational RPs
 #'  are transformed to a spatial measurement representing the displacement on a 
@@ -38,7 +38,7 @@
 #' @importFrom utils read.table
 #' @export
 FD <- function(
-  X, trans_units = c("mm", "cm", "in"), rot_units = c("rad", "deg", "mm", "cm", "in"), 
+  X, trans_units = c("mm", "cm", "in"), rot_units = c("deg", "rad", "mm", "cm", "in"), 
   brain_radius=NULL, detrend=FALSE) {
 
   if (is.character(X)) { X <- read.table(X) }

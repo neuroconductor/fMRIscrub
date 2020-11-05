@@ -1,21 +1,55 @@
 #' CompCor: get noise components
 #'
 #' @param X_noise The noise ROIs data
+#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns?
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
 #'
 #' @return A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
 #'  noise_erosion, noise_comps, and noise_var.
 #' 
 #' @keywords internal
-CompCor.noise_comps <- function(X_noise, noise_nPC){
+CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
+  TOL <- 1e-8
 
   N <- length(X_noise)
   noise_comps <- vector("list", N); names(noise_comps) <- names(X_noise)
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
 
   for (ii in 1:N) {
-    if (ncol(X_noise[[ii]]) == 0) { next }
-    X_noise[[ii]] <- t(t(X_noise[[ii]]) - robustbase::rowMedians(t(X_noise[[ii]]), na.rm=TRUE))
+    T_ <- nrow(X_noise[[ii]])
+    if (ncol(X_noise[[ii]])==0) { next }
+
+    # Transpose.
+    X_noise[[ii]] <- t(X_noise[[ii]])
+    #	Center.
+    if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
+    # Detrend.
+    if (detrend_X) {
+      B <- dct_bases(T_, 4) / sqrt((T_+1)/2)
+      X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]]))
+    }
+    #	Center again for good measure.
+    if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
+    # Compute MADs.
+    mad <- 1.4826 * rowMedians(abs(X_noise[[ii]]), na.rm=TRUE)
+    X_constant <- mad < TOL
+    if (any(X_constant)) {
+      if (all(X_constant)) {
+      stop(paste0("All data locations in noise ROI ", ii, " are zero-variance.\n"))
+      } else {
+        warning(paste0("Warning: ", sum(X_constant),
+        " constant data locations (out of ", length(X_constant),
+        ") in noise ROI ", ii, 
+        ". These will be removed for estimation of the covariance.\n"))
+      }
+    }
+    mad <- mad[!X_constant]; X_noise[[ii]] <- X_noise[[ii]][!X_constant,]
+    # Scale.
+    if (scale_X) { X_noise[[ii]] <- X_noise[[ii]]/c(mad) }
+    # Revert transpose.
+    X_noise[[ii]] <- t(X_noise[[ii]])
+    if (ncol(X_noise[[ii]])==0) { next }
+
     # Compute the PC scores.
     if (noise_nPC[[ii]] >= 1) {
       x <- svd(tcrossprod(X_noise[[ii]]), nu=noise_nPC[[ii]], nv=0)

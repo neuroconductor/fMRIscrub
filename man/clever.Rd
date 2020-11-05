@@ -147,10 +147,12 @@ for PCA.}
 \item{center_X, scale_X}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
 for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
-the input data must already be centered.}
+the input data must already be centered. Also affects noise ROI data for 
+CompCor..}
 
 \item{detrend_X}{Detrend the columns of the data using the DCT? Default: 
- \code{TRUE}. The data must be centered, either before input or with \code{center_X}.
+ \code{TRUE}. The data must be centered, either before input or with 
+ \code{center_X}. Also affects noise ROI data for CompCor.
 
  Detrending is highly recommended for time-series data, especially if there 
  are many time points or evolving circumstances affecting the data. Additionally,

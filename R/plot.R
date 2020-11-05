@@ -103,7 +103,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     PCA_robdist="PCA Rob. Dist. (AAV)",
     ICA_leverage="ICA Lev (AAV)",
     ICA_robdist="ICA Rob. Dist. (AAV)",
-    PCA2_leverage="PCA Lev (All)",
+    PCA2_leverage="PCA Lev (PESEL)",
     PCA2_robdist="PCA Rob. Dist. (PESEL)",
     ICA2_leverage="ICA Lev (PESEL)",
     ICA2_robdist="ICA Rob. Dist. (PESEL)",
@@ -143,10 +143,18 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 
   mcd_meas <- log_meas <- grepl("robdist", name)
 
-  meas <- stack(meas)
-  names(meas)[names(meas)=="values"] <- "measure"
-  names(meas)[names(meas)=="ind"] <- "name"
-  meas$idx <- rep(1:T_)
+  if (ncol(meas)==1) {
+    meas <- data.frame(
+      measure=meas[,1],
+      name="FD"
+    )
+  } else {
+    meas <- stack(meas)
+    names(meas)[names(meas)=="values"] <- "measure"
+    names(meas)[names(meas)=="ind"] <- "name"
+  }
+  meas$idx <- seq(T_)
+
   # MCD
   if (mcd_meas) {
     meas$inMCD <- vector("logical", T_)

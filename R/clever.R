@@ -75,9 +75,11 @@
 #' @param center_X,scale_X Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
 #'  for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
-#'  the input data must already be centered.
+#'  the input data must already be centered. Also affects noise ROI data for 
+#'  CompCor..
 #' @param detrend_X Detrend the columns of the data using the DCT? Default: 
-#'  \code{TRUE}. The data must be centered, either before input or with \code{center_X}.
+#'  \code{TRUE}. The data must be centered, either before input or with 
+#'  \code{center_X}. Also affects noise ROI data for CompCor.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,
@@ -456,18 +458,11 @@ clever = function(
 
   # Format output --------------------------------------------------------------
 
-  meas_list <- setNames(vector("list", length(measures)), measures)
-  out <- list(measures = meas_list, ROIs=c(list(data=ROI_data), ROI_noise))
-  if(get_outliers){
-    flag_list <- meas_list[!(gsub("_.*", "", measures) %in% c("motion", "CompCor", "GSR"))]
-    if ("DVARS__traditional" %in% names(flag_list)) { 
-      names(flag_list)[names(flag_list) == "DVARS__DPD"] <- "DVARS__dual"
-      flag_list <- flag_list[names(flag_list) != "DVARS__ZD"]
-    }
-    out <- c(out, list(outlier_cutoffs = list(), outlier_flags=flag_list))
-    rm(flag_list)
-  }
-  rm(meas_list)
+  out <- list(
+    measures = list(), 
+    ROIs=c(list(data=ROI_data), ROI_noise), 
+    outlier_cutoffs=list(), outlier_flags=list()
+  )
   if (use_PCA) { out <- c(out, list(PCA=NULL)) }
   if (use_PCATF) { out <- c(out, list(PCATF=NULL)) }
   if (use_ICA) { out <- c(out, list(ICA=NULL)) }
@@ -480,7 +475,7 @@ clever = function(
   }
 
   # ----------------------------------------------------------------------------
-  # Compute GSR. -----------------------------------------------------------
+  # Compute GSR. ---------------------------------------------------------------
   # ----------------------------------------------------------------------------
 
   if ("GSR" %in% measures) {
@@ -542,8 +537,8 @@ clever = function(
   if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Detrend.
   if (detrend_X) {
-    B <- dct_bases(T_, 4) / ((T_+1)/2)
-    X <- X - t( B %*% t(B) %*% t(X) )
+    B <- dct_bases(T_, 4) / sqrt((T_+1)/2)
+    X <- t((diag(T_) - (B %*% t(B))) %*% t(X))
   }
   #	Center again for good measure.
   if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
@@ -594,7 +589,7 @@ clever = function(
 
   if (any(grepl("CompCor", measures, fixed=TRUE))) {
     if (verbose) { cat("Computing CompCor.\n") }
-    X_CompCor <- CompCor.noise_comps(X_noise, noise_nPC)
+    X_CompCor <- CompCor.noise_comps(X_noise, center_X,scale_X,detrend_X, noise_nPC)
     for (ii in seq_len(length(X_CompCor$noise_comps))) {
       cols_ii <- paste0(
         "CompCor_", names(X_CompCor$noise_comps)[ii], 

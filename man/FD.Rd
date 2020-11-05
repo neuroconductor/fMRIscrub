@@ -7,7 +7,7 @@
 FD(
   X,
   trans_units = c("mm", "cm", "in"),
-  rot_units = c("rad", "deg", "mm", "cm", "in"),
+  rot_units = c("deg", "rad", "mm", "cm", "in"),
   brain_radius = NULL,
   detrend = FALSE
 )
@@ -26,7 +26,7 @@ FD(
 \item{trans_units}{\code{"mm"} for millimeters (default), \code{"cm"} 
 for centimeters, or \code{"in"} for inches.}
 
-\item{rot_units}{\code{"rad"} for radians (default), \code{"deg"} for degrees,
+\item{rot_units}{\code{"deg"} for degrees (default), \code{"rad"} for radians,
 or one of the \code{trans_units} options.}
 
 \item{brain_radius}{If \code{rot_units} measures an angle, the rotational RPs
