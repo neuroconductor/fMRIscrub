@@ -48,7 +48,8 @@ PCATF <- function(
   } else {
     names(X.svd) <- tolower(names(X.svd))
   }
-  stopifnot(sort(names(X.svd))  == sort(c("u", "d", "v")))
+
+  stopifnot(all(sort(names(X.svd))  == sort(c("u", "d", "v"))))
   stopifnot(is.logical(solve_directions))
   if(is.null(K)){
     K <- max(1, sum(X.svd$d^2 > mean(X.svd$d^2)))
@@ -79,7 +80,12 @@ PCATF <- function(
   D <- rep(NA, K)
   if(solve_directions){ V <- matrix(NA, nrow = N_, ncol = K) }
 
+  all_nIters <- vector("numeric", K)
+  all_times <- vector("numeric", K)
+  time <- Sys.time()
   for(k in 1:K){
+    if (k > 1) { all_times[k-1] <- Sys.time() - time; time <- Sys.time() }
+    #if (verbose) { cat("\t", k, "of", K, "\n") }
     # Get initial eigenvector from regular svd.
     u <- X.svd$u[, k]
     d <- X.svd$d[k]
@@ -95,23 +101,27 @@ PCATF <- function(
       u <- u / sqrt(sum(u^2))
       if(any(is.na(u))){
         u <- u.last
+        if (verbose) { cat("PC",k,":",i,"iterations (NA values from trendfilter) \n") }
         break
       }
       v <- crossprod(X, u)
       v <- v / sqrt(sum(v^2))
       diff <- sqrt(mean((u - u.last)^2))
-      if(diff < TOL){ break }
+      if(diff < TOL){ if (verbose) { cat("PC",k,":",i,"iterations\n") }; break }
       if(verbose & i == niter_max){
         cat(paste0('PC ', k, ' did not converge.\n'))
       }
     }
-
+    all_nIters[k] <- i
+ 
     d <- crossprod(u, X %*% v)[1, 1]
     X <- X - d * tcrossprod(u, v)
     U[, k] <- u
     D[k] <- d
     if(solve_directions){ V[, k] <- v}
   }
+  all_times[k] <- Sys.time() - time
+  return(list(D=D, U=U, PC_exec_times=all_times, nItes=all_nIters))
   out <- list(d = D, u = U)
   if(solve_directions){ out$v = V }
   return(out)

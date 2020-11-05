@@ -545,6 +545,8 @@ clever = function(
     B <- dct_bases(T_, 4) / ((T_+1)/2)
     X <- X - t( B %*% t(B) %*% t(X) )
   }
+  #	Center again for good measure.
+  if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
