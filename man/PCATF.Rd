@@ -24,7 +24,7 @@ this argument if the svd has already been computed. Default NULL.}
 \item{solve_directions}{Should the principal directions be solved for? These
 will be needed to display the leverage images for outlying observations.}
 
-\item{K}{(Optional) The number of trend-filtered PCs to solve for. If not 
+\item{K}{(Optional) The number of trend-filtered PCs to solve for. If not
  provided, it will be set to the number of regular PCs with variance above
 the mean, up to 100 PCs.}
 

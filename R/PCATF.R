@@ -5,7 +5,7 @@
 #'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
 #'	will be needed to display the leverage images for outlying observations.
-#' @param K (Optional) The number of trend-filtered PCs to solve for. If not 
+#' @param K (Optional) The number of trend-filtered PCs to solve for. If not
 #'  provided, it will be set to the number of regular PCs with variance above
 #'	the mean, up to 100 PCs.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
@@ -43,7 +43,7 @@ PCATF <- function(
 
   # Check arguments.
   stopifnot(is.numeric(X))
-  if(is.null(X.svd)){ 
+  if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
     names(X.svd) <- tolower(names(X.svd))
@@ -113,7 +113,7 @@ PCATF <- function(
       }
     }
     all_nIters[k] <- i
- 
+
     d <- crossprod(u, X %*% v)[1, 1]
     X <- X - d * tcrossprod(u, v)
     U[, k] <- u
@@ -122,6 +122,65 @@ PCATF <- function(
   }
   all_times[k] <- Sys.time() - time
   return(list(D=D, U=U, PC_exec_times=all_times, nItes=all_nIters))
+  out <- list(d = D, u = U)
+  if(solve_directions){ out$v = V }
+  return(out)
+}
+
+#' @export
+PCATF_cppcore <- function(
+  X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
+  niter_max = 1000, TOL = 1e-8, verbose=FALSE){
+
+  # Check arguments.
+  stopifnot(is.numeric(X))
+  if(is.null(X.svd)){
+    X.svd <- svd(X)
+  } else {
+    names(X.svd) <- tolower(names(X.svd))
+  }
+
+  stopifnot(all(sort(names(X.svd))  == sort(c("u", "d", "v"))))
+  stopifnot(is.logical(solve_directions))
+  if(is.null(K)){
+    K <- max(1, sum(X.svd$d^2 > mean(X.svd$d^2)))
+    K <- min(100, K)
+  }
+  stopifnot(is.numeric(K))
+  stopifnot(K==round(K))
+  stopifnot(is.numeric(lambda))
+  if(lambda == 0){
+    return(
+      list(u = matrix(X.svd$u[, 1:K], ncol=K),
+           d = X.svd$d[1:K],
+           v = matrix(X.svd$v[, 1:K], ncol=K)
+      )
+    )
+  }
+  stopifnot(lambda > 0)
+  stopifnot(is.numeric(niter_max))
+  stopifnot(niter_max==round(niter_max))
+  stopifnot(is.numeric(TOL))
+  stopifnot(TOL > 0)
+  stopifnot(is.logical(verbose))
+
+  N_ <- ncol(X)
+  T_ <- nrow(X)
+
+  U <- matrix(NA, nrow = T_, ncol = K)
+  D <- rep(NA, K)
+  if(solve_directions){ V <- matrix(NA, nrow = N_, ncol = K) }
+
+
+  time <- Sys.time()
+
+  stuff = pcatf_core(X, matrix(X.svd$u, T_), matrix(X.svd$v, N_),
+                     as.vector(X.svd$d), lambda,
+                     as.integer(K), as.integer(niter_max),
+                     as.integer(solve_directions), as.integer(verbose), TOL)
+
+  full_time <- Sys.time() - time
+  return(list(D=stuff$d, U=stuff$U, PC_exec_times=full_time, nItes=stuff$iters))
   out <- list(d = D, u = U)
   if(solve_directions){ out$v = V }
   return(out)
