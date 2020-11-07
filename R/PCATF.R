@@ -164,20 +164,14 @@ PCATF_cppcore <- function(
   stopifnot(TOL > 0)
   stopifnot(is.logical(verbose))
 
-  N_ <- ncol(X)
-  T_ <- nrow(X)
-
-  U <- matrix(NA, nrow = T_, ncol = K)
-  D <- rep(NA, K)
-  if(solve_directions){ V <- matrix(NA, nrow = N_, ncol = K) }
-
 
   time <- Sys.time()
 
-  stuff = pcatf_core(X, matrix(X.svd$u, T_), matrix(X.svd$v, N_),
-                     as.vector(X.svd$d), lambda,
+  stuff = pcatf_core(X, X.svd$u, X.svd$v,
+                     as.vector(X.svd$d), as.double(lambda),
                      as.integer(K), as.integer(niter_max),
-                     as.integer(solve_directions), as.integer(verbose), TOL)
+                     as.integer(solve_directions), as.integer(verbose),
+                     as.double(TOL))
 
   full_time <- Sys.time() - time
   return(list(D=stuff$d, U=stuff$U, PC_exec_times=full_time, nItes=stuff$iters))

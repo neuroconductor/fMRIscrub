@@ -6,6 +6,19 @@
 
 using namespace Rcpp;
 
+// tf_dp
+arma::vec tf_dp(int n, arma::vec y, double lam);
+RcppExport SEXP _clever_tf_dp(SEXP nSEXP, SEXP ySEXP, SEXP lamSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type lam(lamSEXP);
+    rcpp_result_gen = Rcpp::wrap(tf_dp(n, y, lam));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pcatf_core
 List pcatf_core(arma::mat X, arma::mat U, arma::mat V, arma::vec d, double lambda, int K, int maxiter, int solveV, int verbose, double tol);
 RcppExport SEXP _clever_pcatf_core(SEXP XSEXP, SEXP USEXP, SEXP VSEXP, SEXP dSEXP, SEXP lambdaSEXP, SEXP KSEXP, SEXP maxiterSEXP, SEXP solveVSEXP, SEXP verboseSEXP, SEXP tolSEXP) {
@@ -28,6 +41,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_clever_tf_dp", (DL_FUNC) &_clever_tf_dp, 3},
     {"_clever_pcatf_core", (DL_FUNC) &_clever_pcatf_core, 10},
     {NULL, NULL, 0}
 };
