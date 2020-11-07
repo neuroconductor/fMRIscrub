@@ -54,7 +54,6 @@ Suggests:
     covr
 Remotes:
     psobczyk/pesel,
-    glmgen/glmgen/R_pkg/glmgen,
     mandymejia/ciftiTools
 VignetteBuilder: knitr
 LinkingTo: 
