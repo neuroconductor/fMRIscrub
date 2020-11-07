@@ -652,7 +652,7 @@ clever = function(
     if("PCATF" %in% projections){
       if (verbose) { cat("Computing PCATF.\n") }
       out$PCATF <- do.call(
-        PCATF, 
+        PCATF_cppcore, 
         c(
           list(X=X, X.svd=out$PCA[c("U", "D", "V")], solve_directions=solve_PC_dirs), 
           PCATF_kwargs

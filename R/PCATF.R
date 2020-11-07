@@ -1,3 +1,27 @@
+#' Check PCATF args
+#' 
+#' Check PCATF arguments for both R-core and cpp-core versions
+#' 
+#' @param X,X.svd,solve_directions,K,lambda,niter_max,TOL,verbose See respective
+#'  functions.
+#' @return \code{NULL}, invisibly.
+#' @keywords internal
+PCATF_check_kwargs <- function(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose){
+  stopifnot(is.numeric(X))
+  stopifnot(all(sort(tolower(names(X.svd)))  == sort(c("u", "d", "v"))))
+  stopifnot(is.logical(solve_directions))
+  stopifnot(is.numeric(K))
+  stopifnot(K==round(K))
+  stopifnot(is.numeric(lambda))
+  stopifnot(lambda > 0)
+  stopifnot(is.numeric(niter_max))
+  stopifnot(niter_max==round(niter_max))
+  stopifnot(is.numeric(TOL))
+  stopifnot(TOL > 0)
+  stopifnot(is.logical(verbose))
+  NULL
+}
+
 #' PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
 #'
 #' @param X A numerical data matrix (observations x variables).
@@ -37,27 +61,22 @@
 #' out3_svd$d
 #' plot(rowSums(out3_svd$u^2), ty='l')
 #' @export
-PCATF <- function(
+PCATF_rcore <- function(
   X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
-  stopifnot(is.numeric(X))
+  PCATF_check_kwargs(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose)
   if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
     names(X.svd) <- tolower(names(X.svd))
   }
 
-  stopifnot(all(sort(names(X.svd))  == sort(c("u", "d", "v"))))
-  stopifnot(is.logical(solve_directions))
   if(is.null(K)){
     K <- max(1, sum(X.svd$d^2 > mean(X.svd$d^2)))
     K <- min(100, K)
   }
-  stopifnot(is.numeric(K))
-  stopifnot(K==round(K))
-  stopifnot(is.numeric(lambda))
   if(lambda == 0){
     return(
       list(u = matrix(X.svd$u[, 1:K], ncol=K),
@@ -66,12 +85,6 @@ PCATF <- function(
       )
     )
   }
-  stopifnot(lambda > 0)
-  stopifnot(is.numeric(niter_max))
-  stopifnot(niter_max==round(niter_max))
-  stopifnot(is.numeric(TOL))
-  stopifnot(TOL > 0)
-  stopifnot(is.logical(verbose))
 
   N_ <- ncol(X)
   T_ <- nrow(X)
@@ -127,28 +140,46 @@ PCATF <- function(
   return(out)
 }
 
+#' PCA Trend Filtering (C++ core)
+#' 
+#' From: https://github.com/Lei-D/PCATF and 
+#'  https://github.com/glmgen/glmgen/blob/master/c_lib/glmgen/src/tf/tf_dp.c .
+#' 
+#' Inheriting from \code{glmgen}, this code is under the GNU Lesser General 
+#'  Public License: http://www.gnu.org/licenses/ .
+#'
+#' @param X A numerical data matrix (observations x variables).
+#' @param X.svd (Optional) The svd decomposition of X. Save time by providing
+#'  this argument if the svd has already been computed. Default NULL.
+#' @param solve_directions Should the principal directions be solved for? These
+#'	will be needed to display the leverage images for outlying observations.
+#' @param K (Optional) The number of trend-filtered PCs to solve for. If not
+#'  provided, it will be set to the number of regular PCs with variance above
+#'	the mean, up to 100 PCs.
+#' @param lambda The trend filtering parameter; roughly, the filtering intensity.
+#'	Default is 0.5 . Can be NULL (lets algorithm decide).
+#' @param niter_max The number of iterations to use for approximating the PC.
+#' @param TOL The maximum 2-norm between iterations to accept as convergence.
+#' @param verbose Print statements about convergence?
+#'
+#' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 #' @export
 PCATF_cppcore <- function(
   X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
-  stopifnot(is.numeric(X))
+  PCATF_check_kwargs(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose)
   if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
     names(X.svd) <- tolower(names(X.svd))
   }
 
-  stopifnot(all(sort(names(X.svd))  == sort(c("u", "d", "v"))))
-  stopifnot(is.logical(solve_directions))
   if(is.null(K)){
     K <- max(1, sum(X.svd$d^2 > mean(X.svd$d^2)))
     K <- min(100, K)
   }
-  stopifnot(is.numeric(K))
-  stopifnot(K==round(K))
-  stopifnot(is.numeric(lambda))
   if(lambda == 0){
     return(
       list(u = matrix(X.svd$u[, 1:K], ncol=K),
@@ -157,13 +188,6 @@ PCATF_cppcore <- function(
       )
     )
   }
-  stopifnot(lambda > 0)
-  stopifnot(is.numeric(niter_max))
-  stopifnot(niter_max==round(niter_max))
-  stopifnot(is.numeric(TOL))
-  stopifnot(TOL > 0)
-  stopifnot(is.logical(verbose))
-
 
   time <- Sys.time()
 
@@ -174,8 +198,8 @@ PCATF_cppcore <- function(
                      as.double(TOL))
 
   full_time <- Sys.time() - time
-  return(list(D=stuff$d, U=stuff$U, PC_exec_times=full_time, nItes=stuff$iters))
-  out <- list(d = D, u = U)
-  if(solve_directions){ out$v = V }
-  return(out)
+
+  out <- list(d=stuff$d, u=stuff$U, PC_exec_times=full_time, nItes=stuff$iters)
+  if(solve_directions){ out$v = stuff$v }
+  out
 }
