@@ -735,6 +735,17 @@ clever = function(
       ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$ICA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
     )
 
+    # [TO DO]: Fix this in high_kurtosis
+    if (length(Comps_ii) == 0 && grepl("2_", proj_ii, fixed=FALSE)) {
+      cat(" (Temporary notice: using single highest-kurtosis PC in smaller PC subset.)")
+      Comps_ii <- switch(proj_ii,
+        PCA2_var = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+        ICA2_var = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)]
+      )
+    }
+
     Comps_ii <- switch(proj_ii,
       PCA_var = out$PCA$U[, Comps_ii, drop=FALSE],
       PCA_kurt = out$PCA$U[, Comps_ii, drop=FALSE],
