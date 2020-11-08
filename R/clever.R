@@ -642,19 +642,16 @@ clever = function(
     out$PCA$nPCs_PESEL <- pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs
     nComps <- max(1, out$PCA$nPCs_avgvar, out$PCA$nPCs_PESEL)
 
-    out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
-    out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
-    if (solve_PC_dirs) { 
-      out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
-    }
-
     # Compute PCATF, if requested.
     if("PCATF" %in% projections){
       if (verbose) { cat("Computing PCATF.\n") }
       out$PCATF <- do.call(
-        PCATF, 
+        PCATF_cppcore, 
         c(
-          list(X=X, X.svd=out$PCA[c("U", "D", "V")], solve_directions=solve_PC_dirs), 
+          list(
+            X=X, X.svd=out$PCA[c("U", "D", "V")], 
+            K=out$PCA$nPCs_PESEL, solve_directions=solve_PC_dirs
+          ), 
           PCATF_kwargs
         )
       )
@@ -677,6 +674,12 @@ clever = function(
         out$PCA$U, kurt_quantile=kurt_quantile
       )
     }
+  }
+
+  out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
+  out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
+  if (solve_PC_dirs) { 
+    out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
   }
 
   # Compute ICA
