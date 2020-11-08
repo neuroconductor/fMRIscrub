@@ -6,12 +6,11 @@
 #'  functions.
 #' @return \code{NULL}, invisibly.
 #' @keywords internal
-PCATF_check_kwargs <- function(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose){
+PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose){
   stopifnot(is.numeric(X))
   stopifnot(all(sort(tolower(names(X.svd)))  == sort(c("u", "d", "v"))))
   stopifnot(is.logical(solve_directions))
-  stopifnot(is.numeric(K))
-  stopifnot(K==round(K))
+  stopifnot(is.null(K) || (is.numeric(K) && K==round(K)))
   stopifnot(is.numeric(lambda))
   stopifnot(lambda > 0)
   stopifnot(is.numeric(niter_max))
@@ -66,7 +65,7 @@ PCATF_rcore <- function(
   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
-  PCATF_check_kwargs(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose)
+  PCATF_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
   if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
@@ -79,9 +78,9 @@ PCATF_rcore <- function(
   }
   if(lambda == 0){
     return(
-      list(u = matrix(X.svd$u[, 1:K], ncol=K),
-           d = X.svd$d[1:K],
-           v = matrix(X.svd$v[, 1:K], ncol=K)
+      list(u = X.svd$u[,seq(K),drop=FALSE],
+           d = X.svd$d[seq(K)],
+           v = X.svd$v[,seq(K),drop=FALSE]
       )
     )
   }
@@ -137,7 +136,7 @@ PCATF_rcore <- function(
   return(list(D=D, U=U, PC_exec_times=all_times, nItes=all_nIters))
   out <- list(d = D, u = U)
   if(solve_directions){ out$v = V }
-  return(out)
+  out
 }
 
 #' PCA Trend Filtering (C++ core)
@@ -169,7 +168,7 @@ PCATF_cppcore <- function(
   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
-  PCATF_check_kwargs(X, X,svd, solve_directions, K, lambda, niter_max, TOL, verbose)
+  PCATF_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
   if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
@@ -182,9 +181,9 @@ PCATF_cppcore <- function(
   }
   if(lambda == 0){
     return(
-      list(u = matrix(X.svd$u[, 1:K], ncol=K),
-           d = X.svd$d[1:K],
-           v = matrix(X.svd$v[, 1:K], ncol=K)
+      list(u = X.svd$u[,seq(K),drop=FALSE],
+           d = X.svd$d[seq(K)],
+           v = X.svd$v[,seq(K),drop=FALSE]
       )
     )
   }
@@ -196,10 +195,10 @@ PCATF_cppcore <- function(
                      as.integer(K), as.integer(niter_max),
                      as.integer(solve_directions), as.integer(verbose),
                      as.double(TOL))
-
+                     
   full_time <- Sys.time() - time
 
   out <- list(d=stuff$d, u=stuff$U, PC_exec_times=full_time, nItes=stuff$iters)
-  if(solve_directions){ out$v = stuff$v }
+  if(solve_directions){ out$v = stuff$V }
   out
 }

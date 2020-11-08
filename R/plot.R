@@ -151,7 +151,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   if (ncol(meas)==1) {
     meas <- data.frame(
       measure=meas[,1],
-      name=name
+      name=colnames(meas)
     )
   } else {
     meas <- stack(meas)
@@ -281,6 +281,8 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     plt <- plt + 
       ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name, shape=inMCD)) +
       ggplot2::scale_shape_manual(values=c(16, 3))
+  
+  # [TO DO]: Only show first 10 or so CompCor PCs, and say so in the subtitle
   } else if (grepl("CompCor", name)) {
     max_nPC <- max(as.numeric(gsub("PC", "", unique(meas$name))))
     for (ii in seq(max_nPC, 1)) {

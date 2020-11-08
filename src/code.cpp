@@ -131,7 +131,6 @@ List pcatf_core(arma::mat X, arma::mat U, arma::mat V, arma::vec d,
   arma::mat V_(p,K);
   arma::vec d_(K);
 
-
   arma::vec iters(K);
   arma::vec uk(n);
   arma::vec vk(p);
@@ -144,9 +143,9 @@ List pcatf_core(arma::mat X, arma::mat U, arma::mat V, arma::vec d,
   for(int k = 0; k < K; k++){
     uk = U.col(k);
     dk = d(k);
-    iter = 0;
-    // vk = V.col(k);
+    vk = V.col(k);
 
+    iter = 0;
     while(iter < maxiter){
       iter++;
       ukold = uk;
