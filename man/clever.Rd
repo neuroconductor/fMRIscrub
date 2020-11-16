@@ -12,9 +12,9 @@ clever(
   X_motion = NULL,
   projections = "PCA_kurt",
   solve_PC_dirs = FALSE,
-  center = TRUE,
-  scale = TRUE,
-  detrend = TRUE,
+  center_X = TRUE,
+  scale_X = TRUE,
+  detrend_X = TRUE,
   noise_nPC = 5,
   noise_erosion = NULL,
   PCATF_kwargs = NULL,
@@ -124,11 +124,11 @@ clever(
  contain outlier information. Choose at least one of the following:
 
  \describe{
-   \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with only leverage.}
-   \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance. Compatible with both leverage and robust distance.}
-   \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance. Compatible with both leverage and robust distance.}
+   \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance/chosen by PESEL. Compatible with only leverage.}
+   \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+   \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
  }
  
  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
@@ -144,14 +144,15 @@ measures. Should the PCA and PCATF principal directions be computed?
 Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
 for PCA.}
 
-\item{center, scale}{Center the columns of the data by median, and scale the
+\item{center_X, scale_X}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
-for computing PCA/ICA, so if this is set to \code{FALSE}, the input data
-must already be centered.}
+for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
+the input data must already be centered. Also affects noise ROI data for 
+CompCor..}
 
-\item{detrend}{Only applies to the \code{"leverage"} and \code{"robdist"} 
- measures. Detrend the PCs/ICs before measuring kurtosis and before measuring
- leverage or robust distance? Default: \code{TRUE}.
+\item{detrend_X}{Detrend the columns of the data using the DCT? Default: 
+ \code{TRUE}. The data must be centered, either before input or with 
+ \code{center_X}. Also affects noise ROI data for CompCor.
 
  Detrending is highly recommended for time-series data, especially if there 
  are many time points or evolving circumstances affecting the data. Additionally,
@@ -159,13 +160,7 @@ must already be centered.}
  contaminating the connection between high kurtosis and outlier presence. 
  
  Detrending should not be used with non-time-series data because the 
- observations are not temporally related.
-
- In addition to \code{TRUE} and \code{FALSE}, a third option \code{"kurtosis"}
- can be used to only detrend the PCs/ICs for the purpose of measuring kurtosis, 
- and not for the actual outlyingness measurement.
-
- This option will not affect the PCATF PCs, which are never detrended.}
+ observations are not temporally related.}
 
 \item{noise_nPC}{Only applies to the CompCor measure.
  The number of principal components to compute for each noise
@@ -248,9 +243,6 @@ A \code{"clever"} object, i.e. a list with components
      \item{motion_r1}{First rotation realignment parameter.}
      \item{motion_r2}{Second rotation realignment parameter.}
      \item{motion_r3}{Third rotation realignment parameter.}
-     \item{CompCor_[Noise1]_PC1}{First PC of the first noise ROI.}
-     \item{...}{...}
-     \item{CompCor_[Noisek]_PCn}{nth PC of the kth (last) noise ROI.}
      \item{GSR}{The global signal of the data.}
    }
  }
@@ -288,20 +280,19 @@ A \code{"clever"} object, i.e. a list with components
  \item{PCA}{
    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
-     \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend}}
-     \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
-       (among those of above-average variance) and \code{NA} indicating a PC with kurtosis below
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
    }
  }
  \item{PCATF}{
    If the "PCATF" projection was used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance will be included.}
-     \item{D}{The variance of each PC. Only PCs with above-average variance will be included.}
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
    }
  }
@@ -309,11 +300,31 @@ A \code{"clever"} object, i.e. a list with components
    If the "ICA_var" or "ICA_kurt" projections were used, this will be a list with components:
    \describe{
      \item{S}{The \eqn{P x Q} source signals matrix.} 
-     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance will be included.}
-     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend}}
+     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
+     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
-       (among those of above-average variance) and \code{NA} indicating an IC with kurtosis below
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+   }
+ }
+ \item{CompCor}{
+   If CompCor is computed, this will be a list with components: 
+   \describe{
+     \item{[Noise1]}{
+       \describe{
+         \item{U}{The \eqn{N x Q} PC score matrix for Noise1.}
+         \item{D}{The standard deviation of each PC for Noise1.}
+         \item{Dsq_total}{The sum of squared D values (total variance).}
+       }
+     }
+     \item{...}{...}
+     \item{[Noisek]}{
+       \describe{
+         \item{U}{The \eqn{N x Q} PC score matrix for Noisek.}
+         \item{D}{The standard deviation of each PC for Noisek.}
+         \item{Dsq_total}{The sum of squared D values (total variance).}
+       }
+     }
    }
  }
  \item{robdist_info}{

@@ -84,44 +84,59 @@ fit.F <- function(Q, n, h){
   return(result)
 }
 
+#' Get the cosine bases for DCT
+#' 
+#' @param T_ Length of timeseries
+#' @param n Number of cosine bases
+#' 
+#' @return Matrix with cosine bases along columns
+#' 
+#' @keywords internal
+dct_bases <- function(T_, n){
+  b <- matrix(NA, T_, n)
+  idx <- (seq(T_)-1)/(T_-1)
+  for (ii in seq(n)) { b[,ii] <- cos(idx*pi*ii) }
+  b
+}
 
-#' Estimates the trend of \code{ts} using a robust discrete cosine transform.
+#' Multiple timecourse DCT
+#' 
+#' Detrends, or estimates the trend, of each column in a matrix using the
+#'  discrete cosine transform (DCT).
 #'
-#' @param ts A numeric vector to detrend.
-#' @param robust Should a robust linear model be used? Default FALSE.
+#' @param x A matrix. (Vectors will be coerced to a matrix with one column.)
+#' @param add_mean Add constant column to design matrix to de-mean the data?
+#'  Default: \code{TRUE}.
+#' @param n_bases Number of cosine bases. Default: \code{4}.
+#' @param highpass_freq,TR Not implemented yet; use \code{n_bases}
+#' @param residual \code{TRUE} (default) to get the residuals after regressing
+#'  the cosine bases (detrend using DCT), or \code{FALSE} to get the estimate
+#'  of that regression (trendline using DCT).
 #'
-#' @return The estimated trend.
-#'
-#' @importFrom stats mad lm
-#' @importFrom robustbase lmrob
-#' @importFrom robustbase lmrob.control
+#' @return The estimated detrended timeseries, or trend, based on the DCT.
+#' 
 #' @export
-est_trend <- function(ts, robust=TRUE){
-  TOL <- 1e-8
-  if(mad(ts) < TOL){ return(ts) }
+dct_mat <- function(x, add_mean=TRUE, n_bases=4, highpass_freq=NULL, TR=NULL, residual=TRUE){
+  x <- as.matrix(x)
+  T_ <- nrow(x)
 
-  df <- data.frame(
-    index=1:length(ts),
-    ts=ts
-  )
+  if (!is.null(highpass_freq)) { stop("Not implemented yet; use `n_bases`") }
+  if (!is.null(TR)) { stop("Not implemented yet; use `n_bases`") }
+  stopifnot(!is.null(n_bases))
 
-  i_scaled <- 2*(df$index-1)/(length(df$index)-1) - 1 #range on [-1, 1]
-
-  df['p1'] <- cos(2*pi*(i_scaled/4 - .25)) #cosine on [-1/2, 0]*2*pi
-  df['p2'] <- cos(2*pi*(i_scaled/2 - .5)) #cosine on [-1, 0]*2*pi
-  df['p3'] <- cos(2*pi*(i_scaled*3/4  -.75)) # [-1.5, 0]*2*pi
-  df['p4'] <- cos(2*pi*(i_scaled - 1)) # [2, 0]*2*pi
-
-  if(robust){
-    control <- lmrob.control(scale.tol=1e-3, refine.tol=1e-2) # increased tol.
-    # later: warn.limit.reject=NULL
-    trend <- lmrob(ts~p1+p2+p3+p4, df, control=control)$fitted.values
+  design <- dct_bases(T_, n_bases)
+  # Add constant for mean
+  if (add_mean) { design <- cbind(1, design) }
+  # Normalize 2-norms to 1, so (X^TX)^(-1) is identity
+  design <- design / ((T_+1)/2)
+  # X(X^TX)^(-1)X^TB == XX^TB
+  xfit <- design %*% t(design) %*% x
+  
+  if (residual) {
+    return(x - xfit)
   } else {
-    trend <- lm(ts~p1+p2+p3+p4, df)$fitted.values
+    return(x)
   }
-
-  names(trend) <- NULL
-  trend
 }
 
 #' Wrapper to common functions for reading NIFTIs

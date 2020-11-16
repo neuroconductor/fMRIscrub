@@ -30,9 +30,11 @@ Imports:
     e1071,
     far,
     glmgen,
+    pesel,
     robustbase,
     stats,
-    utils
+    utils,
+    Rcpp
 RoxygenNote: 7.1.1
 URL: https://github.com/mandymejia/clever
 BugReports: https://github.com/mandymejia/clever/issues
@@ -51,6 +53,9 @@ Suggests:
     testthat (>= 2.1.0),
     covr
 Remotes:
-    glmgen/glmgen/R_pkg/glmgen,
+    psobczyk/pesel,
     mandymejia/ciftiTools
 VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo

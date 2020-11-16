@@ -4,13 +4,16 @@
 \alias{out_measures.leverage}
 \title{Computes PCA leverage.}
 \usage{
-out_measures.leverage(Comps, median_cutoff = NA)
+out_measures.leverage(Comps, are_orthogonal = FALSE, median_cutoff = NULL)
 }
 \arguments{
 \item{Comps}{The n x Q PC score matrix/IC mixing matrix.}
 
+\item{are_orthogonal}{Can the columns of \code{Comps} be assumed to be orthogonal?
+Speeds up the computation.}
+
 \item{median_cutoff}{The outlier cutoff, in multiples of the median leverage.
-Default: \code{NA} (do not compute outliers).}
+Default: \code{NULL} (do not compute outliers).}
 }
 \value{
 A list with entries \code{"meas"} (the leverage values), 
