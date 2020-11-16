@@ -708,7 +708,7 @@ clever = function(
     # Issue due to rank.
     if (ncol(out$ICA$M) != nComps) {
       # [TEMPORARY]
-      print("Rank issue with ICA.")
+      cat("Rank issue with ICA.\n")
       nComps_missing <- nComps - ncol(out$ICA$M)
       out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=nComps_missing) )
     }

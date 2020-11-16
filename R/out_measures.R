@@ -90,3 +90,31 @@ out_measures.robdist <- function(Comps, quantile_cutoff=NULL){
 
   out
 }
+
+#' Computes MCD distances with bootstrap.
+#'
+#' Computes robust minimum covariance determinant (MCD) distances across
+#'  the observations (rows) using a bootstrap method ...
+#'
+#' @param Comps An n x Q matrix of PC scores.
+#' @param quantile_cutoff The F-distribution quantile cutoff. Default: 
+#'  \code{NULL} (do not compute outliers).
+#' 
+#' @return A list with entries
+#' \describe{
+#'   \item{"meas"}{A vector of length n of with the robust distance estimate
+#'    for each observation.}
+#'   \item{"info"}{A list with entries "inMCD", "outMCD_scale", and "Fparam"}
+#'   \item{"cut"}{The robust distance cutoff value}
+#'   \item{"flag"}{Logical vector indicating the outliers}
+#' }
+#' 
+#' If \code{is.null(quantile_cutoff)} the latter two elements are omitted.
+#'
+#' @importFrom MASS cov.mcd
+#' @importFrom stats qf
+#' 
+#' @export
+out_measures.robdist_boot <- function(Comps, quantile_cutoff=NULL){ 
+  NULL
+}
