@@ -4,12 +4,13 @@
 \alias{nuisance_reg}
 \title{Nuisance regression}
 \usage{
-nuisance_reg(dat, nuis, intercept = TRUE)
+nuisance_reg(dat, nuis = NULL, intercept = TRUE)
 }
 \arguments{
 \item{dat}{\eqn{N \times P} matrix of N measurements/timepoints, P data variables}
 
-\item{nuis}{\eqn{N \times Q} matrix of N measurements/timepoints, Q nuisance regressors}
+\item{nuis}{\eqn{N \times Q} matrix of N measurements/timepoints, Q nuisance regressors.
+If \code{NULL}, only regress intercept (if \code{intercept==TRUE}. otherwise, return the original data).}
 
 \item{intercept}{Add intercept column (constant) to \code{nuis}? Default: \code{TRUE}.}
 }

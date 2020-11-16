@@ -164,9 +164,6 @@
 #'      \item{motion_r1}{First rotation realignment parameter.}
 #'      \item{motion_r2}{Second rotation realignment parameter.}
 #'      \item{motion_r3}{Third rotation realignment parameter.}
-#'      \item{CompCor_[Noise1]_PC1}{First PC of the first noise ROI.}
-#'      \item{...}{...}
-#'      \item{CompCor_[Noisek]_PCn}{nth PC of the kth (last) noise ROI.}
 #'      \item{GSR}{The global signal of the data.}
 #'    }
 #'  }
@@ -205,8 +202,7 @@
 #'    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
 #'    \describe{
 #'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend_X}}
-#'      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+#'      \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
 #'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
@@ -217,7 +213,7 @@
 #'    If the "PCATF" projection was used, this will be a list with components:
 #'    \describe{
 #'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+#'      \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
 #'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
 #'    }
 #'  }
@@ -230,6 +226,26 @@
 #'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
 #'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
 #'        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+#'    }
+#'  }
+#'  \item{CompCor}{
+#'    If CompCor is computed, this will be a list with components: 
+#'    \describe{
+#'      \item{[Noise1]}{
+#'        \describe{
+#'          \item{U}{The \eqn{N x Q} PC score matrix for Noise1.}
+#'          \item{D}{The standard deviation of each PC for Noise1.}
+#'          \item{Dsq_total}{The sum of squared D values (total variance).}
+#'        }
+#'      }
+#'      \item{...}{...}
+#'      \item{[Noisek]}{
+#'        \describe{
+#'          \item{U}{The \eqn{N x Q} PC score matrix for Noisek.}
+#'          \item{D}{The standard deviation of each PC for Noisek.}
+#'          \item{Dsq_total}{The sum of squared D values (total variance).}
+#'        }
+#'      }
 #'    }
 #'  }
 #'  \item{robdist_info}{
@@ -390,15 +406,29 @@ clever = function(
     measures <- measures[measures != "motion"]
     measures <- c(measures, paste0("motion_t", 1:3), paste0("motion_r", 1:3))
   }
+
+  # Format output --------------------------------------------------------------
+
+  out <- list(
+    measures = list(), 
+    ROIs=c(list(data=ROI_data), ROI_noise), 
+    outlier_cutoffs=list(), outlier_flags=list()
+  )
+  
+  if (use_PCA) { out <- c(out, list(PCA=NULL)) }
+  if (use_PCATF) { out <- c(out, list(PCATF=NULL)) }
+  if (use_ICA) { out <- c(out, list(ICA=NULL)) }
+
   if ("CompCor" %in% measures) {
-    for (ii in seq_len(length(X_noise))) {
-      # max b/c noise_nPC may be decimal (percent var explained): unknown true #
-      new_measures <- paste0(
-        "CompCor_", names(X_noise)[ii], "__PC", seq_len(max(1, noise_nPC[[names(X_noise)[ii]]]))
-      )
-      measures <- c(measures, new_measures)
-      measures <- measures[measures != "CompCor"]
-    }
+    out$CompCor <- setNames(vector("list", length(X_noise)), names(X_noise))
+  }
+  
+  with_robdist <- grepl("robdist", measures, fixed=TRUE)
+  if (any(with_robdist)) {
+    with_robdist <- gsub("robdist__", "", measures[with_robdist], fixed=TRUE)
+    out <- c(
+      out, list(robdist_info=setNames(vector("list", length(with_robdist)), with_robdist))
+    )
   }
 
   # Cutoffs --------------------------------------------------------------------
@@ -455,24 +485,6 @@ clever = function(
   }
 
   stopifnot((kurt_quantile < 1) & (kurt_quantile > 0))
-
-  # Format output --------------------------------------------------------------
-
-  out <- list(
-    measures = list(), 
-    ROIs=c(list(data=ROI_data), ROI_noise), 
-    outlier_cutoffs=list(), outlier_flags=list()
-  )
-  if (use_PCA) { out <- c(out, list(PCA=NULL)) }
-  if (use_PCATF) { out <- c(out, list(PCATF=NULL)) }
-  if (use_ICA) { out <- c(out, list(ICA=NULL)) }
-  with_robdist <- grepl("robdist", measures, fixed=TRUE)
-  if (any(with_robdist)) {
-    with_robdist <- gsub("robdist__", "", measures[with_robdist], fixed=TRUE)
-    out <- c(
-      out, list(robdist_info=setNames(vector("list", length(with_robdist)), with_robdist))
-    )
-  }
 
   # ----------------------------------------------------------------------------
   # Compute GSR. ---------------------------------------------------------------
@@ -591,14 +603,12 @@ clever = function(
     if (verbose) { cat("Computing CompCor.\n") }
     X_CompCor <- CompCor.noise_comps(X_noise, center_X,scale_X,detrend_X, noise_nPC)
     for (ii in seq_len(length(X_CompCor$noise_comps))) {
-      cols_ii <- paste0(
-        "CompCor_", names(X_CompCor$noise_comps)[ii], 
-        "__PC", seq_len(ncol(X_CompCor$noise_comps[[ii]]))
+      out$CompCor[[names(X_noise)[ii]]] <- list(
+        U = X_CompCor$noise_comps[[ii]],
+        D = sqrt(X_CompCor$noise_var[[ii]]),
+        Dsq_total = X_CompCor$noise_vartotal[ii]
       )
-      for (jj in seq_len(length(cols_ii))) {
-        out$measures[[cols_ii[jj]]] <- X_CompCor$noise_comps[[ii]][,jj]
-      }
-      out$measures[[paste0("CompCor_", names(X_CompCor$noise_comps)[ii], "__PC")]] <- NULL
+      names(out$CompCor[[names(X_noise)[ii]]]$Dsq_total) <- NULL
     }
   }
 

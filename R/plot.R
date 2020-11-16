@@ -37,6 +37,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     stop("Package \"ggplot2\" needed to use `clever_plot_indiv_panel`. Please install it.", call. = FALSE)
   }
 
+  args <- list(...)
   xmin <- xmax <- ymin <- ymax <- idx <- measure <- inMCD <- NULL
 
   # Extra colors:
@@ -361,17 +362,17 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
   )
-  CompCor_meas <- names(x$measures)[grepl("CompCor_", names(x$measures), fixed=TRUE)]
-  if (length(CompCor_meas) > 0) {
-    CompCor_meas <- unique(gsub("__PC.*", "", CompCor_meas))
-    for (ii in 1:length(CompCor_meas)) {
-      CompCor_meas_ii <- list(
-        names(x$measures)[grepl(CompCor_meas[ii], names(x$measures), fixed=TRUE)]
-      )
-      names(CompCor_meas_ii) <- CompCor_meas[ii]
-      measures_to_plot <- c(measures_to_plot, CompCor_meas_ii)
-    }
-  }
+  # CompCor_meas <- names(x$measures)[grepl("CompCor_", names(x$measures), fixed=TRUE)]
+  # if (length(CompCor_meas) > 0) {
+  #   CompCor_meas <- unique(gsub("__PC.*", "", CompCor_meas))
+  #   for (ii in 1:length(CompCor_meas)) {
+  #     CompCor_meas_ii <- list(
+  #       names(x$measures)[grepl(CompCor_meas[ii], names(x$measures), fixed=TRUE)]
+  #     )
+  #     names(CompCor_meas_ii) <- CompCor_meas[ii]
+  #     measures_to_plot <- c(measures_to_plot, CompCor_meas_ii)
+  #   }
+  # }
   measures_to_plot <- c(measures_to_plot, list(GSR="GSR"))
 
   # Define all the subplots: outliers

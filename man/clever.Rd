@@ -243,9 +243,6 @@ A \code{"clever"} object, i.e. a list with components
      \item{motion_r1}{First rotation realignment parameter.}
      \item{motion_r2}{Second rotation realignment parameter.}
      \item{motion_r3}{Third rotation realignment parameter.}
-     \item{CompCor_[Noise1]_PC1}{First PC of the first noise ROI.}
-     \item{...}{...}
-     \item{CompCor_[Noisek]_PCn}{nth PC of the kth (last) noise ROI.}
      \item{GSR}{The global signal of the data.}
    }
  }
@@ -284,8 +281,7 @@ A \code{"clever"} object, i.e. a list with components
    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
    \describe{
      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{U_dt}{The \eqn{N x Q} detrended PC score matrix. Included only if \code{detrend_X}}
-     \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
@@ -296,7 +292,7 @@ A \code{"clever"} object, i.e. a list with components
    If the "PCATF" projection was used, this will be a list with components:
    \describe{
      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{D}{The variance of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
    }
  }
@@ -309,6 +305,26 @@ A \code{"clever"} object, i.e. a list with components
      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+   }
+ }
+ \item{CompCor}{
+   If CompCor is computed, this will be a list with components: 
+   \describe{
+     \item{[Noise1]}{
+       \describe{
+         \item{U}{The \eqn{N x Q} PC score matrix for Noise1.}
+         \item{D}{The standard deviation of each PC for Noise1.}
+         \item{Dsq_total}{The sum of squared D values (total variance).}
+       }
+     }
+     \item{...}{...}
+     \item{[Noisek]}{
+       \describe{
+         \item{U}{The \eqn{N x Q} PC score matrix for Noisek.}
+         \item{D}{The standard deviation of each PC for Noisek.}
+         \item{Dsq_total}{The sum of squared D values (total variance).}
+       }
+     }
    }
  }
  \item{robdist_info}{
