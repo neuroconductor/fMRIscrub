@@ -10,7 +10,8 @@
 #'  the thresold, the top leverage image for each outlier, and the indices of
 #'  the top leverage images.
 #'
-#' @export
+# TEMPORARY: internal
+#' @keywords internal
 get_leverage_images <- function(X_svd, timepoints, const_mask=NULL){
 
   #   lev_images <- "leverage__PCA_var", "leverage__PCA_kurt", "leverage__PCATF", "robdist__PCA_var", "robdist__PCA_kurt"

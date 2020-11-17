@@ -34,10 +34,6 @@ You can install the development version of clever from
 devtools::install_github("mandymejia/clever")
 ```
 
-`clever` requires the `glmgen` package for PCA Trend Filtering (PCATF).
-Please see <https://github.com/glmgen/glmgen> for installation
-instructions.
-
 ## Vignette
 
 You can view the vignette using this link:
