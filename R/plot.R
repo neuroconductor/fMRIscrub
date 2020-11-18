@@ -66,8 +66,6 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     Motion_r1 = colors_grey[2],
     Motion_r2 = colors_grey[3],
     Motion_r3 = colors_grey[4],
-    # [TO DO]: Replace `motion` with `FD`
-    motion = "#E78AC3", # pink
     FD = "#E78AC3", # pink
     # GSR
     GSR = "#B8B8B8" # light-grey
@@ -93,16 +91,13 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     ZD = "DVARS z-score",
     dual = "DVARS dual cutoff",
     # motion
-    motion = "Framewise Displacement",
     Motion_t1 = "Translation RP 1",
     Motion_t2 = "Translation RP 2",
     Motion_t3 = "Translation RP 3",
     Motion_r1 = "Rotation RP 1",
     Motion_r2 = "Rotation RP 2",
     Motion_r3 = "Rotation RP 3",
-    FD = "Framewise Displacement",
-    # GSR
-    GSR = "Global Signal"
+    FD = "Framewise Displacement"
   )
   ylab_formatted <- list(
     PCA_leverage="PCA Lev (AAV)",
@@ -278,7 +273,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   }
 
   # Draw data points (after drop-down lines, so they are drawn on top).
-  if (mcd_meas) {
+  if(mcd_meas){
     plt <- plt + 
       ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name, shape=inMCD)) +
       ggplot2::scale_shape_manual(values=c(16, 3))
@@ -295,7 +290,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     }
   } else if (name=="GSR") {
     plt <- plt + 
-      ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, color=name), size=1)
+      ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, group=name, color=name), size=1)
   } else {
     plt <- plt + 
       ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name))
