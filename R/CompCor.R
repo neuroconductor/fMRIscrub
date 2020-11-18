@@ -14,7 +14,7 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
   N <- length(X_noise)
   noise_comps <- vector("list", N); names(noise_comps) <- names(X_noise)
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
-  noise_vartotal <- vector("numeric", N); names(noise_vartotal) <- names(X_noise)
+  noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
 
   for (ii in 1:N) {
     T_ <- nrow(X_noise[[ii]])
@@ -54,20 +54,16 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
     # Compute the PC scores.
     x <- svd(tcrossprod(X_noise[[ii]]))
     noise_var[[ii]] <- x$d
-    noise_vartotal[ii] <- sum(noise_var[[ii]])
-    if (noise_nPC[[ii]] >= 1) {
-      x <- svd(tcrossprod(X_noise[[ii]]), nu=noise_nPC[[ii]], nv=0)
-      noise_comps[[ii]] <- x$u[,seq(noise_nPC[[ii]]),drop=FALSE]
-      noise_var[[ii]] <- noise_var[[ii]][seq(noise_nPC[[ii]])]
-    } else {
+    noise_vartotal[[ii]] <- sum(noise_var[[ii]])
+    if (noise_nPC[[ii]] < 1) {
       # Use enough PCs to explain the desired proportion of variance.
       noise_nPC[[ii]] <- min(
         length(x$d), 
-        sum(cumsum(noise_var[[ii]]) < noise_vartotal[ii]*noise_nPC[[ii]]) + 1
+        sum(cumsum(noise_var[[ii]]) < noise_vartotal[[ii]]*noise_nPC[[ii]]) + 1
       )
-      noise_comps[[ii]] <- x$u[,seq(noise_nPC[[ii]]),drop=FALSE]
-      noise_var[[ii]] <- noise_var[[ii]][seq(noise_nPC[[ii]])]
     }
+    noise_comps[[ii]] <- x$u[,seq(noise_nPC[[ii]]),drop=FALSE]
+    noise_var[[ii]] <- noise_var[[ii]][seq(noise_nPC[[ii]])]
   }
 
   list(noise_comps=noise_comps, noise_var=noise_var, noise_vartotal=noise_vartotal)

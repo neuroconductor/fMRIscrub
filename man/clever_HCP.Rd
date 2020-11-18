@@ -58,7 +58,7 @@ In the HCP, the corresponding file is "ROIs/Atlas_wmparc.2.nii.gz".}
 \item{...}{Additional arguments to \code{\link{clever}}.}
 }
 \description{
-Wrapper to \code{\link{clever}} for HCP data & CompCor. The data from the 
- whole-brain NIFTI is used to obtain the noise ROIs, which are regressed
- from the greyordinate data in the CIFTI.
+Wrapper to \code{\link{clever}} for computing CompCor (and other outlyingness
+ measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
+ ROIs, which are regressed from the greyordinate data in the CIFTI.
 }

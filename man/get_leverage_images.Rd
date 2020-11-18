@@ -25,3 +25,4 @@ Calculate the leverage images for each outlier that meets the
  \code{outlier_level} threshold, with 3 (default) being the highest/strictest
  and 1 being the lowest.
 }
+\keyword{internal}

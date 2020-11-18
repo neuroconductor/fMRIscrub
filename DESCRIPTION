@@ -20,12 +20,12 @@ Authors@R: c(
     person(given = "Daniel",
            family = "McDonald",
            email = "daniel@stat.ubc.ca",
-           role = c("ctb")
+           role = c("ctb"))
     )
 Description: Computes principal Components LEVERage (“CLEVER”), a data-driven
     measure of outlyingness for high-dimensional data such as fMRI scans. Also
-    includes other quality-control measures commonly used for fMRI—framewise 
-    displacement, DVARS, and anatomical CompCor—
+    includes other quality-control measures commonly used for fMRI: framewise 
+    displacement, DVARS, and anatomical CompCor.
 Depends: R (>= 2.10)
 License: GPL-3
 Encoding: UTF-8

@@ -553,7 +553,7 @@ clever = function(
     X <- t((diag(T_) - (B %*% t(B))) %*% t(X))
   }
   #	Center again for good measure.
-  if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  if (detrend_X && center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -591,7 +591,10 @@ clever = function(
     if(get_outliers){
       out$outlier_cutoffs[measures_DVARS] <- outlier_cutoffs[measures_DVARS]
       out$outlier_flags$DVARS__traditional <- out$measures$DVARS__traditional > out$outlier_cutoffs$DVARS__traditional
-      out$outlier_flags$DVARS__dual <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD & out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
+      DVARS__dual1 <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD
+      DVARS__dual2 <- out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
+      out$outlier_flags$DVARS__dual <- DVARS__dual1 & DVARS__dual2
+      rm(DVARS__dual1, DVARS__dual2)
     }
   }
 
@@ -606,7 +609,7 @@ clever = function(
       out$CompCor[[names(X_noise)[ii]]] <- list(
         U = X_CompCor$noise_comps[[ii]],
         D = sqrt(X_CompCor$noise_var[[ii]]),
-        Dsq_total = X_CompCor$noise_vartotal[ii]
+        Dsq_total = X_CompCor$noise_vartotal[[ii]]
       )
       names(out$CompCor[[names(X_noise)[ii]]]$Dsq_total) <- NULL
     }

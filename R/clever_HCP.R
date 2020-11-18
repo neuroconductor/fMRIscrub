@@ -1,8 +1,8 @@
 #' \code{clever} with CompCor for HCP data
 #'
-#' Wrapper to \code{\link{clever}} for HCP data & CompCor. The data from the 
-#'  whole-brain NIFTI is used to obtain the noise ROIs, which are regressed
-#'  from the greyordinate data in the CIFTI. 
+#' Wrapper to \code{\link{clever}} for computing CompCor (and other outlyingness
+#'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
+#'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
@@ -45,8 +45,8 @@ clever_HCP <- function(
   nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
 
   if (any(c("X", "ROI_data") %in% names(list(...)))) { 
-    stop("`X` and `ROI_data` are overriden by the CIFTI/NIFTI file name\
-    arguments for `clever_HCP`.") 
+    stop("`X` and `ROI_data` should not be used with `clever_HCP`, because they\
+    are determined by the arguments `cii` and `nii`.") 
   }
   verbose <- ifelse("verbose" %in% names(list(...)), list(...)$verbose, FALSE)
 
