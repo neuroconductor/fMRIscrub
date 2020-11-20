@@ -549,7 +549,7 @@ clever = function(
   if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Detrend.
   if (detrend_X) {
-    B <- dct_bases(T_, 4) / sqrt((T_+1)/2)
+    B <- dct_bases(T_, 1) / sqrt((T_+1)/2)
     X <- t((diag(T_) - (B %*% t(B))) %*% t(X))
   }
   #	Center again for good measure.
