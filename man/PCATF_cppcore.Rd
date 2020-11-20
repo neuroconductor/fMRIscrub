@@ -9,7 +9,7 @@ PCATF_cppcore(
   X.svd = NULL,
   solve_directions = TRUE,
   K = NULL,
-  lambda = 0.5,
+  lambda = 5,
   niter_max = 1000,
   TOL = 1e-08,
   verbose = FALSE
@@ -29,7 +29,7 @@ will be needed to display the leverage images for outlying observations.}
 the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
-Default is 0.5 . Can be NULL (lets algorithm decide).}
+Default is 5.}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 

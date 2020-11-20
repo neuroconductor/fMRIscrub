@@ -156,7 +156,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #'  provided, it will be set to the number of regular PCs with variance above
 #'	the mean, up to 100 PCs.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
-#'	Default is 0.5 . Can be NULL (lets algorithm decide).
+#'	Default is 5.
 #' @param niter_max The number of iterations to use for approximating the PC.
 #' @param TOL The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
@@ -164,7 +164,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 #' @export
 PCATF_cppcore <- function(
-  X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
+  X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=5,
   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
