@@ -138,6 +138,8 @@
 #'  }
 # @param R_true The N x N correlation matrix, if known. Used for the bootstrap
 #  robust distance measure.
+#' @param full_PCA Return the full SVD? Default: \code{FALSE} (return
+#'  only the components used to compute the measures).
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @return A \code{"clever"} object, i.e. a list with components
@@ -310,6 +312,7 @@ clever = function(
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
   outlier_cutoffs=list(leverage=4, robdist=.9999, DVARS=5, dualDVARS="Afyouni-Nichols", FD=.5),
+  full_PCA=FALSE,
   verbose=FALSE){
 
   # Define the cutoff value for detecting zero variance/MAD voxels
@@ -689,10 +692,12 @@ clever = function(
     }
   }
 
-  out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
-  out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
-  if (solve_PC_dirs) { 
-    out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
+  if (!full_PCA) {
+    out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
+    out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
+    if (solve_PC_dirs) { 
+      out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
+    }
   }
 
   # Compute ICA

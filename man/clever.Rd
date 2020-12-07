@@ -22,6 +22,7 @@ clever(
   get_outliers = TRUE,
   outlier_cutoffs = list(leverage = 4, robdist = 0.9999, DVARS = 5, dualDVARS =
     "Afyouni-Nichols", FD = 0.5),
+  full_PCA = FALSE,
   verbose = FALSE
 )
 }
@@ -215,6 +216,9 @@ Default: \code{0.95}.}
      the right-tail 5\% significance level with Bonferroni FWER correction).}
    \item{\code{"FD"}}{Minimum FD. Default: 0.5 mm (will flag FD scores greater than 0.5 mm).}
  }}
+
+\item{full_PCA}{Return the full SVD? Default: \code{FALSE} (return
+only the components used to compute the measures).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
