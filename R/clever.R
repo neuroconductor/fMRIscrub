@@ -685,7 +685,7 @@ clever = function(
       names(out$PCATF) <- toupper(names(out$PCATF))
     }
 
-    if (any(grepl("PCA_kurt", measures, fixed = TRUE))) {
+    if (any(grepl("PCA_kurt|PCA2_kurt", measures))) {
       out$PCA$highkurt <- high_kurtosis(
         out$PCA$U, kurt_quantile=kurt_quantile
       )
@@ -721,7 +721,7 @@ clever = function(
       out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=nComps_missing) )
     }
 
-    if (any(grepl("ICA_kurt", measures, fixed = TRUE))) {
+    if (any(grepl("ICA_kurt|ICA2_kurt", measures))) {
       out$ICA$highkurt <- high_kurtosis(
         out$ICA$M, kurt_quantile=kurt_quantile
       )

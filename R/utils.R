@@ -128,7 +128,7 @@ dct_mat <- function(x, add_mean=TRUE, n_bases=4, highpass_freq=NULL, TR=NULL, re
   # Add constant for mean
   if (add_mean) { design <- cbind(1, design) }
   # Normalize 2-norms to 1, so (X^TX)^(-1) is identity
-  design <- design / ((T_+1)/2)
+  design <- design / sqrt((T_+1)/2)
   # X(X^TX)^(-1)X^TB == XX^TB
   xfit <- design %*% t(design) %*% x
   
