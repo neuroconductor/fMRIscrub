@@ -109,7 +109,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     ICA2_leverage="ICA Lev (PESEL)",
     ICA2_robdist="ICA Rob. Dist. (PESEL)",
     DVARS="DVARS",
-    motion="Motion",
+    motion="Motion (FD)",
     CompCor_wm_cort="CompCor: Cortical WM",
     CompCor_wm_cblm="CompCor: Cerebellar WM",
     CompCor_csf="CompCor: CSF",
@@ -443,19 +443,25 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   rel_heights <- rep(1, length(plots))
   rel_heights[length(plots)] <- 1.1
 
-  plt <- cowplot::plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
+  if (length(plots) == 1) {
+    plt <- plots[[1]]
+    if (!is.null(title)) {
+      plt <- plt + ggtitle(title)
+    }
+  } else {
+    plt <- cowplot::plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)
 
-  # Add title if provided.
-  if(!is.null(title)){
-    plt <- cowplot::plot_grid(
-      cowplot::ggdraw() + 
-        cowplot::draw_label(title, fontface='bold', x=0, hjust=0) +
-        ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 7)),
-      plt,
-      ncol=1,
-      rel_heights=c(.15, length(plots))
-    )
+    # Add title if provided.
+    if(!is.null(title)){
+      plt <- cowplot::plot_grid(
+        cowplot::ggdraw() + 
+          cowplot::draw_label(title, fontface='bold', x=0, hjust=0) +
+          ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 7)),
+        plt,
+        ncol=1,
+        rel_heights=c(.15, length(plots))
+      )
+    }
   }
-
   plt
 }
