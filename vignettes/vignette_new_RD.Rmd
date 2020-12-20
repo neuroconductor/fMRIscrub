@@ -100,9 +100,9 @@ PCA leverage indicates clear outliers in the first dataset around the 60th and 1
 Next, we can run all methods included in `clever` and compare the results:
 
 ```{r}
-clever.Dat1 = clever(Dat1, projection="all", out_meas="all", 
+clever.Dat1 = clever:::clever_multi(Dat1, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
-clever.Dat2 = clever(Dat2, projection="all", out_meas="all", 
+clever.Dat2 = clever:::clever_multi(Dat2, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
 ```
 

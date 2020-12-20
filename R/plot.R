@@ -100,9 +100,9 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     FD = "Framewise Displacement"
   )
   ylab_formatted <- list(
-    PCA_leverage="PCA Lev (AAV)",
+    PCA_leverage="PCA Leverage",
     PCA_robdist="PCA Rob. Dist. (AAV)",
-    ICA_leverage="ICA Lev (AAV)",
+    ICA_leverage="ICA Leverage",
     ICA_robdist="ICA Rob. Dist. (AAV)",
     PCA2_leverage="PCA Lev (PESEL)",
     PCA2_robdist="PCA Rob. Dist. (PESEL)",

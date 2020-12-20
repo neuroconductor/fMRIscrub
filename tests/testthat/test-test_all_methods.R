@@ -1,6 +1,6 @@
 test_that("clever works with all methods and default settings", {
   data(Dat1)
-  clev <- clever(
+  clev <- clever_multi(
     Dat1, 
     measures = "all", 
     projections = "all"
@@ -10,7 +10,7 @@ test_that("clever works with all methods and default settings", {
 
 test_that("clever works with some custom parameter settings", {
   data(Dat2)
-  clev <- clever(
+  clev <- clever_multi(
     Dat2,
     projections = c("PCATF", "ICA_kurt"), 
     measures = "all",

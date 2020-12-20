@@ -25,8 +25,8 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
     #	Center.
     if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Detrend.
-    if (detrend_X) {
-      B <- dct_bases(T_, 1) / sqrt((T_+1)/2)
+    if (detrend_X > 0) {
+      B <- dct_bases(T_, detrend_X) / sqrt((T_+1)/2)
       X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]]))
     }
     #	Center again for good measure.

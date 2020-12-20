@@ -40,12 +40,12 @@
 #' @param ... Additional arguments to \code{\link{clever}}.
 #'
 #' @export
-clever_HCP <- function(
+CompCor_HCP <- function(
   cii, brainstructures=c("left", "right"), 
   nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
 
   if (any(c("X", "ROI_data") %in% names(list(...)))) { 
-    stop("`X` and `ROI_data` should not be used with `clever_HCP`, because they\
+    stop("`X` and `ROI_data` should not be used with `CompCor_HCP`, because they\
     are determined by the arguments `cii` and `nii`.") 
   }
   verbose <- ifelse("verbose" %in% names(list(...)), list(...)$verbose, FALSE)
@@ -104,7 +104,7 @@ clever_HCP <- function(
     noise_erosion=noise_erosion, noise_nPC=noise_nPC
   )
 
-  out <- clever(
+  out <- clever_multi(
     t(do.call(rbind, cii$data)), 
     ROI_noise=temp$X_noise, noise_nPC=as.numeric(temp$noise_nPC), 
     ...
