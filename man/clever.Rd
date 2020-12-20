@@ -116,7 +116,51 @@ only the components used to compute the measures).}
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
-
+A \code{"clever"} object, i.e. a list with components
+\describe{
+ \item{measure}{
+   The scrubbing measure. If \code{"DVARS2"}, it will be a \code{data.frame}
+   with the first column being DPDVARS and the second being ZDVARS.
+ }
+ \item{outlier_cutoff}{
+   The value of the scrubbing measure used to identify outliers (i.e.
+   minimum leverage, traditional DVARS, or DPDVARS and ZDVARS).
+ }
+ \item{outlier_flags}{
+   A length \eqn{T} logical vector. \code{TRUE} values indicate suspected outliers. 
+ }
+ \item{PCA}{
+   If PCA leverage was used, this will be a list with components:
+   \describe{
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
+     \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
+       the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
+   }
+ }
+ \item{PCATF}{
+   If PCATF leverage was used, this will be a list with components:
+   \describe{
+     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
+     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
+   }
+ }
+ \item{ICA}{
+   If ICA leverage was used, this will be a list with components:
+   \describe{
+     \item{S}{The \eqn{P x Q} source signals matrix.} 
+     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
+     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X}}
+     \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
+       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
+       the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+   }
+ }
+ \item{call}{The call to this function.}
+}
 }
 \description{
 Calculates data-driven scrubbing measures (leverage and DVARS) and identifies

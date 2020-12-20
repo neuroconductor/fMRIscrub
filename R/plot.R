@@ -109,6 +109,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
     ICA2_leverage="ICA Lev (PESEL)",
     ICA2_robdist="ICA Rob. Dist. (PESEL)",
     DVARS="DVARS",
+    DVARS2="Dual DVARS",
     motion="Motion (FD)",
     CompCor_wm_cort="CompCor: Cortical WM",
     CompCor_wm_cblm="CompCor: Cerebellar WM",
@@ -319,13 +320,11 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   return(plt)
 }
 
-#' Plot \code{"clever"}
+#' Plot \code{"clever_multi"}
 #' 
-#' Plots the outlyingness measures from a \code{"clever"} result. Can support 
-#'  multiple panels of different outlyingness measures, but by default, 
-#'  it will plot only the first measures.
+#' Plots the outlyingness measures from a \code{"clever_multi"} result. 
 #'
-#' @param x The \code{"clever"} object.
+#' @param x The \code{"clever_multi"} object.
 #' @param measures "all" to plot each measure (default), or a character vector 
 #'  of desired measures.
 #' @param title (Optional) If provided, will add a title to the plot.
@@ -333,15 +332,15 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
 #'
 #' @return A ggplot
 #' 
-#' @method plot clever 
+#' @method plot clever_multi 
 #' @export
-plot.clever <- function(x, measures="all", title=NULL, ...){
+plot.clever_multi <- function(x, measures="all", title=NULL, ...){
 
   if (!requireNamespace("cowplot", quietly = TRUE)) {
-    stop("Package \"cowplot\" needed to use `plot.clever`. Please install it.", call. = FALSE)
+    stop("Package \"cowplot\" needed to plot the clever results. Please install it.", call. = FALSE)
   }
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package \"ggplot2\" needed to use `plot.clever`. Please install it.", call. = FALSE)
+    stop("Package \"ggplot2\" needed to plot the clever results. Please install it.", call. = FALSE)
   }
 
   # Define all the subplots: measures
@@ -354,7 +353,8 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
     ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
-    DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
+    DVARS = "DVARS__traditional",
+    DVARS2 = c("DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
   )
   # CompCor_meas <- names(x$measures)[grepl("CompCor_", names(x$measures), fixed=TRUE)]
@@ -380,7 +380,8 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
     ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
-    DVARS = c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD"),
+    DVARS = "DVARS__traditional",
+    DVARS2 = c("DVARS__DPD", "DVARS__ZD"),
     motion = "FD"
   )
   outflag_to_plot <- list(
@@ -392,7 +393,8 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
     ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
     ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
-    DVARS = c("DVARS__traditional", "DVARS__dual"),
+    DVARS = "DVARS__traditional",
+    DVARS2 = "DVARS__dual",
     motion = "FD"
   )
 
@@ -401,14 +403,14 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
   outcuts_to_plot <- lapply(outcuts_to_plot, function(y){y[y %in% names(x$measures)]})
   outflag_to_plot <- lapply(
     outflag_to_plot, 
-    function(y){y[y %in% names(x$measures) | (y=="DVARS__dual" & ("DVARS__DPD" %in% names(x$measures) && "DVARS__ZD" %in% names(x$measures)))] }
+    function(y){ y[y %in% names(x$measures) | (y=="DVARS__traditional" & "DVARS" %in% names(x$measures)) | (y=="DVARS__dual" & "DVARS__DPD" %in% names(x$measures))] }
   )
   if (!("all" %in% measures)) {
     measures_to_plot <- lapply(measures_to_plot, function(y){y[y %in% measures]})
     outcuts_to_plot <- lapply(outcuts_to_plot, function(y){y[y %in% measures]})
     outflag_to_plot <- lapply(
       outflag_to_plot, 
-      function(y) { y[y %in% measures | (y=="DVARS__dual" & ("DVARS__DPD" %in% names(measures) && "DVARS__ZD" %in% names(measures)))] }
+      function(y){ y[y %in% measures | (y=="DVARS__traditional" & "DVARS" %in% measures) | (y=="DVARS__dual" & "DVARS2" %in% measures)] }
     )
   }
   measures_to_plot <- measures_to_plot[vapply(measures_to_plot, length, 0) > 0]
@@ -464,4 +466,18 @@ plot.clever <- function(x, measures="all", title=NULL, ...){
     }
   }
   plt
+}
+
+#' Plot \code{"clever"}
+#'
+#' @param x The \code{"clever"} object.
+#' @param title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to ggplot: main, sub, xlab, ...
+#'
+#' @return A ggplot
+#' 
+#' @method plot clever 
+#' @export
+plot.clever <- function(x, title=NULL, ...){
+  plot(clever_to_multi(x)) + ggplot2::theme(legend.position = "none")
 }

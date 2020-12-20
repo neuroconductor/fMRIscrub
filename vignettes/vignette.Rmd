@@ -82,8 +82,8 @@ dim(Dat2)
 We next run `clever` on both datasets. First, we will begin by looking at the standard implementation of PCA leverage:
 
 ```{r}
-clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, measures="leverage")
-clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, measures="leverage")
+clever.Dat1.var.lev = clever(Dat1, verbose=TRUE)
+clever.Dat2.var.lev = clever(Dat2, verbose=TRUE)
 ```
 
 ```{r fig.width=10, fig.height=3}
@@ -92,28 +92,13 @@ p2 <- plot(clever.Dat2.var.lev, title="Dat2", show.legend=FALSE)
 cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-PCA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, PCA leverage does indicate a few potential outliers including around the 40th and 110th timepoints.
+PCA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, PCA leverage does indicate a few potential outliers including around the 40th and 110th timepoints. We can confirm that the results for DVARS look similar:
 
-Next, we can run all methods included in `clever` and compare the results:
-
-```{r}
-clever.Dat1 = clever::multi(Dat1, verbose=TRUE, measures="all", projections="all")
-clever.Dat2 = clever::multi(Dat2, verbose=TRUE, measures="all", projections="all")
+```{r fig.width=10, fig.height=3}
+p1 <- plot(clever(Dat1, measure="DVARS2"), title="Dat1", show.legend=FALSE)
+p2 <- plot(clever(Dat2, measure="DVARS2"), title="Dat2", show.legend=FALSE)
+cowplot::plot_grid(p1, p2, nrow=1)
 ```
-
-Here are the outliers for the first dataset:
-
-```{r fig.height=22, fig.width=8}
-plot(clever.Dat1, "all", title="Dat1")
-```
-
-And for the second:
-
-```{r fig.height=22, fig.width=8}
-plot(clever.Dat2, "all", title="Dat2")
-```
-
-For the first dataset, most methods identify outliers around timepoints 60 and 150 consistently. A few other timepoints are flagged as well for scrubbing and DVARS, and robust distance flags many more timepoints. For the second dataset, weaker outliers are identified around timepoint 40 and 110 inconsistently, especially for the kurtosis method. Overall, these results are consistent with our prior knowledge of both datasets. 
 
 ### fMRI image reconstruction
 
@@ -151,7 +136,7 @@ Below, we compare the timepoint of median leverage (first) to the timepoint of m
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
-levs = clever.Dat1$measures$leverage__PCA_kurt
+levs = clever.Dat1.var.lev$measure
 t_med = order(levs)[ceiling(length(levs)/2)]
 t_max = which.max(levs)
 
@@ -168,7 +153,7 @@ The median time point appears normal, whereas the most outlying time point clear
 `clever` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. To solve for these images, be sure to use `lev_images=TRUE` (already the default option).
 
 ```{r eval=FALSE}
-Lev_Img1 = clever.Dat1$outlier_lev_imgs$PCA_var__leverage
+Lev_Img1 = clever.Dat1.var.lev$measure
 cat('The timepoints meeting the first outlier level threshold:\n')
 cat(paste(row.names(Lev_Img1$mean), collapse=", "))
 ```
@@ -190,3 +175,15 @@ image(Lev_Img1.top[,,,idx], main=paste0('Lev. img., top dir. (T=',t_max,')'))
 ```
 
 The leverage images highlight the banding artifact present at this time point.
+
+# Appendix
+
+For testing purposes, we can run multiple methods at the same time using the internal function `clever_multi`:
+
+```{r fig.height=20, fig.width=6}
+clever.Dat1.all <- clever:::clever_multi(
+  Dat1, measures="all", projections="all", verbose=TRUE
+)
+
+plot(clever.Dat1.all)
+```

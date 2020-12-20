@@ -94,7 +94,6 @@
 #'  \item{measure}{
 #'    The scrubbing measure. If \code{"DVARS2"}, it will be a \code{data.frame}
 #'    with the first column being DPDVARS and the second being ZDVARS.
-#'    }
 #'  }
 #'  \item{outlier_cutoff}{
 #'    The value of the scrubbing measure used to identify outliers (i.e.
@@ -166,7 +165,7 @@ clever = function(
     ICA = "ICA_kurt",
     PCATF = "PCATF"
   )
-  stopifnot(is.TRUEorFALSE(PESEL))
+  stopifnot(is.logical(PESEL))
 
   clever_multi_args <- list(
 
@@ -175,7 +174,7 @@ clever = function(
     outlier_cutoff <- list(outlier_cutoff)
     names(outlier_cutoff) <- measure
   } else {
-    outlier_cutoff <- switch(outlier_cutoff,
+    outlier_cutoff <- switch(measure,
       leverage = 4,
       DVARS  = 5,
       DVARS2 = "Afyouni-Nichols"
@@ -191,12 +190,5 @@ clever = function(
   )
 
   # Re-format results.
-  class(clev) <- "clever"
-  names(clev)[names(clev) == "measures"] <- "measure"
-  names(clev)[names(clev) == "outlier_cutoffs"] <- "outlier_cutoff"
-  clev$measure <- as.vector(clev$measure)
-  attr(clev$measure, "measure") <- measure
-  clev$outlier_cutoff <- as.vector(clev$outlier_cutoff)
-  clev$outlier_flags <- as.vector(clev$outlier_flags)
-  clev
+  clever_from_multi(clev)
 }

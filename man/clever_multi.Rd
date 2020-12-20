@@ -6,7 +6,7 @@
 \usage{
 clever_multi(
   X,
-  measures = c("leverage", "DVARS"),
+  measures = c("leverage", "DVARS2"),
   ROI_data = "infer",
   ROI_noise = NULL,
   X_motion = NULL,
@@ -14,7 +14,7 @@ clever_multi(
   solve_PC_dirs = FALSE,
   center_X = TRUE,
   scale_X = TRUE,
-  detrend_X = TRUE,
+  detrend_X = 4,
   noise_nPC = 5,
   noise_erosion = NULL,
   PCATF_kwargs = NULL,
@@ -43,8 +43,9 @@ clever_multi(
  \describe{
    \item{\code{"leverage"}}{PCA leverage (the mean of the squared PC scores)}
    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-   \item{\code{"DVARS"}}{traditional-DVARS, as well as Delta-percent-DVARS and
-     z-score-DVARS (Afyouni and Nichols, 2018)}
+   \item{\code{"DVARS"}}{traditional DVARS}
+   \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
+     Nichols, 2018)}
    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
      \code{X_motion} is required.}
@@ -56,7 +57,7 @@ clever_multi(
  Use \code{"all"} to select all available measures. (CompCor will
  only be computed if the ROIs are provided, and FD and motion will only be 
  computed if the motion realignment parameters are provided.) Default: 
- \code{"leverage", "DVARS"}.
+ \code{"leverage", "DVARS2"}.
 
  Note that motion, CompCor and GSR are not direct measures of outlyingness,
  so they do not have corresponding \code{outlier_cutoffs}.}
@@ -273,7 +274,7 @@ A \code{"clever_multi"} object, i.e. a list with components
  }
  \item{outlier_flags}{
    Applies \code{outlier_cutoffs} to \code{measures}: a logical data.frame with
-   \eqn{T} rows where \code{TRUE} values indicate suspected outlier presence. 
+   \eqn{T} rows where \code{TRUE} values indicate suspected outlier presence. The DVARS2 flag indicates where both DPDVARS and ZDVARS exceeded their cutoffs.
  }
  \item{ROIs}{
    \describe{

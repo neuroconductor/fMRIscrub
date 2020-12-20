@@ -22,8 +22,9 @@
 #'  \describe{
 #'    \item{\code{"leverage"}}{PCA leverage (the mean of the squared PC scores)}
 #'    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-#'    \item{\code{"DVARS"}}{traditional-DVARS, as well as Delta-percent-DVARS and
-#'      z-score-DVARS (Afyouni and Nichols, 2018)}
+#'    \item{\code{"DVARS"}}{traditional DVARS}
+#'    \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
+#'      Nichols, 2018)}
 #'    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
 #'    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
 #'      \code{X_motion} is required.}
@@ -35,7 +36,7 @@
 #'  Use \code{"all"} to select all available measures. (CompCor will
 #'  only be computed if the ROIs are provided, and FD and motion will only be 
 #'  computed if the motion realignment parameters are provided.) Default: 
-#'  \code{"leverage", "DVARS"}.
+#'  \code{"leverage", "DVARS2"}.
 #'
 #'  Note that motion, CompCor and GSR are not direct measures of outlyingness,
 #'  so they do not have corresponding \code{outlier_cutoffs}.
@@ -191,7 +192,7 @@
 #'  }
 #'  \item{outlier_flags}{
 #'    Applies \code{outlier_cutoffs} to \code{measures}: a logical data.frame with
-#'    \eqn{T} rows where \code{TRUE} values indicate suspected outlier presence. 
+#'    \eqn{T} rows where \code{TRUE} values indicate suspected outlier presence. The DVARS2 flag indicates where both DPDVARS and ZDVARS exceeded their cutoffs.
 #'  }
 #'  \item{ROIs}{
 #'    \describe{
@@ -295,8 +296,6 @@
 #' @importFrom robustbase rowMedians
 #' @importFrom stats mad qnorm var setNames
 #'
-#' @export
-#'
 #' @examples
 #' n_voxels = 1e4
 #' n_timepoints = 100
@@ -305,10 +304,10 @@
 #' clev = clever_multi(X)
 clever_multi = function(
   X,
-  measures=c("leverage", "DVARS"),
+  measures=c("leverage", "DVARS2"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_PC_dirs=FALSE,
-  center_X=TRUE, scale_X=TRUE, detrend_X=TRUE,
+  center_X=TRUE, scale_X=TRUE, detrend_X=4,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -327,11 +326,11 @@ clever_multi = function(
 
   measures0 <- measures
   valid_measures0 <- c(
-    "leverage", "robdist", "DVARS", "FD", # robdist_bootstrap
+    "leverage", "robdist", "DVARS", "DVARS2", "FD", # robdist_bootstrap
     "motion", "CompCor", "GSR" 
   ) 
   if ("all" %in% measures0) {
-    measures0 <- c("leverage", "robdist", "DVARS", "GSR")
+    measures0 <- c("leverage", "robdist", "DVARS", "DVARS2", "GSR")
     if (!is.null(ROI_data) && !is.null(ROI_noise)) { measures0 <- c(measures0, "CompCor") }
     if (!is.null(X_motion)) { measures0 <- c(measures0, "FD", "motion") }
   } else {
@@ -403,8 +402,11 @@ clever_multi = function(
     measures <- measures[measures != "robdist__PCATF"] # not compatible
   }
   if ("DVARS" %in% measures) {
-    measures <- measures[measures != "DVARS"]
-    measures <- c(measures, "DVARS__traditional", "DVARS__DPD", "DVARS__ZD")
+    measures[measures == "DVARS"] <- "DVARS__traditional"
+  }
+  if ("DVARS2" %in% measures) {
+    measures <- measures[measures != "DVARS2"]
+    measures <- c(measures, "DVARS__DPD", "DVARS__ZD")
   }
   if ("motion" %in% measures) {
     measures <- measures[measures != "motion"]
@@ -481,8 +483,10 @@ clever_multi = function(
 
   if (identical(detrend_X, TRUE)) {
     cat("Note: `detrend_X` was `TRUE`, but expected a number. Using 4 cosine bases.")
+    do_detrend_X <- TRUE
   } else if (identical(detrend_X, FALSE)) {
     detrend_X <- 0
+    do_detrend_X <- FALSE
   } else {
     stopifnot(is.numeric(detrend_X))
     do_detrend_X <- detrend_X > 0
@@ -595,20 +599,31 @@ clever_multi = function(
   # Compute DVARS. -------------------------------------------------------------
   # ----------------------------------------------------------------------------
 
-  if ("DVARS__traditional" %in% measures) {
+  if (any(grepl("DVARS", measures))) {
     if (verbose) { cat("Computing DVARS.\n") }
     X_DVARS <- DVARS(X, normalize=FALSE, norm_I=100, verbose=verbose)
-    
-    measures_DVARS <- c("DVARS__traditional", "DVARS__DPD", "DVARS__ZD")
-    out$measures[measures_DVARS] <- X_DVARS[c("DVARS", "DPD", "ZD")]
+
+    if ("DVARS__traditional" %in% measures) {
+      out$measures["DVARS__traditional"] <- X_DVARS["DVARS"]
+    }
+
+    if ("DVARS__DPD" %in% measures) {
+      out$measures[c("DVARS__DPD", "DVARS__ZD")] <- X_DVARS[c("DPD", "ZD")]
+    }
 
     if(get_outliers){
-      out$outlier_cutoffs[measures_DVARS] <- outlier_cutoffs[measures_DVARS]
-      out$outlier_flags$DVARS__traditional <- out$measures$DVARS__traditional > out$outlier_cutoffs$DVARS__traditional
-      DVARS__dual1 <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD
-      DVARS__dual2 <- out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
-      out$outlier_flags$DVARS__dual <- DVARS__dual1 & DVARS__dual2
-      rm(DVARS__dual1, DVARS__dual2)
+      if ("DVARS__traditional" %in% measures) {
+        out$outlier_cutoffs["DVARS__traditional"] <- outlier_cutoffs["DVARS__traditional"]
+        out$outlier_flags$DVARS__traditional <- out$measures$DVARS__traditional > out$outlier_cutoffs$DVARS__traditional
+      }
+
+      if ("DVARS__DPD" %in% measures) {
+        out$outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")] <- outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")]
+        DVARS__dual1 <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD
+        DVARS__dual2 <- out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
+        out$outlier_flags$DVARS__dual <- DVARS__dual1 & DVARS__dual2
+        rm(DVARS__dual1, DVARS__dual2)
+      }
     }
   }
 
@@ -701,13 +716,13 @@ clever_multi = function(
         out$PCA$U, kurt_quantile=kurt_quantile
       )
     }
-  }
 
-  if (!full_PCA) {
-    out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
-    out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
-    if (solve_PC_dirs) { 
-      out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
+    if (!full_PCA) {
+      out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
+      out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
+      if (solve_PC_dirs) { 
+        out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
+      }
     }
   }
 

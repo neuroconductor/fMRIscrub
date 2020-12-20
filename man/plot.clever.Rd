@@ -4,13 +4,10 @@
 \alias{plot.clever}
 \title{Plot \code{"clever"}}
 \usage{
-\method{plot}{clever}(x, measures = "all", title = NULL, ...)
+\method{plot}{clever}(x, title = NULL, ...)
 }
 \arguments{
 \item{x}{The \code{"clever"} object.}
-
-\item{measures}{"all" to plot each measure (default), or a character vector 
-of desired measures.}
 
 \item{title}{(Optional) If provided, will add a title to the plot.}
 
@@ -20,7 +17,5 @@ of desired measures.}
 A ggplot
 }
 \description{
-Plots the outlyingness measures from a \code{"clever"} result. Can support 
- multiple panels of different outlyingness measures, but by default, 
- it will plot only the first measures.
+Plot \code{"clever"}
 }
