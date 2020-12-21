@@ -1,18 +1,18 @@
-#' \code{clever} with CompCor for HCP data
+#' Run CompCor on the HCP data
 #'
-#' Wrapper to \code{\link{clever}} for computing CompCor (and other outlyingness
+#' Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
 #'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
 #'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
-#'  "Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
+#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
 #' @param brainstructures Choose among "left", "right", and "subcortical".
 #'  Default: \code{c("left", "right")} (cortical data only)
 #' @param nii \eqn{I \times J \times \K \times T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
 #'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
-#'  file is e.g. "Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"
+#'  file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"
 #' @param nii_labels \eqn{I \times J \times K}
 #'  NIFTI object or array (or file path to the NIFTI) which
 #'  contains the corresponding labels to each voxel in \code{nii}. Values should
@@ -36,8 +36,8 @@
 #'  https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
 #'
 #'  Default: \code{c("wm_cort", "csf")}
-#' @param noise_nPC,noise_erosion See \code{\link{clever}}.
-#' @param ... Additional arguments to \code{\link{clever}}.
+#' @param noise_nPC,noise_erosion See \code{\link{clever_multi}}.
+#' @param ... Additional arguments to \code{\link{clever_multi}}.
 #'
 #' @export
 CompCor_HCP <- function(
@@ -49,6 +49,12 @@ CompCor_HCP <- function(
     are determined by the arguments `cii` and `nii`.") 
   }
   verbose <- ifelse("verbose" %in% names(list(...)), list(...)$verbose, FALSE)
+
+
+  clever_multi_args <- list(...)
+  if (!("measures" %in% names(clever_multi_args))) {
+    data_clever_CompCor_Params$measures <- "CompCor"
+  }
 
   # `cii`
   if (is.character(cii)) { 
@@ -104,11 +110,16 @@ CompCor_HCP <- function(
     noise_erosion=noise_erosion, noise_nPC=noise_nPC
   )
 
-  out <- clever_multi(
-    t(do.call(rbind, cii$data)), 
-    ROI_noise=temp$X_noise, noise_nPC=as.numeric(temp$noise_nPC), 
-    ...
+  out <- do.call(clever_multi,
+    c(clever_multi_args, 
+      list(
+        X=t(do.call(rbind, cii$data)), 
+        ROI_noise=temp$X_noise, 
+        noise_nPC=as.numeric(temp$noise_nPC)
+      )
+    )
   )
+  
   out$ROIs <- c(out$ROIs, temp$ROI_noise)
   out
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompCor_HCP.R
 \name{CompCor_HCP}
 \alias{CompCor_HCP}
-\title{\code{clever} with CompCor for HCP data}
+\title{Run CompCor on the HCP data}
 \usage{
 CompCor_HCP(
   cii,
@@ -18,7 +18,7 @@ CompCor_HCP(
 \arguments{
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
 ROI components will be regressed. In the HCP, the corresponding file is e.g.
-"Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
+"../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
 
 \item{brainstructures}{Choose among "left", "right", and "subcortical".
 Default: \code{c("left", "right")} (cortical data only)}
@@ -26,7 +26,7 @@ Default: \code{c("left", "right")} (cortical data only)}
 \item{nii}{\eqn{I \times J \times \K \times T} 
 NIFTI object or array (or file path to the NIFTI) which contains
 whole-brain data, including the noise ROIs. In the HCP, the corresponding
-file is e.g. "Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
+file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
 
 \item{nii_labels}{\eqn{I \times J \times K}
 NIFTI object or array (or file path to the NIFTI) which
@@ -53,12 +53,12 @@ In the HCP, the corresponding file is "ROIs/Atlas_wmparc.2.nii.gz".}
 
  Default: \code{c("wm_cort", "csf")}}
 
-\item{noise_nPC, noise_erosion}{See \code{\link{clever}}.}
+\item{noise_nPC, noise_erosion}{See \code{\link{clever_multi}}.}
 
-\item{...}{Additional arguments to \code{\link{clever}}.}
+\item{...}{Additional arguments to \code{\link{clever_multi}}.}
 }
 \description{
-Wrapper to \code{\link{clever}} for computing CompCor (and other outlyingness
+Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
  ROIs, which are regressed from the greyordinate data in the CIFTI.
 }
