@@ -16,6 +16,11 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
   noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
 
+  if (length(noise_nPC) == 1) {
+    noise_nPC <- list(rep(noise_nPC), length(X_noise))
+    names(noise_nPC) <- names(X_noise)
+  }
+
   for (ii in 1:N) {
     T_ <- nrow(X_noise[[ii]])
     if (ncol(X_noise[[ii]])==0) { next }
