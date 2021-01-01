@@ -17,9 +17,11 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
   noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
 
   if (length(noise_nPC) == 1) {
-    noise_nPC <- list(rep(noise_nPC, length(X_noise)))
-    names(noise_nPC) <- names(X_noise)
+    noise_nPC <- as.list(rep(noise_nPC, N))
+  } else {
+    noise_nPC <- as.list(noise_nPC)
   }
+  names(noise_nPC) <- names(X_noise)
 
   for (ii in 1:N) {
     T_ <- nrow(X_noise[[ii]])
@@ -59,6 +61,7 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
 
     # Compute the PC scores.
     x <- svd(tcrossprod(X_noise[[ii]]))
+    print(lapply(x, dim))
     noise_var[[ii]] <- x$d
     noise_vartotal[[ii]] <- sum(noise_var[[ii]])
     if (noise_nPC[[ii]] < 1) {

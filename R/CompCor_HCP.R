@@ -113,6 +113,9 @@ CompCor_HCP <- function(
   if (!is.null(timepoints)) {
     stopifnot(all(timepoints %in% seq(T_)))
     nii <- nii[,,,timepoints]
+    if (length(timepoints) < 10) {
+      warning("There are very few timepoints.\n")
+    }
   }
 
   cat("Computing noise components.\n")
