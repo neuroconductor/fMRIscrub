@@ -4,12 +4,13 @@
 \alias{CompCor.noise_comps}
 \title{CompCor: get noise components}
 \usage{
-CompCor.noise_comps(X_noise, center_X, scale_X, detrend_X, noise_nPC)
+CompCor.noise_comps(X_noise, center_X, scale_X, DCT_X, nuisance_X, noise_nPC)
 }
 \arguments{
 \item{X_noise}{The noise ROIs data}
 
-\item{center_X, scale_X, detrend_X}{Center, scale, and detrend data columns?}
+\item{center_X, scale_X, DCT_X, nuisance_X}{Center, scale, detrend, and nuisance
+regression}
 
 \item{noise_nPC}{Number of PCs to obtain for each noise ROI}
 }

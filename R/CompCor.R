@@ -1,20 +1,29 @@
 #' CompCor: get noise components
 #'
 #' @param X_noise The noise ROIs data
-#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns?
+#' @param center_X,scale_X,DCT_X,nuisance_X Center, scale, detrend, and nuisance
+#'  regression
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
 #'
 #' @return A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
 #'  noise_erosion, noise_comps, and noise_var.
 #' 
 #' @keywords internal
-CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
+CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, noise_nPC){
   TOL <- 1e-8
 
   N <- length(X_noise)
   noise_comps <- vector("list", N); names(noise_comps) <- names(X_noise)
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
   noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
+
+  if (is.null(DCT_X)) { DCT_X <- 0 }
+  detrend_X <- DCT_X > 0
+  nreg_X <- !is.null(nuisance_X)
+  if (nreg_X) {
+    stopifnot(is.matrix(nuisance_X))
+    stopifnot(nrow(nuisance_X) == T_)
+  }
 
   if (length(noise_nPC) == 1) {
     noise_nPC <- as.list(rep(noise_nPC, N))
@@ -31,14 +40,16 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
     X_noise[[ii]] <- t(X_noise[[ii]])
     #	Center.
     if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
-    # Detrend.
-    if (identical(detrend_X, FALSE)) { detrend_X <- 0 }
-    if (detrend_X > 0) {
-      B <- dct_bases(T_, detrend_X) / sqrt((T_+1)/2)
-      X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]]))
+    # Detrend and perform nuisance regression.
+    if (detrend_X | nreg_X) {
+      B <- NULL
+      if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
+      if (nreg_X) { B <- cbind(B, nuisance_X) }
+      X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]])) 
+
     }
     #	Center again for good measure.
-    if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
+    if (detrend_X && center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(X_noise[[ii]]), na.rm=TRUE)
     X_constant <- mad < TOL

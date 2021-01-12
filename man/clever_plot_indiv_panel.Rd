@@ -9,10 +9,10 @@ clever_plot_indiv_panel(meas, cuts, flag, name, robdist_info = NULL, ...)
 \arguments{
 \item{meas}{A \eqn{T_ x m} data.frame with each column being the time-course for an 
 outlyingness measure. Column names should identify the method as one of the following:
-\code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
-\code{PCA_var__robdist}, \code{PCA_kurt__robdist};
-\code{ICA_var__leverage}, \code{ICA_kurt__leverage};
-\code{ICA_var__robdist}, \code{ICA_kurt__robdist};
+\code{PCA__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
+\code{PCA__robdist}, \code{PCA_kurt__robdist};
+\code{ICA__leverage}, \code{ICA_kurt__leverage};
+\code{ICA__robdist}, \code{ICA_kurt__robdist};
 \code{DVARS}, \code{DVARS_DPD}, \code{DVARS_ZD}; or \code{FD}.}
 
 \item{cuts}{An \eqn{m} length vector with each value being the cutoff for a 

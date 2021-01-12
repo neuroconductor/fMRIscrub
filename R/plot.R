@@ -5,10 +5,10 @@
 #'
 #' @param meas A \eqn{T_ x m} data.frame with each column being the time-course for an 
 #'  outlyingness measure. Column names should identify the method as one of the following:
-#'  \code{PCA_var__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
-#'  \code{PCA_var__robdist}, \code{PCA_kurt__robdist};
-#'  \code{ICA_var__leverage}, \code{ICA_kurt__leverage};
-#'  \code{ICA_var__robdist}, \code{ICA_kurt__robdist};
+#'  \code{PCA__leverage}, \code{PCA_kurt__leverage}, \code{PCATF__leverage};
+#'  \code{PCA__robdist}, \code{PCA_kurt__robdist};
+#'  \code{ICA__leverage}, \code{ICA_kurt__leverage};
+#'  \code{ICA__robdist}, \code{ICA_kurt__robdist};
 #'  \code{DVARS}, \code{DVARS_DPD}, \code{DVARS_ZD}; or \code{FD}.
 #' @param cuts An \eqn{m} length vector with each value being the cutoff for a 
 #'  outlyingness measure. Column names should be the same as those provided for \code{meas}.
@@ -44,15 +44,15 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   colors_grey <- c("#494949", "#808080", "#b8b8b8", "#cdcdcd")
   colors <- list(
     # leverage or robdist
-    PCA_var = "#8DA0CB", # blue
+    PCA = "#8DA0CB", # blue
     PCA_kurt = "#FC8D62", # orange
     PCATF = "#A6D854", # green
-    ICA_var = "#8DA0CB", # blue
+    ICA = "#8DA0CB", # blue
     ICA_kurt = "#FC8D62", # orange
-    PCA2_var = "#8DA0CB", # blue
+    PCA2 = "#8DA0CB", # blue
     PCA2_kurt = "#FC8D62", # orange
     PCATF = "#A6D854", # green
-    ICA2_var = "#8DA0CB", # blue
+    ICA2 = "#8DA0CB", # blue
     ICA2_kurt = "#FC8D62", # orange
     # DVARS
     traditional = "#66C2A5", # aqua 
@@ -76,14 +76,14 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
   )
   name_formatted <- list(
     # leverage or robdist
-    PCA_var = "AAV PCs",
+    PCA = "AAV PCs",
     PCA_kurt = "AAV & high-kurtosis PCs" ,
     PCATF = "AAV trend-filtered PCs",
-    ICA_var = "AAV ICs",
+    ICA = "AAV ICs",
     ICA_kurt = "AAV & high-kurtosis ICs" ,
-    PCA2_var = "PESEL PCs",
+    PCA2 = "PESEL PCs",
     PCA2_kurt = "PESEL & high-kurtosis PCs" ,
-    ICA2_var = "PESEL ICs",
+    ICA2 = "PESEL ICs",
     ICA2_kurt = "PESEL & high-kurtosis ICs" ,
     # DVARS
     traditional = "Traditional DVARS",
@@ -345,14 +345,14 @@ plot.clever_multi <- function(x, measures="all", title=NULL, ...){
 
   # Define all the subplots: measures
   measures_to_plot <- list(
-    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
-    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
-    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
-    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste0("robdist__", c("PCA", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2", "PCA2_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2", "ICA2_kurt")),
     DVARS = "DVARS__traditional",
     DVARS2 = c("DVARS__DPD", "DVARS__ZD"),
     motion = c(paste0("motion_t", 1:3), paste0("motion_r", 1:3), "FD")
@@ -372,27 +372,27 @@ plot.clever_multi <- function(x, measures="all", title=NULL, ...){
 
   # Define all the subplots: outliers
   outcuts_to_plot <- list(
-    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
-    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
-    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
-    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste0("robdist__", c("PCA", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2", "PCA2_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2", "ICA2_kurt")),
     DVARS = "DVARS__traditional",
     DVARS2 = c("DVARS__DPD", "DVARS__ZD"),
     motion = "FD"
   )
   outflag_to_plot <- list(
-    PCA_leverage = paste0("leverage__",  c("PCA_var", "PCA_kurt", "PCATF")),
-    PCA_robdist = paste0("robdist__", c("PCA_var", "PCA_kurt")),
-    PCA2_leverage = paste0("leverage__",  c("PCA2_var", "PCA2_kurt")),
-    PCA2_robdist = paste0("robdist__", c("PCA2_var", "PCA2_kurt")),
-    ICA_leverage = paste0("leverage__",  c("ICA_var", "ICA_kurt")),
-    ICA_robdist = paste0("robdist__", c("ICA_var", "ICA_kurt")),
-    ICA2_leverage = paste0("leverage__",  c("ICA2_var", "ICA2_kurt")),
-    ICA2_robdist = paste0("robdist__", c("ICA2_var", "ICA2_kurt")),
+    PCA_leverage = paste0("leverage__",  c("PCA", "PCA_kurt", "PCATF")),
+    PCA_robdist = paste0("robdist__", c("PCA", "PCA_kurt")),
+    PCA2_leverage = paste0("leverage__",  c("PCA2", "PCA2_kurt")),
+    PCA2_robdist = paste0("robdist__", c("PCA2", "PCA2_kurt")),
+    ICA_leverage = paste0("leverage__",  c("ICA", "ICA_kurt")),
+    ICA_robdist = paste0("robdist__", c("ICA", "ICA_kurt")),
+    ICA2_leverage = paste0("leverage__",  c("ICA2", "ICA2_kurt")),
+    ICA2_robdist = paste0("robdist__", c("ICA2", "ICA2_kurt")),
     DVARS = "DVARS__traditional",
     DVARS2 = "DVARS__dual",
     motion = "FD"
