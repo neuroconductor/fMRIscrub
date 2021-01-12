@@ -61,7 +61,6 @@ CompCor.noise_comps <- function(X_noise, center_X,scale_X,detrend_X, noise_nPC){
 
     # Compute the PC scores.
     x <- svd(tcrossprod(X_noise[[ii]]))
-    print(lapply(x, dim))
     noise_var[[ii]] <- x$d
     noise_vartotal[[ii]] <- sum(noise_var[[ii]])
     if (noise_nPC[[ii]] < 1) {
