@@ -13,29 +13,29 @@ format_data(
 )
 }
 \arguments{
-\item{X}{Wide numerical data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
  For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
  of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
 
  Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I \times J \times K \times T} 
- observations), in which case \code{ROI_data} must be provided.
+ observations), in which case \code{ROI_data} must be provided. 
+ (\eqn{V_{in-mask voxels} \times T observations})
 
  Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
  (\eqn{V_{left} + V_{right} + V_{subcortical} \times T observations}).}
 
-\item{ROI_data}{Indicates the data ROI. Can be a logical vector/array or 
- \code{"infer"} (default): 
+\item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
 
  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
  the data ROI is indicated by \code{TRUE} values. If \code{"infer"}, all 
- columns of \code{X} will be included in the data ROI (all \code{TRUE}).
+ columns of \code{X} will be included in the data ROI (\code{rep(TRUE, V)}).
 
  If \code{X} is an array or NIFTI, this must be either a vector of values
  to expect for out-of-mask voxels in \code{X}, or a (file path to a) 3D NIFTI.
  In the latter case, each of the volume dimensions should match the first
- three dimension of \code{X}. Voxels in the data ROI should be indicated by
+ three dimensions of \code{X}. Voxels in the data ROI should be indicated by
  \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"},
- will be set to \code{c(0, NA, NaN)} (include all voxels which are not constant
+ will be set to \code{c(0, NA, NaN)} (include all voxels which are not
  \code{0}, \code{NA}, or \code{NaN}).
 
  If \code{X} is a \code{"xifti"} all data locations will be used and this

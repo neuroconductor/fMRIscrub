@@ -9,10 +9,11 @@ clever(
   measure = "leverage",
   projection = "PCA",
   PESEL = TRUE,
-  solve_PC_dirs = FALSE,
+  solve_dirs = FALSE,
   center_X = TRUE,
   scale_X = TRUE,
-  detrend_X = 4,
+  DCT_X = 0,
+  nuisance_X = NULL,
   PCATF_kwargs = NULL,
   kurt_quantile = 0.95,
   get_outliers = TRUE,
@@ -22,7 +23,7 @@ clever(
 )
 }
 \arguments{
-\item{X}{Wide numerical data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
 For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
 of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.}
 
@@ -39,14 +40,13 @@ of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
 
 \item{projection}{Only applies if \code{measure} is \code{"leverage"}. Choose
 one of the following: \code{"PCA"}, \code{"PCATF"}, or \code{"ICA"}. The
-directions of outlyingness will be selected from the components of this
-projection.}
+directions of outlyingness will be selected from components of this projection.}
 
 \item{PESEL}{Only applies if \code{measure} is \code{"leverage"}. Leverage
  scrubbing selects directions among the largest \eqn{k} components. \eqn{k}
- can be determined by PESEL, a data-driven algorithm (default: \code{TRUE}). 
- Otherwise, \eqn{k} will be the number of above-average-variance PCs 
- (\code{FALSE}). 
+ can be determined by PESEL, a data-driven algorithm (default:
+ \code{PESEL=TRUE}). Otherwise, \eqn{k} will be the number of
+ above-average-variance PCs (\code{PESEL=FALSE}). 
 
  Both methods are based on the principal components (PCs), even if the
  projection is PCATF or ICA.
@@ -55,36 +55,32 @@ projection.}
  \eqn{k} which also have scores of high kurtosis (> 95th percentile of the
  kurtosis of data of equal length from a Normal distribution.)}
 
-\item{solve_PC_dirs}{Only applies to the \code{"leverage"} and \code{"robdist"} 
-measures. Should the PCA and PCATF principal directions be computed? 
-Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
-for PCA.}
+\item{solve_dirs}{Only applies if \code{measure} is \code{"leverage"}. 
+Should the projection directions be computed? Default: \code{FALSE}. 
+This will save memory, especially for PCA since the full SVD
+can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
+leverage images.}
 
 \item{center_X, scale_X}{Center the columns of the data by their medians, and scale the
-columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. Centering is necessary
-for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
-the input data must already be centered.}
+columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+Centering is necessary for detrending and for computing PCA/ICA, so if this 
+is set to \code{FALSE}, \the input data must already be centered.}
 
-\item{detrend_X}{Detrend the columns of the data using the DCT? Use an integer
- to indicate the number of cosine bases to detrend with (default: \code{4}), or \code{0} 
- to forgo detrending. 
+\item{DCT_X}{Detrend the columns of the data using the discrete cosine
+transform (DCT)? Use an integer to indicate the number of cosine bases to 
+use for detrending. Use \code{0} (default) to forgo detrending.}
 
- The data must be centered, either before input or with \code{center_X}.
+\item{nuisance_X}{A matrix of nuisance signals to regress from the data
+before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+regression will be performed simultaneously with DCT detrending if 
+applicable. \code{NULL} to not add additional nuisance regressors.}
 
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- for the kurtosis-based projection, trends can induce positive or negative kurtosis,
- contaminating the connection between high kurtosis and outlier presence. 
- 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
-
-\item{PCATF_kwargs}{Options for the \code{"PCATF"} projection. Valid entries 
-are: 
+\item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
+entries are:
 
 \describe{
-  \item{K}{Maximum number of PCs to compute. Default: \code{100}. Cannot be set above 100.}
-  \item{lambda}{Trend-filtering parameter. Default: \code{0.05}.}
+  \item{K}{Maximum number of PCs to compute. Default: \code{100}.}
+  \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
   \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
   \item{verbose}{Print updates? Default: \code{FALSE}.}
 }}
@@ -114,6 +110,21 @@ for kurtosis should be used to select the components? Default: \code{0.95}.}
 only the components used to compute the measures).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
+
+\item{detrend_X}{Detrend the columns of the data using the DCT? Use an integer
+ to indicate the number of cosine bases to use for detrending (default: \code{4}).
+ Or, use \code{0} to forgo detrending. 
+
+ The data must be centered, either before input or with \code{center_X}.
+
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. Additionally,
+ if kurtosis is being used to select the projection directions, trends can 
+ induce positive or negative kurtosis, contaminating the connection between 
+ high kurtosis and outlier presence. 
+ 
+ Detrending should not be used with non-time-series data because the 
+ observations are not temporally related.}
 }
 \value{
 A \code{"clever"} object, i.e. a list with components
@@ -130,33 +141,28 @@ A \code{"clever"} object, i.e. a list with components
    A length \eqn{T} logical vector. \code{TRUE} values indicate suspected outliers. 
  }
  \item{PCA}{
-   If PCA leverage was used, this will be a list with components:
+   If PCA was used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
-     \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
-       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
-       the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
+     \item{U}{The \eqn{T \times Q} PC score matrix.}
+     \item{D}{The standard deviation of each PC.}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
+     \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
    }
  }
  \item{PCATF}{
-   If PCATF leverage was used, this will be a list with components:
+   If PCATF was used, this will be a list with components:
    \describe{
-     \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
-     \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
+     \item{U}{The \eqn{T \times Q} PC score matrix.}
+     \item{D}{The standard deviation of each PC.}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
    }
  }
  \item{ICA}{
-   If ICA leverage was used, this will be a list with components:
+   If ICA was used, this will be a list with components:
    \describe{
-     \item{S}{The \eqn{P x Q} source signals matrix.} 
-     \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
-     \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X}}
-     \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
-       (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
-       the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+     \item{S}{The \eqn{P \times Q} source signals matrix.} 
+     \item{M}{The \eqn{T \times Q} mixing matrix.}
+     \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
    }
  }
  \item{call}{The call to this function.}

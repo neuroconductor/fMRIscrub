@@ -2,15 +2,6 @@
 #' 
 #' Calculates data-driven scrubbing measures and identifies outliers in 
 #'  high-dimensional data.
-#'
-#' \code{clever_multi} will use all combinations of the requested projections and 
-#'  outlyingness measures which make sense. For example, if  
-#'  \code{projection=c("PCATF", "PCA_var", "PCA_kurt")} and 
-#'  \code{out_meas=c("leverage", "robdist")} then these five
-#'  combinations will be used: PCATF with leverage, PCA + variance with 
-#'  leverage, PCA + variance with robust distance, PCA + kurtosis with leverage,
-#'  and PCA + kurtosis with robust distance. Each method combination will yield 
-#'  its own results.
 #' 
 #' In addition to the measures supported by \code{\link{clever}}, this function
 #'  also can perform FD or CompCor.
@@ -20,16 +11,18 @@
 #'  at least one of the following: 
 #' 
 #'  \describe{
-#'    \item{\code{"leverage"}}{PCA leverage (the mean of the squared PC scores)}
+#'    \item{\code{"leverage"}}{Leverage scrubbing, which is based on
+#'      projecting the data onto directions thought to express outlier 
+#'      information.}
 #'    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-#'    \item{\code{"DVARS"}}{traditional DVARS}
+#'    \item{\code{"DVARS"}}{Traditional DVARS}
 #'    \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
 #'      Nichols, 2018)}
-#'    \item{\code{"FD"}}{Framewise Displacement. \code{X_motion} is required.}
+#'    \item{\code{"FD"}}{Framewise Displacement. Requires \code{X_motion}.}
 #'    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-#'      \code{X_motion} is required.}
-#'    \item{\code{"CompCor"}}{anatomical CompCor based on the ROIs. \code{ROI_data} 
-#'      and \code{ROI_noise} are required.}
+#'      Requires \code{X_motion}.}
+#'    \item{\code{"CompCor"}}{Anatomical CompCor based on the ROIs. Requires
+#'      \code{ROI_data} and \code{ROI_noise}.}
 #'    \item{\code{"GSR"}}{Global Signal of the data.}
 #'  }
 #' 
@@ -54,29 +47,34 @@
 #'  contain outlier information. Choose at least one of the following:
 #' 
 #'  \describe{
-#'    \item{\code{"PCA_var"}}{PCA using the PCs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
-#'    \item{\code{"PCA_kurt"}}{PCA using the PCs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
-#'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance/chosen by PESEL. Compatible with only leverage.}
-#'    \item{\code{"ICA_var"}}{ICA using the ICs of above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
-#'    \item{\code{"ICA_kurt"}}{ICA using the ICs of high kurtosis and above-average variance/chosen by PESEL. Compatible with both leverage and robust distance.}
+#'    \item{\code{"PCA"}}{PCA using the PCs of above-average variance.}
+#'    \item{\code{"PCA_kurt"}}{PCA using the PCs of above-average variance and with high kurtosis.}
+#'    \item{\code{"PCA2"}}{PCA using the PCs selected by PESEL.}
+#'    \item{\code{"PCA2_kurt"}}{PCA using the PCs selected by PESEL and with high kurtosis.}
+#'    \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with leverage only.}
+#'    \item{\code{"ICA"}}{ICA using the ICs of above-average variance.}
+#'    \item{\code{"ICA_kurt"}}{ICA using the ICs of above-average variance and with high kurtosis.}
+#'    \item{\code{"ICA2"}}{ICA using the ICs selected by PESEL.}
+#'    \item{\code{"ICA2_kurt"}}{ICA using the ICs selected by PESEL and with high kurtosis.}
 #'  }
 #'  
 #'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
 #'  
-#'  Each compatible measure + projection combination will yield its own result.
-#'  For example, if all PCA-related projections are used and both leverage and robust distance
-#'  are requested, the results will be: leverage of high-variance PCs, leverage
-#'  of high-kurtosis PCs, leverage of trend-filtered PCs, robust distance of
-#'  high-variance PCs, and robust distance of high-kurtosis PCs.
-#' @param solve_PC_dirs Only applies to the \code{"leverage"} and \code{"robdist"} 
-#'  measures. Should the PCA and PCATF principal directions be computed? 
-#'  Default: \code{FALSE} (conserves memory). Required to use \code{leverage_images}
-#'  for PCA.
+#'  Each compatible combination between \code{projections} and the applicable 
+#'  \code{measures} will yield its own result.
+#' @param solve_dirs Only applies to the \code{"leverage"} and \code{"robdist"} 
+#'  measures. Should the projection directions be computed? Default:
+#'  \code{FALSE}. This will save memory, especially for PCA since the full SVD
+#'  can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
+#'  leverage images.
 #' @param center_X,scale_X Center the columns of the data by median, and scale the
-#'  columns of the data by MAD? Default: \code{TRUE}. Centering is necessary
-#'  for detrending and for computing PCA/ICA, so if this is set to \code{FALSE}, 
-#'  the input data must already be centered. Also affects noise ROI data for 
-#'  CompCor..
+#'  columns of the data by MAD? Default: \code{TRUE} for both. Centering is
+#'  necessary for detrending and for computing PCA/ICA, so if this is set to 
+#'  \code{FALSE}, the input data must already be centered. For aCompCor, these 
+#'  options will also be applied to the noise ROI data.
+#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
+#'  use for detrending. Use \code{0} (default) to forgo detrending. 
 #' @param detrend_X Detrend the columns of the data using the DCT? Use an integer
 #'  to indicate the number of cosine bases to use for detrending (default: \code{4}).
 #'  Or, use \code{0} to forgo detrending. 
@@ -85,17 +83,22 @@
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,
-#'  for the kurtosis-based projection, trends can induce positive or negative kurtosis,
-#'  contaminating the connection between high kurtosis and outlier presence. 
+#'  if kurtosis is being used to select the projection directions, trends can 
+#'  induce positive or negative kurtosis, contaminating the connection between 
+#'  high kurtosis and outlier presence. 
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
-#' @param PCATF_kwargs Options for the \code{"PCATF"} projection. Valid entries 
-#'  are: 
+#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+#'  regression will be performed simultaneously with DCT detrending if 
+#'  applicable. \code{NULL} to not add additional nuisance regressors.
+#' @param PCATF_kwargs Arguments to \code{\link{PCATF}} in list form. Valid
+#'  entries are:
 #'  
 #'  \describe{
-#'    \item{K}{Maximum number of PCs to compute. Default: \code{100}. Cannot be set above 100.}
-#'    \item{lambda}{Trend-filtering parameter. Default: \code{0.05}.}
+#'    \item{K}{Maximum number of PCs to compute. Default: \code{100}.}
+#'    \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
 #'    \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
 #'    \item{verbose}{Print updates? Default: \code{FALSE}.}
 #'  }
@@ -116,6 +119,7 @@
 #'  each noise ROI).
 #' @param noise_erosion Only applies to the CompCor measure.
 #'  The number of voxel layers to erode the noise ROIs by. 
+#' 
 #'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
 #'  It will be matched to each ROI based on the name of each entry, or if the 
 #'  names are missing, the order of entries. If it is an unnamed vector, its 
@@ -149,15 +153,24 @@
 #'  \item{measures}{
 #'    A data.frame of the measures (only those requested will be included):
 #'    \describe{
-#'      \item{leverage__PCA_var}{Leverage values of the "PCA_var" projection.}
+#'      \item{leverage__PCA}{Leverage values of the "PCA" projection.}
 #'      \item{leverage__PCA_kurt}{Leverage values of the "PCA_kurt" projection.}
+#'      \item{leverage__PCA2}{Leverage values of the "PCA2" projection.}
+#'      \item{leverage__PCA2_kurt}{Leverage values of the "PCA2_kurt" projection.}
 #'      \item{leverage__PCATF}{Leverage values of the "PCATF" projection.}
-#'      \item{leverage__ICA_var}{Leverage values of the "ICA_var" projection.}
+#'      \item{leverage__ICA}{Leverage values of the "ICA" projection.}
 #'      \item{leverage__ICA_kurt}{Leverage values of the "ICA_kurt" projection.}
-#'      \item{robdist__PCA_var}{Robust distance values of the "PCA_var" projection.}
-#'      \item{robdist__PCA_kurt}{Robust distance values of the "PCA_kurt" projection.}
-#'      \item{robdist__ICA_var}{Robust distance values of the "ICA_var" projection.}
-#'      \item{robdist__ICA_kurt}{Robust distance values of the "ICA_kurt" projection.}
+#'      \item{leverage__ICA2}{Leverage values of the "ICA2" projection.}
+#'      \item{leverage__ICA2_kurt}{Leverage values of the "ICA2_kurt" projection.}
+#'      \item{robdist__PCA}{Robust distances of the "PCA" projection.}
+#'      \item{robdist__PCA_kurt}{Robust distances of the "PCA_kurt" projection.}
+#'      \item{robdist__PCA2}{Robust distances of the "PCA2" projection.}
+#'      \item{robdist__PCA2_kurt}{Robust distances of the "PCA2_kurt" projection.}
+#'      \item{robdist__PCATF}{Robust distances of the "PCATF" projection.}
+#'      \item{robdist__ICA}{Robust distances of the "ICA" projection.}
+#'      \item{robdist__ICA_kurt}{Robust distances of the "ICA_kurt" projection.}
+#'      \item{robdist__ICA2}{Robust distances of the "ICA2" projection.}
+#'      \item{robdist__ICA2_kurt}{Robust distances of the "ICA2_kurt" projection.}
 #'      \item{DVARS}{Traditional DVARS values.}
 #'      \item{DVARS__DPD}{Delta-percent-DVARS values.}
 #'      \item{DVARS_ZD}{z-score-DVARS values.}
@@ -175,15 +188,24 @@
 #'    A vector of the outlier cutoffs for each outlyingness measure (see the 
 #'    \code{outlier_cutoffs} argument; only those requested will be included):
 #'    \describe{
-#'      \item{leverage__PCA_var}{Minimum leverage.}
-#'      \item{leverage__PCA_kurt}{Minimum leverage.}
-#'      \item{leverage__PCATF}{Minimum leverage.}
-#'      \item{leverage__ICA_var}{Minimum leverage.}
-#'      \item{leverage__ICA_kurt}{Minimum leverage.}
-#'      \item{robdist__PCA_var}{Minimum robust distance.}
+#'      \item{leverage__PCA}{Minimum leverage value.}
+#'      \item{leverage__PCA_kurt}{Minimum leverage value.}
+#'      \item{leverage__PCA2}{Minimum leverage value.}
+#'      \item{leverage__PCA2_kurt}{Minimum leverage value.}
+#'      \item{leverage__PCATF}{Minimum leverage value.}
+#'      \item{leverage__ICA}{Minimum leverage value.}
+#'      \item{leverage__ICA_kurt}{Minimum leverage value.}
+#'      \item{leverage__ICA2}{Minimum leverage value.}
+#'      \item{leverage__ICA2_kurt}{Minimum leverage value.}
+#'      \item{robdist__PCA}{Minimum robust distance.}
 #'      \item{robdist__PCA_kurt}{Minimum robust distance.}
-#'      \item{robdist__ICA_var}{Minimum robust distance.}
+#'      \item{robdist__PCA2}{Minimum robust distance.}
+#'      \item{robdist__PCA2_kurt}{Minimum robust distance.}
+#'      \item{robdist__PCATF}{Minimum robust distance.}
+#'      \item{robdist__ICA}{Minimum robust distance.}
 #'      \item{robdist__ICA_kurt}{Minimum robust distance.}
+#'      \item{robdist__ICA2}{Minimum robust distance.}
+#'      \item{robdist__ICA2_kurt}{Minimum robust distance.}
 #'      \item{DVARS}{Minimum traditional DVARS.}
 #'      \item{DVARS__DPD}{Minimum Delta-percent-DVARS.}
 #'      \item{DVARS_ZD}{Minimum z-score-DVARS.}
@@ -203,41 +225,37 @@
 #'    }
 #'  }
 #'  \item{PCA}{
-#'    If the "PCA_var" or "PCA_kurt" projections were used, this will be a list with components:
+#'    If PCA was used, this will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
-#'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis PC 
-#'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating a PC with kurtosis below
-#'        the quantile cutoff. Only included if the "PCA_kurt" projection was used.}
+#'      \item{U}{The \eqn{T \times Q} PC score matrix.}
+#'      \item{D}{The standard deviation of each PC.}
+#'      \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+
 #'    }
 #'  }
 #'  \item{PCATF}{
-#'    If the "PCATF" projection was used, this will be a list with components:
+#'    If PCATF was used, this will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{N x Q} PC score matrix. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{D}{The standard deviation of each PC. Only PCs with above-average variance/chosen by PESEL will be included.}
-#'      \item{V}{The \eqn{P x Q} PC directions matrix. Included only if \code{solve_PC_dirs}}
+#'      \item{U}{The \eqn{T \times Q} PC score matrix.}
+#'      \item{D}{The standard deviation of each PC.}
+#'      \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
 #'    }
 #'  }
 #'  \item{ICA}{
-#'    If the "ICA_var" or "ICA_kurt" projections were used, this will be a list with components:
+#'    If ICA was used, this will be a list with components:
 #'    \describe{
-#'      \item{S}{The \eqn{P x Q} source signals matrix.} 
-#'      \item{M}{The \eqn{N x Q} mixing matrix. Only ICs with above-average variance/chosen by PESEL will be included.}
-#'      \item{M_dt}{The \eqn{N x Q} detrended mixing matrix. Included only if \code{detrend_X > 0}}
-#'      \item{kurt_idx}{The length \code{Q} kurtosis rankings, with 1 indicating the highest-kurtosis IC 
-#'        (among those of above-average variance/chosen by PESEL) and \code{NA} indicating an IC with kurtosis below
-#'        the quantile cutoff. Only included if the "ICA_kurt" projection was used.}
+#'      \item{S}{The \eqn{P \times Q} source signals matrix.} 
+#'      \item{M}{The \eqn{T \times Q} mixing matrix.}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
 #'    }
 #'  }
 #'  \item{CompCor}{
-#'    If CompCor is computed, this will be a list with components: 
+#'    If CompCor was computed, this will be a list with components: 
 #'    \describe{
 #'      \item{[Noise1]}{
 #'        \describe{
-#'          \item{U}{The \eqn{N x Q} PC score matrix for Noise1.}
+#'          \item{U}{The \eqn{T \times Q} PC score matrix for Noise1.}
 #'          \item{D}{The standard deviation of each PC for Noise1.}
 #'          \item{Dsq_total}{The sum of squared D values (total variance).}
 #'        }
@@ -245,7 +263,7 @@
 #'      \item{...}{...}
 #'      \item{[Noisek]}{
 #'        \describe{
-#'          \item{U}{The \eqn{N x Q} PC score matrix for Noisek.}
+#'          \item{U}{The \eqn{T \times Q} PC score matrix for Noisek.}
 #'          \item{D}{The standard deviation of each PC for Noisek.}
 #'          \item{Dsq_total}{The sum of squared D values (total variance).}
 #'        }
@@ -255,38 +273,17 @@
 #'  \item{robdist_info}{
 #'    If the "robdist" measure was used, this will be a list with components:
 #'    \describe{
-#'      \item{PCA_var}{
-#'      If the "PCA_var" projection was used, this will be a list with components:
+#'      \item{PCA}{
+#'      If the "PCA" projection was used, this will be a list with components:
 #'        \describe{
 #'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
 #'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
 #'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
 #'        }
 #'      }
-#'      \item{PCA_kurt}{
-#'      If the "PCA_kurt" projection was used, this will be a list with components:
-#'        \describe{
-#'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
-#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
-#'        }
-#'      }
-#'      \item{ICA_var}{
-#'      If the "ICA_var" projection was used, this will be a list with components:
-#'        \describe{
-#'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
-#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
-#'        }
-#'      }
-#'      \item{ICA_kurt}{
-#'      If the "ICA_kurt" projection was used, this will be a list with components:
-#'        \describe{
-#'          \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-#'          \item{outMCD_scale}{The scale for out-of-MCD observations.}
-#'          \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
-#'        }
-#'      }
+#'      \item{PCA_kurt}{same components as those for PCA...}
+#'      \item{ICA}{same components as those for PCA...}
+#'      \item{ICA_kurt}{same components as those for PCA...}
 #'    }
 #'  }
 #'  \item{call}{The call to this function.}
@@ -306,8 +303,8 @@ clever_multi = function(
   X,
   measures=c("leverage", "DVARS2"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
-  projections = "PCA_kurt", solve_PC_dirs=FALSE,
-  center_X=TRUE, scale_X=TRUE, detrend_X=4,
+  projections = "PCA_kurt", solve_dirs=FALSE,
+  center_X=TRUE, scale_X=TRUE, DCT_X=0, nuisance_X=NULL,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -338,17 +335,9 @@ clever_multi = function(
   }
 
   valid_projections <- c(
-    "PCA_var", "PCA_kurt", "PCA2_var", "PCA2_kurt", "PCATF", 
-    "ICA_var", "ICA_kurt", "ICA2_var", "ICA2_kurt"
+    "PCA", "PCA_kurt", "PCA2", "PCA2_kurt", "PCATF", 
+    "ICA", "ICA_kurt", "ICA2", "ICA2_kurt"
   )
-  if ("PCA" %in% projections) {
-    projections <- c(projections, c("PCA_var", "PCA_kurt"))
-    projections <- projections[projections == "PCA"]
-  }
-  if ("ICA" %in% projections) {
-    projections <- c(projections, c("ICA_var", "ICA_kurt"))
-    projections <- projections[projections == "ICA"]
-  }
 
   # [TEMPORARY]
   if (any(grepl("ICA", projections))) { stopifnot(any(grepl("PCA", projections))) }
@@ -474,24 +463,11 @@ clever_multi = function(
   # Other arguments ------------------------------------------------------------
 
   is.TRUEorFALSE <- function(x) { length(x)==1 && is.logical(x) }
-  stopifnot(is.TRUEorFALSE(solve_PC_dirs))
+  stopifnot(is.TRUEorFALSE(solve_dirs))
   stopifnot(is.TRUEorFALSE(get_outliers))
   stopifnot(is.TRUEorFALSE(verbose))
   stopifnot(is.TRUEorFALSE(center_X))
   stopifnot(is.TRUEorFALSE(scale_X))
-  
-
-  if (identical(detrend_X, TRUE)) {
-    cat("Note: `detrend_X` was `TRUE`, but expected a number. Using 4 cosine bases.")
-    do_detrend_X <- TRUE
-  } else if (identical(detrend_X, FALSE)) {
-    detrend_X <- 0
-    do_detrend_X <- FALSE
-  } else {
-    stopifnot(is.numeric(detrend_X))
-    do_detrend_X <- detrend_X > 0
-  }
-  stopifnot(is.TRUEorFALSE(do_detrend_X))
 
   if(!identical(PCATF_kwargs, NULL)){
     names(PCATF_kwargs) <- match.arg(
@@ -548,6 +524,14 @@ clever_multi = function(
   # Do it here instead of calling `scale_med` to save memory. ------------------
   # ----------------------------------------------------------------------------
   
+  if (is.null(DCT_X)) { DCT_X <- 0 }
+  detrend_X <- DCT_X > 0
+  nreg_X <- !is.null(nuisance_X)
+  if (nreg_X) {
+    stopifnot(is.matrix(nuisance_X))
+    stopifnot(nrow(nuisance_X) == T_)
+  }
+
   # [TO-DO: Skip if only Motion/FD/GSR requested.]
   if (verbose) { 
     action <- c(
@@ -558,20 +542,24 @@ clever_multi = function(
       "Centering and detrending",
       "Scaling and detrending",
       "Centering, scaling, and detrending"
-    )[1*center_X + 2*scale_X + 4*do_detrend_X]
-    cat(action, "the data matrix.\n")
+    )[1*center_X + 2*scale_X + 4*detrend_X]
+    cat(action, "the data matrix.")
+    if (nreg_X) { cat(" Also removing nuisance regressors.") }
+    cat("\n")
   }
   # Transpose.
   X <- t(X)
   #	Center.
   if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
-  # Detrend.
-  if (do_detrend_X) {
-    B <- dct_bases(T_, detrend_X) / sqrt((T_+1)/2)
-    X <- t((diag(T_) - (B %*% t(B))) %*% t(X))
+  # Detrend and perform nuisance regression.
+  if (detrend_X | nreg_X) {
+    B <- NULL
+    if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
+    if (nreg_X) { B <- cbind(B, nuisance_X) }
+    X <- t((diag(T_) - (B %*% t(B))) %*% t(X)) 
   }
   #	Center again for good measure.
-  if (do_detrend_X && center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  if (detrend_X && center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -633,7 +621,9 @@ clever_multi = function(
 
   if (any(grepl("CompCor", measures, fixed=TRUE))) {
     if (verbose) { cat("Computing CompCor.\n") }
-    X_CompCor <- CompCor.noise_comps(X_noise, center_X,scale_X,detrend_X, noise_nPC)
+    X_CompCor <- CompCor.noise_comps(
+      X_noise, center_X, scale_X, DCT_X, nuisance_X, noise_nPC
+    )
     for (ii in seq_len(length(X_CompCor$noise_comps))) {
       out$CompCor[[names(X_noise)[ii]]] <- list(
         U = X_CompCor$noise_comps[[ii]],
@@ -652,21 +642,21 @@ clever_multi = function(
 
   # Compute the PC scores (and directions, if leverage images or PCATF are desired).
   if (any(grepl("PCA", measures, fixed=TRUE))) {
-    if ("PCATF" %in% projections) { solve_PC_dirs <- TRUE }
+    if ("PCATF" %in% projections) { solve_dirs <- TRUE }
     if (verbose) {
       cat(paste0(
         "Computing the",
         ifelse(
-          ("PCA_var" %in% projections) | ("PCA_kurt" %in% projections),
+          ("PCA" %in% projections) | ("PCA_kurt" %in% projections),
           ifelse("PCATF" %in% projections, " normal and trend-filtered", ""),
           ifelse("PCATF" %in% projections, " trend-filtered", "INTERNAL ERROR")
         ),
         " PC scores",
-        ifelse(solve_PC_dirs, " and directions", ""), ".\n"
+        ifelse(solve_dirs, " and directions", ""), ".\n"
       ))
     }
 
-    if (solve_PC_dirs) {
+    if (solve_dirs) {
       out$PCA <- svd(X)
       names(out$PCA) <- toupper(names(out$PCA))
     } else {
@@ -692,12 +682,12 @@ clever_multi = function(
         c(
           list(
             X=X, X.svd=out$PCA[c("U", "D", "V")], 
-            K=out$PCA$nPCs_PESEL, solve_directions=solve_PC_dirs
+            K=out$PCA$nPCs_PESEL, solve_directions=solve_dirs
           ), 
           PCATF_kwargs
         )
       )
-      if(!solve_PC_dirs){ out$PCA$V <- NULL }
+      if(!solve_dirs){ out$PCA$V <- NULL }
 
       tf_zero_var <- apply(out$PCATF$u, 2, var) < TOL
       if(any(tf_zero_var)){
@@ -720,7 +710,7 @@ clever_multi = function(
     if (!full_PCA) {
       out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
       out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
-      if (solve_PC_dirs) { 
+      if (solve_dirs) { 
         out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
       }
     }
@@ -771,14 +761,14 @@ clever_multi = function(
 
     # [TEMPORARY] PCA was required, so `out$PCA` exists
     Comps_ii <- switch(proj_ii,
-      PCA_var = seq_len(out$PCA$nPCs_avgvar),
+      PCA = seq_len(out$PCA$nPCs_avgvar),
       PCA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$PCA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
-      PCA2_var = seq_len(out$PCA$nPCs_PESEL),
+      PCA2 = seq_len(out$PCA$nPCs_PESEL),
       PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$PCA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
       PCATF = NULL,
-      ICA_var = seq_len(out$PCA$nPCs_avgvar),
+      ICA = seq_len(out$PCA$nPCs_avgvar),
       ICA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$ICA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
-      ICA2_var = seq_len(out$PCA$nPCs_PESEL),
+      ICA2 = seq_len(out$PCA$nPCs_PESEL),
       ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$ICA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
     )
 
@@ -786,22 +776,22 @@ clever_multi = function(
     if (length(Comps_ii) == 0 && grepl("2_", proj_ii, fixed=FALSE)) {
       cat(" (Temporary notice: using single highest-kurtosis PC in smaller PC subset.)")
       Comps_ii <- switch(proj_ii,
-        PCA2_var = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        PCA2 = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
         PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
-        ICA2_var = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        ICA2 = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
         ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)]
       )
     }
 
     Comps_ii <- switch(proj_ii,
-      PCA_var = out$PCA$U[, Comps_ii, drop=FALSE],
+      PCA = out$PCA$U[, Comps_ii, drop=FALSE],
       PCA_kurt = out$PCA$U[, Comps_ii, drop=FALSE],
-      PCA2_var = out$PCA$U[, Comps_ii, drop=FALSE],
+      PCA2 = out$PCA$U[, Comps_ii, drop=FALSE],
       PCA2_kurt = out$PCA$U[, Comps_ii, drop=FALSE],
       PCATF = out$PCATF$U,
-      ICA_var = out$ICA$M[, Comps_ii, drop=FALSE],
+      ICA = out$ICA$M[, Comps_ii, drop=FALSE],
       ICA_kurt = out$ICA$M[, Comps_ii, drop=FALSE],
-      ICA2_var = out$ICA$M[, Comps_ii, drop=FALSE],
+      ICA2 = out$ICA$M[, Comps_ii, drop=FALSE],
       ICA2_kurt = out$ICA$M[, Comps_ii, drop=FALSE]
     )
     
