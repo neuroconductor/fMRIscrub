@@ -25,23 +25,31 @@ CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, n
     stopifnot(nrow(nuisance_X) == T_)
   }
 
+  if (length(noise_nPC) == 1) {
+    noise_nPC <- as.list(rep(noise_nPC, N))
+  } else {
+    noise_nPC <- as.list(noise_nPC)
+  }
+  names(noise_nPC) <- names(X_noise)
+
   for (ii in 1:N) {
     T_ <- nrow(X_noise[[ii]])
     if (ncol(X_noise[[ii]])==0) { next }
 
     # Transpose.
-    X_noise <- t(X_noise)
+    X_noise[[ii]] <- t(X_noise[[ii]])
     #	Center.
-    if (center_X) { X_noise <- X_noise - c(rowMedians(X_noise, na.rm=TRUE)) }
+    if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Detrend and perform nuisance regression.
     if (detrend_X | nreg_X) {
       B <- NULL
       if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
       if (nreg_X) { B <- cbind(B, nuisance_X) }
-      X_noise <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise)) 
+      X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]])) 
+
     }
     #	Center again for good measure.
-    if (detrend_X && center_X) { X_noise <- X_noise - c(rowMedians(X_noise, na.rm=TRUE)) }
+    if (detrend_X && center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(X_noise[[ii]]), na.rm=TRUE)
     X_constant <- mad < TOL
@@ -64,6 +72,7 @@ CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, n
 
     # Compute the PC scores.
     x <- svd(tcrossprod(X_noise[[ii]]))
+    print(lapply(x, dim))
     noise_var[[ii]] <- x$d
     noise_vartotal[[ii]] <- sum(noise_var[[ii]])
     if (noise_nPC[[ii]] < 1) {
@@ -101,10 +110,16 @@ CompCor.regress <- function(X, noise_comps){
 #'
 #' The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
 #' 
-#' The data are centered on each voxel timecourse's median.
+#' The data are centered on each voxel timecourse's median. If the data ROI is
+#'  empty, the CompCor regressors will be calculated, but not regression will
+#'  be performed.
 #'
 #' @inheritParams data_clever_CompCor_Params
 #' @inheritParams noise_Params
+#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns? Will
+#'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
+#'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
+#'  indicated by the number of DCT bases to regress (0 to not detrend).
 #'
 #' @return A list with entries \code{"data"} and \code{"noise"}
 #'
@@ -119,20 +134,63 @@ CompCor.regress <- function(X, noise_comps){
 #' @importFrom robustbase rowMedians
 #'
 #' @export
-CompCor <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_erosion=NULL){
+CompCor <- function(
+  X, ROI_data="infer", ROI_noise=NULL, 
+  noise_nPC=5, noise_erosion=NULL,
+  center_X=TRUE, scale_X=TRUE, detrend_X=0
+  ){
 
   out1 <- format_data(
-    X=X, ROI_data=ROI_data, ROI_noise=ROI_noise, noise_nPC=noise_nPC, noise_erosion=noise_erosion
+    X=X, ROI_data=ROI_data, ROI_noise=ROI_noise, 
+    noise_nPC=noise_nPC, noise_erosion=noise_erosion
   )
 
   out2 <- CompCor.noise_comps(
-    X_noise=out1$X_noise, noise_nPC=out1$noise_nPC
+    X_noise=out1$X_noise, 
+    center_X=center_X, scale_X=scale_X, detrend_X=detrend_X,
+    noise_nPC=out1$noise_nPC
   )
 
-  out1$X <- CompCor.regress(out1$X, out2$noise_comps)
+  if (any(ROI_data)) {
+    TOL <- 1e-8
+    # Transpose.
+    out1$X <- t(out1$X)
+    #	Center.
+    if (center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    # Detrend.
+    if (identical(detrend_X, FALSE)) { detrend_X <- 0 }
+    if (detrend_X > 0) {
+      B <- dct_bases(T_, detrend_X) / sqrt((T_+1)/2)
+      out1$X <- t((diag(T_) - (B %*% t(B))) %*% t(out1$X))
+    }
+    #	Center again for good measure.
+    if (center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    # Compute MADs.
+    mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
+    X_constant <- mad < TOL
+    if (any(X_constant)) {
+      if (all(X_constant)) {
+      stop(paste0("All data locations in noise ROI ", ii, " are zero-variance.\n"))
+      } else {
+        warning(paste0("Warning: ", sum(X_constant),
+        " constant data locations (out of ", length(X_constant),
+        ") in noise ROI ", ii, 
+        ". These will be removed for estimation of the covariance.\n"))
+      }
+    }
+    mad <- mad[!X_constant]; out1$X <- out1$X[!X_constant,]
+    # Scale.
+    if (scale_X) { out1$X <- out1$X/c(mad) }
+    # Revert transpose.
+    out1$X <- t(out1$X)
+
+    out1$X <- CompCor.regress(out1$X, out2$noise_comps)
+  } else {
+    out1["X"] <- list(NULL)
+  }
 
   list(
     X=out1$X, 
-    noise=list(PCs=out2$noise_comps, var=out2$noise_var, ROI=out1$ROI_noise)
+    noise=list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise)
   )
 }

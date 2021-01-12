@@ -178,7 +178,13 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
     stopifnot(!any(names(ROI_noise) == "data"))
 
     # noise_nPC
-    noise_nPC <- as.list(noise_nPC)
+    if (length(noise_nPC) == 1) {
+      noise_nPC <- as.list(rep(noise_nPC, length(ROI_noise)))
+    } else {
+      noise_nPC <- as.list(noise_nPC)
+    }
+    names(noise_nPC) <- names(ROI_noise)
+
     if (is.null(names(noise_nPC))) {
       noise_nPC <- noise_nPC[rep(1:length(noise_nPC), length(ROI_noise))[1:length(ROI_noise)]]
       names(noise_nPC) <- names(ROI_noise)

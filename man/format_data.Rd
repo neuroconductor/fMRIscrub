@@ -27,19 +27,19 @@ format_data(
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
 
  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
- the data ROI is indicated by \code{TRUE} values. If \code{"infer"}, all 
+ the data ROI is indicated by \code{TRUE} values. If \code{"infer"} (default), all 
  columns of \code{X} will be included in the data ROI (\code{rep(TRUE, V)}).
 
  If \code{X} is an array or NIFTI, this must be either a vector of values
  to expect for out-of-mask voxels in \code{X}, or a (file path to a) 3D NIFTI.
  In the latter case, each of the volume dimensions should match the first
  three dimensions of \code{X}. Voxels in the data ROI should be indicated by
- \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"},
+ \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"} (default),
  will be set to \code{c(0, NA, NaN)} (include all voxels which are not
  \code{0}, \code{NA}, or \code{NaN}).
 
  If \code{X} is a \code{"xifti"} all data locations will be used and this
- should be left as \code{"infer"}.
+ should be left as \code{"infer"} (default).
 
  If \code{NULL}, the data ROI will be empty. This is useful for obtaining just
  the noise ROI, if the data and noise are located in separate files.}

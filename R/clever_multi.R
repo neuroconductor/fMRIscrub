@@ -286,7 +286,6 @@
 #'      \item{ICA_kurt}{same components as those for PCA...}
 #'    }
 #'  }
-#'  \item{call}{The call to this function.}
 #' }
 #'
 #' @importFrom pesel pesel
@@ -843,6 +842,5 @@ clever_multi = function(
     out$outlier_flags <- as.data.frame(out$outlier_flags)
     out$outlier_cutoffs <- do.call(c, out$outlier_cutoffs)
   }
-  out$call <- match.call()
   structure(out, class="clever_multi")
 }

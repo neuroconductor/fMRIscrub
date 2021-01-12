@@ -4,11 +4,6 @@
 #'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
 #'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'
-#' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
-#'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
-#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
-#' @param brainstructures Choose among "left", "right", and "subcortical".
-#'  Default: \code{c("left", "right")} (cortical data only)
 #' @param nii \eqn{I \times J \times \K \times T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
 #'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
@@ -36,36 +31,46 @@
 #'  https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
 #'
 #'  Default: \code{c("wm_cort", "csf")}
-#' @param noise_nPC,noise_erosion See \code{\link{clever_multi}}.
-#' @param ... Additional arguments to \code{\link{clever_multi}}.
+#' @param noise_nPC The number of principal components to compute for each noise
+#'  ROI. Alternatively, values between 0 and 1, in which case they will 
+#'  represent the minimum proportion of variance explained by the PCs used for
+#'  each noise ROI. The smallest number of PCs will be used to achieve this 
+#'  proportion of variance explained. 
+#' 
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its
+#'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
+#'  each noise ROI).
+#' @param noise_erosion  The number of voxel layers to erode the noise ROIs by. 
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its 
+#'  elements will be recycled. Default: \code{NULL}, which will use a value of
+#'  0 (do not erode the noise ROIs).
+#' @param brainstructures Choose among "left", "right", and "subcortical".
+#'  Default: \code{c("left", "right")} (cortical data only)
+#' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
+#'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
+#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
+#' @param timepoints A numeric vector indicating the timepoints to compute 
+#'  CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
+#'  with 1, so the first timepoint has index 1 and the last has the same index
+#'  as the length of the scan.)
+#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns? Will
+#'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
+#'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
+#'  indicated by the number of DCT bases to regress (0 to not detrend). By default,
+#'  the data is centered and scaled but not detrended.
+#' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @export
 CompCor_HCP <- function(
-  cii, brainstructures=c("left", "right"), 
-  nii, nii_labels, ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, ...){
-
-  if (any(c("X", "ROI_data") %in% names(list(...)))) { 
-    stop("`X` and `ROI_data` should not be used with `CompCor_HCP`, because they\
-    are determined by the arguments `cii` and `nii`.") 
-  }
-  verbose <- ifelse("verbose" %in% names(list(...)), list(...)$verbose, FALSE)
-
-
-  clever_multi_args <- list(...)
-  if (!("measures" %in% names(clever_multi_args))) {
-    data_clever_CompCor_Params$measures <- "CompCor"
-  }
-
-  # `cii`
-  if (is.character(cii)) { 
-    if (requireNamespace("ciftiTools", quietly = TRUE)) {
-      cii <- ciftiTools::read_cifti(cii, brainstructures=brainstructures, verbose=verbose) 
-    } else {
-      stop("Package `ciftiTools` required to read the CIFTI file. Please install\
-      it from the github repo `mandymejia/ciftiTools`.")
-    }
-  }
-  stopifnot(all(names(cii) == c("data", "surf", "meta")))
+  nii, nii_labels, 
+  ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
+  timepoints=NULL, cii=NULL, brainstructures=c("left", "right"),
+  center_X = TRUE, scale_X = TRUE, detrend_X = 0,
+  verbose=FALSE){
 
   # `nii`
   if (is.character(nii)) {
@@ -104,22 +109,43 @@ CompCor_HCP <- function(
     function(x){array(nii_labels %in% x, dim=dim(nii_labels))}
   )
 
-  cat("Formatting HCP data.\n")
-  temp <- format_data(
-    nii, ROI_data=NULL, ROI_noise = ROI_noise, 
-    noise_erosion=noise_erosion, noise_nPC=noise_nPC
-  )
+  T_ <- dim(nii)[4]
+  if (!is.null(timepoints)) {
+    stopifnot(all(timepoints %in% seq(T_)))
+    nii <- nii[,,,timepoints]
+    if (length(timepoints) < 10) {
+      warning("There are very few timepoints.\n")
+    }
+  }
 
-  out <- do.call(clever_multi,
-    c(clever_multi_args, 
-      list(
-        X=t(do.call(rbind, cii$data)), 
-        ROI_noise=temp$X_noise, 
-        noise_nPC=as.numeric(temp$noise_nPC)
-      )
-    )
-  )
-  
-  out$ROIs <- c(out$ROIs, temp$ROI_noise)
+  cat("Computing noise components.\n")
+  out <- CompCor(
+    nii, ROI_data=NULL, ROI_noise=ROI_noise, 
+    noise_erosion=noise_erosion, noise_nPC=noise_nPC,
+    center_X=center_X, scale_X=scale_X, detrend_X=detrend_X
+  )$noise
+
+  # `cii`
+  if (!is.null(cii)) {
+    if (is.character(cii)) { 
+      if (requireNamespace("ciftiTools", quietly = TRUE)) {
+        cii <- ciftiTools::read_cifti(cii, brainstructures=brainstructures, verbose=verbose) 
+      } else {
+        stop("Package `ciftiTools` required to read the CIFTI file. Please install\
+        it from the github repo `mandymejia/ciftiTools`.")
+      }
+    }
+    stopifnot(all(names(cii) == c("data", "surf", "meta")))
+
+    cii <- do.call(rbind, cii$data)
+
+    if (!is.null(timepoints)) {
+      stopifnot(all(timepoints %in% seq(ncol(cii))))
+      cii <- cii[,timepoints]
+    }
+
+    out$data <- CompCor.regress(cii, out$PCs)
+  }
+
   out
 }

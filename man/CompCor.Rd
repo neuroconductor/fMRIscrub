@@ -9,7 +9,10 @@ CompCor(
   ROI_data = "infer",
   ROI_noise = NULL,
   noise_nPC = 5,
-  noise_erosion = NULL
+  noise_erosion = NULL,
+  center_X = TRUE,
+  scale_X = TRUE,
+  detrend_X = 0
 )
 }
 \arguments{
@@ -27,19 +30,19 @@ CompCor(
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
 
  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
- the data ROI is indicated by \code{TRUE} values. If \code{"infer"}, all 
+ the data ROI is indicated by \code{TRUE} values. If \code{"infer"} (default), all 
  columns of \code{X} will be included in the data ROI (\code{rep(TRUE, V)}).
 
  If \code{X} is an array or NIFTI, this must be either a vector of values
  to expect for out-of-mask voxels in \code{X}, or a (file path to a) 3D NIFTI.
  In the latter case, each of the volume dimensions should match the first
  three dimensions of \code{X}. Voxels in the data ROI should be indicated by
- \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"},
+ \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"} (default),
  will be set to \code{c(0, NA, NaN)} (include all voxels which are not
  \code{0}, \code{NA}, or \code{NaN}).
 
  If \code{X} is a \code{"xifti"} all data locations will be used and this
- should be left as \code{"infer"}.
+ should be left as \code{"infer"} (default).
 
  If \code{NULL}, the data ROI will be empty. This is useful for obtaining just
  the noise ROI, if the data and noise are located in separate files.}
@@ -90,6 +93,11 @@ It will be matched to each ROI based on the name of each entry, or if the
 names are missing, the order of entries. If it is an unnamed vector, its 
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
+
+\item{center_X, scale_X, detrend_X}{Center, scale, and detrend data columns? Will
+affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
+and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
+indicated by the number of DCT bases to regress (0 to not detrend).}
 }
 \value{
 A list with entries \code{"data"} and \code{"noise"}
@@ -106,5 +114,7 @@ A list with entries \code{"data"} and \code{"noise"}
 The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
 }
 \details{
-The data are centered on each voxel timecourse's median.
+The data are centered on each voxel timecourse's median. If the data ROI is
+ empty, the CompCor regressors will be calculated, but not regression will
+ be performed.
 }

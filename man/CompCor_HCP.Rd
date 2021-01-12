@@ -5,24 +5,21 @@
 \title{Run CompCor on the HCP data}
 \usage{
 CompCor_HCP(
-  cii,
-  brainstructures = c("left", "right"),
   nii,
   nii_labels,
   ROI_noise = c("wm_cort", "csf"),
   noise_nPC = 5,
   noise_erosion = NULL,
-  ...
+  timepoints = NULL,
+  cii = NULL,
+  brainstructures = c("left", "right"),
+  center_X = TRUE,
+  scale_X = TRUE,
+  detrend_X = 0,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
-ROI components will be regressed. In the HCP, the corresponding file is e.g.
-"../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
-
-\item{brainstructures}{Choose among "left", "right", and "subcortical".
-Default: \code{c("left", "right")} (cortical data only)}
-
 \item{nii}{\eqn{I \times J \times \K \times T} 
 NIFTI object or array (or file path to the NIFTI) which contains
 whole-brain data, including the noise ROIs. In the HCP, the corresponding
@@ -53,9 +50,44 @@ In the HCP, the corresponding file is "ROIs/Atlas_wmparc.2.nii.gz".}
 
  Default: \code{c("wm_cort", "csf")}}
 
-\item{noise_nPC, noise_erosion}{See \code{\link{clever_multi}}.}
+\item{noise_nPC}{The number of principal components to compute for each noise
+ ROI. Alternatively, values between 0 and 1, in which case they will 
+ represent the minimum proportion of variance explained by the PCs used for
+ each noise ROI. The smallest number of PCs will be used to achieve this 
+ proportion of variance explained. 
 
-\item{...}{Additional arguments to \code{\link{clever_multi}}.}
+ Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+ It will be matched to each ROI based on the name of each entry, or if the 
+ names are missing, the order of entries. If it is an unnamed vector, its
+ elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
+ each noise ROI).}
+
+\item{noise_erosion}{The number of voxel layers to erode the noise ROIs by. 
+Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+It will be matched to each ROI based on the name of each entry, or if the 
+names are missing, the order of entries. If it is an unnamed vector, its 
+elements will be recycled. Default: \code{NULL}, which will use a value of
+0 (do not erode the noise ROIs).}
+
+\item{timepoints}{A numeric vector indicating the timepoints to compute 
+CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
+with 1, so the first timepoint has index 1 and the last has the same index
+as the length of the scan.)}
+
+\item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
+ROI components will be regressed. In the HCP, the corresponding file is e.g.
+"../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
+
+\item{brainstructures}{Choose among "left", "right", and "subcortical".
+Default: \code{c("left", "right")} (cortical data only)}
+
+\item{center_X, scale_X, detrend_X}{Center, scale, and detrend data columns? Will
+affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
+and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
+indicated by the number of DCT bases to regress (0 to not detrend). By default,
+the data is centered and scaled but not detrended.}
+
+\item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \description{
 Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
