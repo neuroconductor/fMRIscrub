@@ -51,7 +51,10 @@ CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise
       } else {
         B <- cbind(1, B)
       }
-      X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]])) 
+      # Remove linearly-dependent columns
+      # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
+      B <- B[, qr(B)$pivot[seq_len(qr(B)$rank)]]
+      X_noise[[ii]] <- t( (diag(T_) - (B %*% solve(t(B) %*% B, t(B)) )) %*% t(X_noise[[ii]]) ) 
     }
     #	Center again for good measure.
     if (detrend && center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
@@ -189,7 +192,10 @@ CompCor <- function(
       } else {
         B <- cbind(1, B)
       }
-      out1$X <- t((diag(T_) - (B %*% t(B))) %*% t(out1$X)) 
+      # Remove linearly-dependent columns
+      # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
+      B <- B[, qr(B)$pivot[seq_len(qr(B)$rank)]]
+      out1$X <- t( (diag(T_) - (B %*% solve(t(B) %*% B, t(B)) )) %*% t(out1$X) ) 
     }
     #	Center again for good measure.
     if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }

@@ -90,8 +90,8 @@
 #'  }
 # @param R_true The \eqn{T \times T} correlation matrix, if known. Used for the bootstrap
 #  robust distance measure.
-#' @param full_PCA Return the full SVD? Default: \code{FALSE} (return
-#'  only the components used to compute the measures).
+#' @param full_PCA Only applies to the PCA projection. Return the full SVD? 
+#'  Default: \code{FALSE} (return only the components used to compute the measures).
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @return A \code{"clever"} object, i.e. a list with components

@@ -301,7 +301,7 @@ clever_multi = function(
   X,
   measures=c("leverage", "DVARS2"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
-  projections = "PCA_kurt", solve_dirs=FALSE,
+  projections = "PCA2_kurt", solve_dirs=FALSE,
   center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
@@ -557,7 +557,10 @@ clever_multi = function(
     } else {
       B <- cbind(1, B)
     }
-    X <- t((diag(T_) - (B %*% t(B))) %*% t(X)) 
+    # Remove linearly-dependent columns
+    # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
+    B <- B[, qr(B)$pivot[seq_len(qr(B)$rank)]]
+    X <- t( (diag(T_) - (B %*% solve(t(B) %*% B, t(B)) )) %*% t(X) ) 
   }
   #	Center again for good measure.
   if (detrend && center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
@@ -841,6 +844,9 @@ clever_multi = function(
   if (get_outliers) {
     out$outlier_flags <- as.data.frame(out$outlier_flags)
     out$outlier_cutoffs <- do.call(c, out$outlier_cutoffs)
+  } else {
+    out$outlier_flags <- NULL
+    out$outlier_cutoffs <- NULL
   }
   structure(out, class="clever_multi")
 }

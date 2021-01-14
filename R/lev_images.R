@@ -9,7 +9,7 @@
 #'  the top leverage images.
 #'
 #' @export
-get_leverage_images <- function(clev, timepoints=NULL, const_mask=NULL){
+lev_images <- function(clev, timepoints=NULL, const_mask=NULL){
 
   if (is.null(timepoints)) {
     timepoints <- which(clev$outlier_flags)

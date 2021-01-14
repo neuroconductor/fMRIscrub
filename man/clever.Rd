@@ -117,8 +117,8 @@ for kurtosis should be used to select the components? Default: \code{0.95}.}
      the right-tail 5\% significance level with Bonferroni FWER correction).}
  }}
 
-\item{full_PCA}{Return the full SVD? Default: \code{FALSE} (return
-only the components used to compute the measures).}
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+Default: \code{FALSE} (return only the components used to compute the measures).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }

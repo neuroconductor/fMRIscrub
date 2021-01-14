@@ -153,7 +153,7 @@ The median time point appears normal, whereas the most outlying time point clear
 ```{r eval=FALSE}
 clev <- clever(Dat1, solve_dirs=TRUE)
 const_mask <- apply(Dat1, 2, sd) < 1e-8
-Lev_Img1 = get_leverage_images(clev, const_mask=const_mask)
+Lev_Img1 = lev_images(clev, const_mask=const_mask)
 cat('The timepoints meeting the first outlier level threshold:\n')
 cat(paste(row.names(Lev_Img1$mean), collapse=", "))
 ```

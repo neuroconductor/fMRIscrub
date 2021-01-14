@@ -10,7 +10,7 @@ clever_multi(
   ROI_data = "infer",
   ROI_noise = NULL,
   X_motion = NULL,
-  projections = "PCA_kurt",
+  projections = "PCA2_kurt",
   solve_dirs = FALSE,
   center = TRUE,
   scale = TRUE,
