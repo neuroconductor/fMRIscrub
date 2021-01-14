@@ -70,11 +70,6 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{timepoints}{A numeric vector indicating the timepoints to compute 
-CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
-with 1, so the first timepoint has index 1 and the last has the same index
-as the length of the scan.)}
-
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
 ROI components will be regressed. In the HCP, the corresponding file is e.g.
 "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
@@ -99,6 +94,11 @@ applicable. \code{NULL} to not add additional nuisance regressors. Affects
 both \code{X} and the noise data.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
+
+\item{frames}{A numeric vector indicating the timepoints to compute 
+CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
+with 1, so the first timepoint has index 1 and the last has the same index
+as the length of the scan.)}
 }
 \description{
 Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness

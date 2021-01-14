@@ -60,7 +60,7 @@
 #' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} to not add additional nuisance regressors.
+#'  applicable. \code{NULL} (default) to not add additional nuisance regressors.
 #' @param PCATF_kwargs Arguments to \code{\link{PCATF}} in list form. Valid
 #'  entries are:
 #'  

@@ -53,8 +53,8 @@
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
 #'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
-#' @param timepoints A numeric vector indicating the timepoints to compute 
-#'  CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
+#' @param frames A numeric vector indicating the timepoints to compute 
+#'  CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
 #'  with 1, so the first timepoint has index 1 and the last has the same index
 #'  as the length of the scan.)
 #' @param center,scale Center the columns of the data by median, and scale the
@@ -118,11 +118,11 @@ CompCor_HCP <- function(
   )
 
   T_ <- dim(nii)[4]
-  if (!is.null(timepoints)) {
-    stopifnot(all(timepoints %in% seq(T_)))
-    nii <- nii[,,,timepoints]
-    if (length(timepoints) < 10) {
-      warning("There are very few timepoints.\n")
+  if (!is.null(frames)) {
+    stopifnot(all(frames %in% seq(T_)))
+    nii <- nii[,,,frames]
+    if (length(frames) < 10) {
+      warning("There are very few frames.\n")
     }
   }
 
@@ -130,7 +130,7 @@ CompCor_HCP <- function(
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center=center, scale=scale, detrend=detrend
+    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X
   )$noise
 
   # `cii`
@@ -147,9 +147,9 @@ CompCor_HCP <- function(
 
     cii <- do.call(rbind, cii$data)
 
-    if (!is.null(timepoints)) {
-      stopifnot(all(timepoints %in% seq(ncol(cii))))
-      cii <- cii[,timepoints]
+    if (!is.null(frames)) {
+      stopifnot(all(frames %in% seq(ncol(cii))))
+      cii <- cii[,frames]
     }
 
     out$data <- CompCor.regress(cii, out$PCs)
