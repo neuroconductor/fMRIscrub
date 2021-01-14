@@ -4,7 +4,7 @@
 \alias{CompCor.noise_comps}
 \title{CompCor: get noise components}
 \usage{
-CompCor.noise_comps(X_noise, center, scale, DCT, nuisance_too, noise_nPC)
+CompCor.noise_comps(X_noise, center, scale, noise_nPC)
 }
 \arguments{
 \item{X_noise}{The noise ROIs data}
@@ -19,6 +19,10 @@ A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
  noise_erosion, noise_comps, and noise_var.
 }
 \description{
-CompCor: get noise components
+Get noise components for aCompCor.
+}
+\details{
+DCT should be 0 and nuisance_too should be NULL, because these should
+ be added to the final nuisance design matrix along with the CompCor components!
 }
 \keyword{internal}

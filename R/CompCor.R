@@ -1,4 +1,9 @@
 #' CompCor: get noise components
+#' 
+#' Get noise components for aCompCor.
+#'
+#' DCT should be 0 and nuisance_too should be NULL, because these should
+#'  be added to the final nuisance design matrix along with the CompCor components!
 #'
 #' @param X_noise The noise ROIs data
 #' @param center,scale,DCT,nuisance_too Center, scale, detrend, and nuisance
@@ -9,21 +14,13 @@
 #'  noise_erosion, noise_comps, and noise_var.
 #' 
 #' @keywords internal
-CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise_nPC){
+CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
   TOL <- 1e-8
 
   N <- length(X_noise)
   noise_comps <- vector("list", N); names(noise_comps) <- names(X_noise)
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
   noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
-
-  if (is.null(DCT)) { DCT <- 0 }
-  detrend <- DCT > 0
-  do_nreg <- !is.null(nuisance_too)
-  if (do_nreg) {
-    stopifnot(is.matrix(nuisance_too))
-    stopifnot(nrow(nuisance_too) == T_)
-  }
 
   if (length(noise_nPC) == 1) {
     noise_nPC <- as.list(rep(noise_nPC, N))
@@ -40,27 +37,6 @@ CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise
     X_noise[[ii]] <- t(X_noise[[ii]])
     #	Center.
     if (center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
-    # Detrend and perform nuisance regression.
-    if (detrend | do_nreg) {
-      B <- NULL
-      if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
-      if (do_nreg) { B <- cbind(B, nuisance_too) }
-      if (center) {
-        # Center design matrix robustly instead of using intercept term.
-        B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
-      } else {
-        B <- cbind(1, B)
-      }
-      # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-      # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
-      qrB <- qr(B)
-      B <- B[, qrB$pivot[seq_len(qrB$rank)]]
-      QB <- qr.Q(qrB)
-      H <- QB %*% t(QB)
-      X_noise[[ii]] <- X_noise[[ii]] %*% (diag(T_) - H)
-    }
-    #	Center again for good measure.
-    if (detrend && center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(X_noise[[ii]]), na.rm=TRUE)
     X_constant <- mad < TOL
@@ -99,21 +75,31 @@ CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise
   list(noise_comps=noise_comps, noise_var=noise_var, noise_vartotal=noise_vartotal)
 }
 
-#' CompCor: regress
+#' Nuisance regression
 #'
-#' @param X The data
-#' @param noise_comps The noise components
+#' Performs nuisance regression. The data and design matrix must both be
+#'  centered, or an intercept must be included in the design matrix!
 #'
-#' @return The data with the noise components regressed from it.
+#' @param X The TxV or VxT data.
+#' @param design The TxQ matrix of nuisance regressors
+#'
+#' @return The data after nuisance regression
 #' 
-#' @importFrom stats hat
 #' @keywords internal
-CompCor.regress <- function(X, noise_comps){
-  # Project each row of the data (which is why we transpose) on 
-  #   the PCs (and the vector of ones for the intercept).
-  noise_mat <- do.call(cbind, noise_comps)
-  I_minus_H <- diag(nrow(noise_mat)) - stats::hat(noise_mat)
-  t(I_minus_H %*% t(X))
+nuisance_regression <- function(X, design){
+  # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
+  # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
+  qrd <- qr(design)
+  design <- design[, qrd$pivot[seq_len(qrd$rank)]]
+  Qd <- qr.Q(qrd)
+  I_m_H <- diag(nrow(design)) - (Qd %*% t(Qd))
+  if (nrow(X)==nrow(design)) {
+    return(I_m_H %*% X)
+  } else if (ncol(X)==nrow(design)) {
+    return(X %*% I_m_H)
+  } else {
+    stop("X and design are not of compatible dimensions.")
+  }
 }
 
 #' CompCor
@@ -165,9 +151,7 @@ CompCor <- function(
   )
 
   out2 <- CompCor.noise_comps(
-    X_noise=out1$X_noise, 
-    center=center, scale=scale, DCT=DCT, nuisance_too=nuisance_too,
-    noise_nPC=out1$noise_nPC
+    X_noise=out1$X_noise, center=center, scale=scale, noise_nPC=out1$noise_nPC
   )
 
   T_ <- nrow(out1$X)
@@ -179,51 +163,32 @@ CompCor <- function(
   }
 
   if (any(ROI_data)) {
-    TOL <- 1e-8
-    # Transpose.
+    # Normalize data.
     out1$X <- t(out1$X)
-    #	Center.
     if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
-    # Detrend and perform nuisance regression.
-    if (detrend | do_nreg) {
-      B <- NULL
-      if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
-      if (do_nreg) { B <- cbind(B, nuisance_too) }
-      if (center) {
-        # Center design matrix robustly instead of using intercept term.
-        B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
-      } else {
-        B <- cbind(1, B)
-      }
-      # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-      # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
-      qrB <- qr(B)
-      B <- B[, qrB$pivot[seq_len(qrB$rank)]]
-      QB <- qr.Q(qrB)
-      H <- QB %*% t(QB)
-      out1$X <- out1$X %*% (diag(T_) - H)
+    if (scale) { 
+      mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
+      mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
+      out1$X <- out1$X * mad_inv
     }
-    #	Center again for good measure.
-    if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
-    # Compute MADs.
-    mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
-    X_constant <- mad < TOL
-    if (any(X_constant)) {
-      if (all(X_constant)) {
-      stop(paste0("All data locations are zero-variance.\n"))
-      } else {
-        warning(paste0("Warning: ", sum(X_constant),
-        " constant data locations (out of ", length(X_constant),
-        "). These will be removed for estimation of the covariance.\n"))
-      }
-    }
-    mad <- mad[!X_constant]; out1$X <- out1$X[!X_constant,]
-    # Scale.
-    if (scale) { out1$X <- out1$X/c(mad) }
-    # Revert transpose.
     out1$X <- t(out1$X)
 
-    out1$X <- CompCor.regress(out1$X, out2$noise_comps)
+    # Make design matrix.
+    design <- do.call(cbind, out2$noise_comps)
+    if (DCT > 0) { 
+      DCTb <- dct_bases(T_, DCT)
+      if (!center) { DCTb <- scale(DCTb) }
+      design <- cbind(design, DCTb) 
+    }
+    if (!is.null(nuisance_too)) {
+      stopifnot(is.matrix(nuisance_too))
+      if(nrow(nuisance_too) != T_) { stop("Extra nuisance regressors must be same length as data, after dropping frames.") }
+      design <- cbind(design, nuisance_too)
+    }
+    if (center) { design <- scale(design) } 
+
+
+    out1$X <- nuisance_regression(out1$X, design)
   } else {
     out1["X"] <- list(NULL)
   }

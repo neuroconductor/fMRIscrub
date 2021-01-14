@@ -59,17 +59,15 @@
 #'  as the length of the scan.)
 #' @param center,scale Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
-#'  \code{X} and the noise data.
-#' @param DCT Detrend the columns of the data using the discrete cosine
-#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
-#'  use for detrending. Use \code{0} (default) to forgo detrending. 
+#'  \code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
+#'  so if it is \code{FALSE}, \code{nuisance_too} must already be centered.
+#' @param DCT Add DCT bases to the nuisance regression? Use an integer to 
+#'  indicate the number of cosine bases. Use \code{0} (default) to forgo detrending. 
 #' 
 #'  The data must be centered, either before input or with \code{center}.
-#' @param nuisance_too A matrix of nuisance signals to regress from the data
-#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-#'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} to not add additional nuisance regressors. Affects 
-#'  both \code{X} and the noise data.
+#' @param nuisance_too A matrix of nuisance signals to add to the nuisance
+#'  regression. Should have \eqn{T} rows. \code{NULL} to not add additional 
+#'  nuisance regressors (default).
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @export
@@ -95,7 +93,7 @@ CompCor_HCP <- function(
   stopifnot(length(dim(nii_labels))==3)
   stopifnot(dim(nii_labels)==dim(nii)[1:3])
 
-  # Check `ROI_noise`.
+  # Get ROI masks.
   ROI_noise.default <- list(
     wm_cort = c(3000:4035, 5001, 5002), 
     wm_cblm =  c(7, 46),
@@ -117,20 +115,24 @@ CompCor_HCP <- function(
     function(x){array(nii_labels %in% x, dim=dim(nii_labels))}
   )
 
+  # Drop frames in NIFTI.
   T_ <- dim(nii)[4]
   if (!is.null(frames)) {
     stopifnot(all(frames %in% seq(T_)))
     nii <- nii[,,,frames]
-    if (length(frames) < 10) {
-      warning("There are very few frames.\n")
-    }
+  }
+  T_ <- dim(nii)[4]
+  if (T_ < 10) {
+    warning("There are very few frames.\n")
   }
 
   cat("Computing noise components.\n")
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center=center, scale=scale, DCT=DCT, nuisance_too=nuisance_too
+    center=center, scale=scale, 
+    # We do nuisance regression with aCompCor, not prior.
+    DCT=0, nuisance_too=NULL
   )$noise
 
   # `cii`
@@ -147,12 +149,37 @@ CompCor_HCP <- function(
 
     cii <- do.call(rbind, cii$data)
 
+    # Drop frames.
     if (!is.null(frames)) {
       stopifnot(all(frames %in% seq(ncol(cii))))
       cii <- cii[,frames]
     }
 
-    out$data <- CompCor.regress(cii, out$PCs)
+    # Normalize CIFTI.
+    cii <- t(cii)
+    if (center) { cii <- cii - c(rowMedians(cii, na.rm=TRUE)) }
+    if (scale) { 
+      mad <- 1.4826 * rowMedians(abs(cii), na.rm=TRUE)
+      mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
+      cii <- cii * mad_inv
+    }
+    cii <- t(cii)
+
+    # Make design matrix.
+    design <- do.call(cbind, out$PCs)
+    if (DCT > 0) { 
+      DCTb <- dct_bases(T_, DCT)
+      if (!center) { DCTb <- scale(DCTb) }
+      design <- cbind(design, DCTb) 
+    }
+    if (!is.null(nuisance_too)) {
+      stopifnot(is.matrix(nuisance_too))
+      if(nrow(nuisance_too) != T_) { stop("Extra nuisance regressors must be same length as data, after dropping frames.") }
+      design <- cbind(design, nuisance_too)
+    }
+    if (center) { design <- scale(design) } 
+
+    out$data <- nuisance_regression(cii, design)
   }
 
   out

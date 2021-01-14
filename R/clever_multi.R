@@ -554,16 +554,8 @@ clever_multi = function(
     if (center) {
       # Center design matrix robustly instead of using intercept term.
       B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
-    } else {
-      B <- cbind(1, B)
-    }
-    # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-    # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
-    qrB <- qr(B)
-    B <- B[, qrB$pivot[seq_len(qrB$rank)]]
-    QB <- qr.Q(qrB)
-    H <- QB %*% t(QB)
-    X <- X %*% (diag(T_) - H)
+    } 
+    X <- nuisance_regression(X, B)
   }
   #	Center again for good measure.
   if (detrend && center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }

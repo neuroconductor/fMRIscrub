@@ -48,7 +48,7 @@ FD <- function(
     warning(paste(
       "`X` has more than 6 columns.",
       "using the first 3 as translation RPs,",
-      "the second 3 as rotation RPs, and discarding the rest."
+      "the second 3 as rotation RPs, and discarding the rest.\n"
     ))
     X <- X[,1:6]
   }

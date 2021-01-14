@@ -84,19 +84,17 @@ Default: \code{c("left", "right")} (cortical data only)}
 
 \item{center, scale}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE} for both. Affects both
-\code{X} and the noise data.}
+\code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
+so if it is \code{FALSE}, \code{nuisance_too} must already be centered.}
 
-\item{DCT}{Detrend the columns of the data using the discrete cosine
- transform (DCT)? Use an integer to indicate the number of cosine bases to 
- use for detrending. Use \code{0} (default) to forgo detrending. 
+\item{DCT}{Add DCT bases to the nuisance regression? Use an integer to 
+ indicate the number of cosine bases. Use \code{0} (default) to forgo detrending. 
 
  The data must be centered, either before input or with \code{center}.}
 
-\item{nuisance_too}{A matrix of nuisance signals to regress from the data
-before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-regression will be performed simultaneously with DCT detrending if 
-applicable. \code{NULL} to not add additional nuisance regressors. Affects 
-both \code{X} and the noise data.}
+\item{nuisance_too}{A matrix of nuisance signals to add to the nuisance
+regression. Should have \eqn{T} rows. \code{NULL} to not add additional 
+nuisance regressors (default).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
