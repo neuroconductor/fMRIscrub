@@ -10,9 +10,9 @@ CompCor(
   ROI_noise = NULL,
   noise_nPC = 5,
   noise_erosion = NULL,
-  center_X = TRUE,
-  scale_X = TRUE,
-  detrend_X = 0
+  center = TRUE,
+  scale = TRUE,
+  detrend = 0
 )
 }
 \arguments{
@@ -94,7 +94,7 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{center_X, scale_X, detrend_X}{Center, scale, and detrend data columns? Will
+\item{center, scale, detrend}{Center, scale, and detrend data columns? Will
 affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
 and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
 indicated by the number of DCT bases to regress (0 to not detrend).}

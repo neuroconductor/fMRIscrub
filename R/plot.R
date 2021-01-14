@@ -312,7 +312,7 @@ clever_plot_indiv_panel <- function(meas, cuts, flag, name, robdist_info=NULL, .
       axis.title.x=ggplot2::element_blank(),
       legend.position=legend.position,
       panel.spacing.y=ggplot2::unit(1.5, "lines")) +
-    ggplot2::scale_x_continuous(expand=ggplot2::expansion(mult = c(.01, .01)), breaks=xticks) +
+    ggplot2::scale_continuous(expand=ggplot2::expansion(mult = c(.01, .01)), breaks=xticks) +
     ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult = c(0, .01)))
 
   # [TO-DO]: implement dual axis for DVARS.

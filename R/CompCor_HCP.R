@@ -57,7 +57,7 @@
 #'  CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
 #'  with 1, so the first timepoint has index 1 and the last has the same index
 #'  as the length of the scan.)
-#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns? Will
+#' @param center,scale,detrend Center, scale, and detrend data columns? Will
 #'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
 #'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
 #'  indicated by the number of DCT bases to regress (0 to not detrend). By default,
@@ -69,7 +69,7 @@ CompCor_HCP <- function(
   nii, nii_labels, 
   ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
   timepoints=NULL, cii=NULL, brainstructures=c("left", "right"),
-  center_X = TRUE, scale_X = TRUE, detrend_X = 0,
+  center = TRUE, scale = TRUE, detrend = 0,
   verbose=FALSE){
 
   # `nii`
@@ -122,7 +122,7 @@ CompCor_HCP <- function(
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center_X=center_X, scale_X=scale_X, detrend_X=detrend_X
+    center=center, scale=scale, detrend=detrend
   )$noise
 
   # `cii`
