@@ -67,13 +67,24 @@ Centering is necessary for detrending and for computing PCA/ICA, so if this
 is set to \code{FALSE}, \the input data must already be centered.}
 
 \item{DCT_X}{Detrend the columns of the data using the discrete cosine
-transform (DCT)? Use an integer to indicate the number of cosine bases to 
-use for detrending. Use \code{0} (default) to forgo detrending.}
+ transform (DCT)? Use an integer to indicate the number of cosine bases to 
+ use for detrending. Use \code{0} (default) to forgo detrending. 
+
+ The data must be centered, either before input or with \code{center_X}.
+
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. Additionally,
+ if kurtosis is being used to select the projection directions, trends can 
+ induce positive or negative kurtosis, contaminating the connection between 
+ high kurtosis and outlier presence. 
+ 
+ Detrending should not be used with non-time-series data because the 
+ observations are not temporally related.}
 
 \item{nuisance_X}{A matrix of nuisance signals to regress from the data
 before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 regression will be performed simultaneously with DCT detrending if 
-applicable. \code{NULL} to not add additional nuisance regressors.}
+applicable. \code{NULL} (default) to not add additional nuisance regressors.}
 
 \item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
 entries are:
@@ -110,21 +121,6 @@ for kurtosis should be used to select the components? Default: \code{0.95}.}
 only the components used to compute the measures).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
-
-\item{detrend_X}{Detrend the columns of the data using the DCT? Use an integer
- to indicate the number of cosine bases to use for detrending (default: \code{4}).
- Or, use \code{0} to forgo detrending. 
-
- The data must be centered, either before input or with \code{center_X}.
-
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- if kurtosis is being used to select the projection directions, trends can 
- induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. 
- 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
 }
 \value{
 A \code{"clever"} object, i.e. a list with components

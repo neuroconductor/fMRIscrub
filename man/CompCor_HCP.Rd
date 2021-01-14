@@ -10,12 +10,13 @@ CompCor_HCP(
   ROI_noise = c("wm_cort", "csf"),
   noise_nPC = 5,
   noise_erosion = NULL,
-  timepoints = NULL,
+  frames = NULL,
   cii = NULL,
   brainstructures = c("left", "right"),
   center_X = TRUE,
   scale_X = TRUE,
-  detrend_X = 0,
+  DCT_X = 0,
+  nuisance_X = NULL,
   verbose = FALSE
 )
 }
@@ -69,8 +70,8 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{timepoints}{A numeric vector indicating the timepoints to compute 
-CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
+\item{frames}{A numeric vector indicating the timepoints to compute 
+CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
 with 1, so the first timepoint has index 1 and the last has the same index
 as the length of the scan.)}
 
@@ -81,11 +82,22 @@ ROI components will be regressed. In the HCP, the corresponding file is e.g.
 \item{brainstructures}{Choose among "left", "right", and "subcortical".
 Default: \code{c("left", "right")} (cortical data only)}
 
-\item{center_X, scale_X, detrend_X}{Center, scale, and detrend data columns? Will
-affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
-and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
-indicated by the number of DCT bases to regress (0 to not detrend). By default,
-the data is centered and scaled but not detrended.}
+\item{center_X, scale_X}{Center the columns of the data by their medians, and scale the
+columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+Centering is necessary for detrending and for computing PCA/ICA, so if this 
+is set to \code{FALSE}, \the input data must already be centered. Will affect
+both the data and the noise ROIs.}
+
+\item{DCT_X}{Detrend the columns of the data using the discrete cosine
+transform (DCT)? Use an integer to indicate the number of cosine bases to 
+use for detrending. Use \code{0} (default) to forgo detrending. Will affect
+both the data and the noise ROIs.}
+
+\item{nuisance_X}{A matrix of nuisance signals to regress from the data
+before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+regression will be performed simultaneously with DCT detrending if 
+applicable. \code{NULL} (default) to not add additional nuisance regressors. 
+Will affect both the data and the noise ROIs.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }

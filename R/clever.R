@@ -46,9 +46,6 @@
 #' @param DCT_X Detrend the columns of the data using the discrete cosine
 #'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
 #'  use for detrending. Use \code{0} (default) to forgo detrending. 
-#' @param detrend_X Detrend the columns of the data using the DCT? Use an integer
-#'  to indicate the number of cosine bases to use for detrending (default: \code{4}).
-#'  Or, use \code{0} to forgo detrending. 
 #' 
 #'  The data must be centered, either before input or with \code{center_X}.
 #' 
@@ -63,7 +60,7 @@
 #' @param nuisance_X A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} to not add additional nuisance regressors.
+#'  applicable. \code{NULL} (default) to not add additional nuisance regressors.
 #' @param PCATF_kwargs Arguments to \code{\link{PCATF}} in list form. Valid
 #'  entries are:
 #'  

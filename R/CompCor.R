@@ -115,10 +115,20 @@ CompCor.regress <- function(X, noise_comps){
 #'
 #' @inheritParams data_clever_CompCor_Params
 #' @inheritParams noise_Params
-#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns? Will
-#'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
-#'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
-#'  indicated by the number of DCT bases to regress (0 to not detrend).
+#' @param center_X,scale_X Center the columns of the data by their medians, and scale the
+#'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+#'  Centering is necessary for detrending and for computing PCA/ICA, so if this 
+#'  is set to \code{FALSE}, \the input data must already be centered. Will affect
+#'  both the data and the noise ROIs.
+#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
+#'  use for detrending. Use \code{0} (default) to forgo detrending. Will affect
+#'  both the data and the noise ROIs.
+#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+#'  regression will be performed simultaneously with DCT detrending if 
+#'  applicable. \code{NULL} (default) to not add additional nuisance regressors. 
+#'  Will affect both the data and the noise ROIs.
 #'
 #' @return A list with entries \code{"data"} and \code{"noise"}
 #'
@@ -136,7 +146,7 @@ CompCor.regress <- function(X, noise_comps){
 CompCor <- function(
   X, ROI_data="infer", ROI_noise=NULL, 
   noise_nPC=5, noise_erosion=NULL,
-  center_X=TRUE, scale_X=TRUE, detrend_X=0
+  center_X=TRUE, scale_X=TRUE, DCT_X=0, nuisance_X=NULL
   ){
 
   out1 <- format_data(
@@ -146,7 +156,7 @@ CompCor <- function(
 
   out2 <- CompCor.noise_comps(
     X_noise=out1$X_noise, 
-    center_X=center_X, scale_X=scale_X, detrend_X=detrend_X,
+    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X,
     noise_nPC=out1$noise_nPC
   )
 
@@ -156,14 +166,15 @@ CompCor <- function(
     out1$X <- t(out1$X)
     #	Center.
     if (center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
-    # Detrend.
-    if (identical(detrend_X, FALSE)) { detrend_X <- 0 }
-    if (detrend_X > 0) {
-      B <- dct_bases(T_, detrend_X) / sqrt((T_+1)/2)
-      out1$X <- t((diag(T_) - (B %*% t(B))) %*% t(out1$X))
+    # Detrend and perform nuisance regression.
+    if (detrend_X | nreg_X) {
+      B <- NULL
+      if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
+      if (nreg_X) { B <- cbind(B, nuisance_X) }
+      out1$X <- t((diag(T_) - (B %*% t(B))) %*% t(out1$X)) 
     }
     #	Center again for good measure.
-    if (center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    if (detrend_X && center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
     X_constant <- mad < TOL

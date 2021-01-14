@@ -53,23 +53,32 @@
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
 #'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
-#' @param timepoints A numeric vector indicating the timepoints to compute 
-#'  CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
+#' @param frames A numeric vector indicating the timepoints to compute 
+#'  CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
 #'  with 1, so the first timepoint has index 1 and the last has the same index
 #'  as the length of the scan.)
-#' @param center_X,scale_X,detrend_X Center, scale, and detrend data columns? Will
-#'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
-#'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
-#'  indicated by the number of DCT bases to regress (0 to not detrend). By default,
-#'  the data is centered and scaled but not detrended.
+#' @param center_X,scale_X Center the columns of the data by their medians, and scale the
+#'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+#'  Centering is necessary for detrending and for computing PCA/ICA, so if this 
+#'  is set to \code{FALSE}, \the input data must already be centered. Will affect
+#'  both the data and the noise ROIs.
+#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
+#'  use for detrending. Use \code{0} (default) to forgo detrending. Will affect
+#'  both the data and the noise ROIs.
+#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+#'  regression will be performed simultaneously with DCT detrending if 
+#'  applicable. \code{NULL} (default) to not add additional nuisance regressors. 
+#'  Will affect both the data and the noise ROIs.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @export
 CompCor_HCP <- function(
   nii, nii_labels, 
   ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
-  timepoints=NULL, cii=NULL, brainstructures=c("left", "right"),
-  center_X = TRUE, scale_X = TRUE, detrend_X = 0,
+  frames=NULL, cii=NULL, brainstructures=c("left", "right"),
+  center_X = TRUE, scale_X = TRUE, DCT_X=0, nuisance_X=NULL,
   verbose=FALSE){
 
   # `nii`
@@ -110,11 +119,11 @@ CompCor_HCP <- function(
   )
 
   T_ <- dim(nii)[4]
-  if (!is.null(timepoints)) {
-    stopifnot(all(timepoints %in% seq(T_)))
-    nii <- nii[,,,timepoints]
-    if (length(timepoints) < 10) {
-      warning("There are very few timepoints.\n")
+  if (!is.null(frames)) {
+    stopifnot(all(frames %in% seq(T_)))
+    nii <- nii[,,,frames]
+    if (length(frames) < 10) {
+      warning("There are very few frames.\n")
     }
   }
 
@@ -122,7 +131,7 @@ CompCor_HCP <- function(
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center_X=center_X, scale_X=scale_X, detrend_X=detrend_X
+    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X
   )$noise
 
   # `cii`
@@ -139,9 +148,9 @@ CompCor_HCP <- function(
 
     cii <- do.call(rbind, cii$data)
 
-    if (!is.null(timepoints)) {
-      stopifnot(all(timepoints %in% seq(ncol(cii))))
-      cii <- cii[,timepoints]
+    if (!is.null(frames)) {
+      stopifnot(all(frames %in% seq(ncol(cii))))
+      cii <- cii[,frames]
     }
 
     out$data <- CompCor.regress(cii, out$PCs)
