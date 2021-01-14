@@ -9,7 +9,7 @@ CompCor.noise_comps(X_noise, center, scale, noise_nPC)
 \arguments{
 \item{X_noise}{The noise ROIs data}
 
-\item{center, scale, DCT, nuisance_too}{Center, scale, detrend, and nuisance
+\item{center, scale}{Center & scale robustly
 regression}
 
 \item{noise_nPC}{Number of PCs to obtain for each noise ROI}

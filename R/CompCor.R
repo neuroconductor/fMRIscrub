@@ -6,7 +6,7 @@
 #'  be added to the final nuisance design matrix along with the CompCor components!
 #'
 #' @param X_noise The noise ROIs data
-#' @param center,scale,DCT,nuisance_too Center, scale, detrend, and nuisance
+#' @param center,scale Center & scale robustly
 #'  regression
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
 #' 
