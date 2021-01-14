@@ -1,7 +1,7 @@
 #' CompCor: get noise components
 #'
 #' @param X_noise The noise ROIs data
-#' @param center_X,scale_X,DCT_X,nuisance_X Center, scale, detrend, and nuisance
+#' @param center,scale,DCT,nuisance_too Center, scale, detrend, and nuisance
 #'  regression
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
 #'
@@ -9,7 +9,7 @@
 #'  noise_erosion, noise_comps, and noise_var.
 #' 
 #' @keywords internal
-CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, noise_nPC){
+CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise_nPC){
   TOL <- 1e-8
 
   N <- length(X_noise)
@@ -17,12 +17,12 @@ CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, n
   noise_var <- vector("list", N); names(noise_var) <- names(X_noise)
   noise_vartotal <- vector("list", N); names(noise_vartotal) <- names(X_noise)
 
-  if (is.null(DCT_X)) { DCT_X <- 0 }
-  detrend_X <- DCT_X > 0
-  nreg_X <- !is.null(nuisance_X)
-  if (nreg_X) {
-    stopifnot(is.matrix(nuisance_X))
-    stopifnot(nrow(nuisance_X) == T_)
+  if (is.null(DCT)) { DCT <- 0 }
+  detrend <- DCT > 0
+  do_nreg <- !is.null(nuisance_too)
+  if (do_nreg) {
+    stopifnot(is.matrix(nuisance_too))
+    stopifnot(nrow(nuisance_too) == T_)
   }
 
   if (length(noise_nPC) == 1) {
@@ -39,17 +39,22 @@ CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, n
     # Transpose.
     X_noise[[ii]] <- t(X_noise[[ii]])
     #	Center.
-    if (center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
+    if (center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Detrend and perform nuisance regression.
-    if (detrend_X | nreg_X) {
+    if (detrend | do_nreg) {
       B <- NULL
-      if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
-      if (nreg_X) { B <- cbind(B, nuisance_X) }
+      if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
+      if (do_nreg) { B <- cbind(B, nuisance_too) }
+      if (center) {
+        # Center design matrix robustly instead of using intercept term.
+        B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
+      } else {
+        B <- cbind(1, B)
+      }
       X_noise[[ii]] <- t((diag(T_) - (B %*% t(B))) %*% t(X_noise[[ii]])) 
-
     }
     #	Center again for good measure.
-    if (detrend_X && center_X) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
+    if (detrend && center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(X_noise[[ii]]), na.rm=TRUE)
     X_constant <- mad < TOL
@@ -65,7 +70,7 @@ CompCor.noise_comps <- function(X_noise, center_X, scale_X, DCT_X, nuisance_X, n
     }
     mad <- mad[!X_constant]; X_noise[[ii]] <- X_noise[[ii]][!X_constant,]
     # Scale.
-    if (scale_X) { X_noise[[ii]] <- X_noise[[ii]]/c(mad) }
+    if (scale) { X_noise[[ii]] <- X_noise[[ii]]/c(mad) }
     # Revert transpose.
     X_noise[[ii]] <- t(X_noise[[ii]])
     if (ncol(X_noise[[ii]])==0) { next }
@@ -115,20 +120,19 @@ CompCor.regress <- function(X, noise_comps){
 #'
 #' @inheritParams data_clever_CompCor_Params
 #' @inheritParams noise_Params
-#' @param center_X,scale_X Center the columns of the data by their medians, and scale the
-#'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
-#'  Centering is necessary for detrending and for computing PCA/ICA, so if this 
-#'  is set to \code{FALSE}, \the input data must already be centered. Will affect
-#'  both the data and the noise ROIs.
-#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#' @param center,scale Center the columns of the data by median, and scale the
+#'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
+#'  \code{X} and the noise data.
+#' @param DCT Detrend the columns of the data using the discrete cosine
 #'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
-#'  use for detrending. Use \code{0} (default) to forgo detrending. Will affect
-#'  both the data and the noise ROIs.
-#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#'  use for detrending. Use \code{0} (default) to forgo detrending. 
+#' 
+#'  The data must be centered, either before input or with \code{center}.
+#' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} (default) to not add additional nuisance regressors. 
-#'  Will affect both the data and the noise ROIs.
+#'  applicable. \code{NULL} to not add additional nuisance regressors. Affects 
+#'  both \code{X} and the noise data.
 #'
 #' @return A list with entries \code{"data"} and \code{"noise"}
 #'
@@ -160,21 +164,35 @@ CompCor <- function(
     noise_nPC=out1$noise_nPC
   )
 
+
+  detrend <- DCT > 0
+  do_nreg <- !is.null(nuisance_too)
+  if (do_nreg) {
+    stopifnot(is.matrix(nuisance_too))
+    stopifnot(nrow(nuisance_too) == T_)
+  }
+
   if (any(ROI_data)) {
     TOL <- 1e-8
     # Transpose.
     out1$X <- t(out1$X)
     #	Center.
-    if (center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
     # Detrend and perform nuisance regression.
-    if (detrend_X | nreg_X) {
+    if (detrend | do_nreg) {
       B <- NULL
-      if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
-      if (nreg_X) { B <- cbind(B, nuisance_X) }
+      if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
+      if (do_nreg) { B <- cbind(B, nuisance_too) }
+      if (center) {
+        # Center design matrix robustly instead of using intercept term.
+        B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
+      } else {
+        B <- cbind(1, B)
+      }
       out1$X <- t((diag(T_) - (B %*% t(B))) %*% t(out1$X)) 
     }
     #	Center again for good measure.
-    if (detrend_X && center_X) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
     # Compute MADs.
     mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
     X_constant <- mad < TOL
@@ -190,7 +208,7 @@ CompCor <- function(
     }
     mad <- mad[!X_constant]; out1$X <- out1$X[!X_constant,]
     # Scale.
-    if (scale_X) { out1$X <- out1$X/c(mad) }
+    if (scale) { out1$X <- out1$X/c(mad) }
     # Revert transpose.
     out1$X <- t(out1$X)
 

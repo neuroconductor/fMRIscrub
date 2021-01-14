@@ -39,15 +39,15 @@
 #'  This will save memory, especially for PCA since the full SVD
 #'  can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
 #'  leverage images.
-#' @param center_X,scale_X Center the columns of the data by their medians, and scale the
+#' @param center,scale Center the columns of the data by their medians, and scale the
 #'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
 #'  Centering is necessary for detrending and for computing PCA/ICA, so if this 
 #'  is set to \code{FALSE}, \the input data must already be centered.
-#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#' @param DCT Detrend the columns of the data using the discrete cosine
 #'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
 #'  use for detrending. Use \code{0} (default) to forgo detrending. 
 #' 
-#'  The data must be centered, either before input or with \code{center_X}.
+#'  The data must be centered, either before input or with \code{center}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,
@@ -57,7 +57,7 @@
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
-#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
 #'  applicable. \code{NULL} (default) to not add additional nuisance regressors.
@@ -150,7 +150,7 @@
 #' clev = clever(X)
 clever = function(
   X, measure="leverage", projection="PCA", PESEL=TRUE, solve_dirs=FALSE,
-  center_X=TRUE, scale_X=TRUE, DCT_X=0, nuisance_X=NULL,
+  center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
   outlier_cutoff=NULL,
@@ -185,7 +185,7 @@ clever = function(
   # Run `clever_multi`.
   clev <- clever_multi(
     X=X, measures=measure, projections=projection, solve_dirs=solve_dirs,
-    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X, 
+    center=center, scale=scale, DCT=DCT, nuisance_too=nuisance_too, 
     PCATF_kwargs=PCATF_kwargs, kurt_quantile=kurt_quantile, 
     get_outliers=get_outliers, outlier_cutoffs=outlier_cutoff,
     full_PCA=full_PCA, verbose=verbose

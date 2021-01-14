@@ -67,19 +67,16 @@
 #'  \code{FALSE}. This will save memory, especially for PCA since the full SVD
 #'  can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
 #'  leverage images.
-#' @param center_X,scale_X Center the columns of the data by median, and scale the
+#' @param center,scale Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE} for both. Centering is
 #'  necessary for detrending and for computing PCA/ICA, so if this is set to 
 #'  \code{FALSE}, the input data must already be centered. For aCompCor, these 
 #'  options will also be applied to the noise ROI data.
-#' @param DCT_X Detrend the columns of the data using the discrete cosine
+#' @param DCT Detrend the columns of the data using the discrete cosine
 #'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
 #'  use for detrending. Use \code{0} (default) to forgo detrending. 
-#' @param detrend_X Detrend the columns of the data using the DCT? Use an integer
-#'  to indicate the number of cosine bases to use for detrending (default: \code{4}).
-#'  Or, use \code{0} to forgo detrending. 
 #' 
-#'  The data must be centered, either before input or with \code{center_X}.
+#'  The data must be centered, either before input or with \code{center}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,
@@ -89,7 +86,7 @@
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
-#' @param nuisance_X A matrix of nuisance signals to regress from the data
+#' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
 #'  applicable. \code{NULL} to not add additional nuisance regressors.
@@ -303,7 +300,7 @@ clever_multi = function(
   measures=c("leverage", "DVARS2"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA_kurt", solve_dirs=FALSE,
-  center_X=TRUE, scale_X=TRUE, DCT_X=0, nuisance_X=NULL,
+  center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -465,8 +462,8 @@ clever_multi = function(
   stopifnot(is.TRUEorFALSE(solve_dirs))
   stopifnot(is.TRUEorFALSE(get_outliers))
   stopifnot(is.TRUEorFALSE(verbose))
-  stopifnot(is.TRUEorFALSE(center_X))
-  stopifnot(is.TRUEorFALSE(scale_X))
+  stopifnot(is.TRUEorFALSE(center))
+  stopifnot(is.TRUEorFALSE(scale))
 
   if(!identical(PCATF_kwargs, NULL)){
     names(PCATF_kwargs) <- match.arg(
@@ -523,12 +520,12 @@ clever_multi = function(
   # Do it here instead of calling `scale_med` to save memory. ------------------
   # ----------------------------------------------------------------------------
   
-  if (is.null(DCT_X)) { DCT_X <- 0 }
-  detrend_X <- DCT_X > 0
-  nreg_X <- !is.null(nuisance_X)
-  if (nreg_X) {
-    stopifnot(is.matrix(nuisance_X))
-    stopifnot(nrow(nuisance_X) == T_)
+  if (is.null(DCT)) { DCT <- 0 }
+  detrend <- DCT > 0
+  do_nreg <- !is.null(nuisance_too)
+  if (do_nreg) {
+    stopifnot(is.matrix(nuisance_too))
+    stopifnot(nrow(nuisance_too) == T_)
   }
 
   # [TO-DO: Skip if only Motion/FD/GSR requested.]
@@ -541,24 +538,30 @@ clever_multi = function(
       "Centering and detrending",
       "Scaling and detrending",
       "Centering, scaling, and detrending"
-    )[1*center_X + 2*scale_X + 4*detrend_X]
+    )[1*center + 2*scale + 4*detrend]
     cat(action, "the data matrix.")
-    if (nreg_X) { cat(" Also removing nuisance regressors.") }
+    if (do_nreg) { cat(" Also removing nuisance regressors.") }
     cat("\n")
   }
   # Transpose.
   X <- t(X)
   #	Center.
-  if (center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Detrend and perform nuisance regression.
-  if (detrend_X | nreg_X) {
+  if (detrend | do_nreg) {
     B <- NULL
-    if (detrend_X) { B <- dct_bases(T_, DCT_X) / sqrt((T_+1)/2) }
-    if (nreg_X) { B <- cbind(B, nuisance_X) }
+    if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
+    if (do_nreg) { B <- cbind(B, nuisance_too) }
+    if (center) {
+      # Center design matrix robustly instead of using intercept term.
+      B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
+    } else {
+      B <- cbind(1, B)
+    }
     X <- t((diag(T_) - (B %*% t(B))) %*% t(X)) 
   }
   #	Center again for good measure.
-  if (detrend_X && center_X) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  if (detrend && center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -578,7 +581,7 @@ clever_multi = function(
   }
   mad <- mad[!X_constant]; X <- X[!X_constant,]; V_ <- ncol(X)
   # Scale.
-  if (scale_X) { X <- X/c(mad) }
+  if (scale) { X <- X/c(mad) }
   # Revert transpose.
   X <- t(X)
 
@@ -621,7 +624,7 @@ clever_multi = function(
   if (any(grepl("CompCor", measures, fixed=TRUE))) {
     if (verbose) { cat("Computing CompCor.\n") }
     X_CompCor <- CompCor.noise_comps(
-      X_noise, center_X, scale_X, DCT_X, nuisance_X, noise_nPC
+      X_noise, center, scale, DCT, nuisance_too, noise_nPC
     )
     for (ii in seq_len(length(X_CompCor$noise_comps))) {
       out$CompCor[[names(X_noise)[ii]]] <- list(

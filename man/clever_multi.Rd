@@ -12,10 +12,10 @@ clever_multi(
   X_motion = NULL,
   projections = "PCA_kurt",
   solve_dirs = FALSE,
-  center_X = TRUE,
-  scale_X = TRUE,
-  DCT_X = 0,
-  nuisance_X = NULL,
+  center = TRUE,
+  scale = TRUE,
+  DCT = 0,
+  nuisance_too = NULL,
   noise_nPC = 5,
   noise_erosion = NULL,
   PCATF_kwargs = NULL,
@@ -151,17 +151,28 @@ measures. Should the projection directions be computed? Default:
 can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
 leverage images.}
 
-\item{center_X, scale_X}{Center the columns of the data by median, and scale the
+\item{center, scale}{Center the columns of the data by median, and scale the
 columns of the data by MAD? Default: \code{TRUE} for both. Centering is
 necessary for detrending and for computing PCA/ICA, so if this is set to 
 \code{FALSE}, the input data must already be centered. For aCompCor, these 
 options will also be applied to the noise ROI data.}
 
-\item{DCT_X}{Detrend the columns of the data using the discrete cosine
-transform (DCT)? Use an integer to indicate the number of cosine bases to 
-use for detrending. Use \code{0} (default) to forgo detrending.}
+\item{DCT}{Detrend the columns of the data using the discrete cosine
+ transform (DCT)? Use an integer to indicate the number of cosine bases to 
+ use for detrending. Use \code{0} (default) to forgo detrending. 
 
-\item{nuisance_X}{A matrix of nuisance signals to regress from the data
+ The data must be centered, either before input or with \code{center}.
+
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. Additionally,
+ if kurtosis is being used to select the projection directions, trends can 
+ induce positive or negative kurtosis, contaminating the connection between 
+ high kurtosis and outlier presence. 
+ 
+ Detrending should not be used with non-time-series data because the 
+ observations are not temporally related.}
+
+\item{nuisance_too}{A matrix of nuisance signals to regress from the data
 before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 regression will be performed simultaneously with DCT detrending if 
 applicable. \code{NULL} to not add additional nuisance regressors.}
@@ -225,21 +236,6 @@ Default: \code{0.95}.}
 only the components used to compute the measures).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
-
-\item{detrend_X}{Detrend the columns of the data using the DCT? Use an integer
- to indicate the number of cosine bases to use for detrending (default: \code{4}).
- Or, use \code{0} to forgo detrending. 
-
- The data must be centered, either before input or with \code{center_X}.
-
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- if kurtosis is being used to select the projection directions, trends can 
- induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. 
- 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
 }
 \value{
 A \code{"clever_multi"} object, i.e. a list with components
