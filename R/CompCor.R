@@ -164,7 +164,7 @@ CompCor <- function(
     noise_nPC=out1$noise_nPC
   )
 
-
+  T_ <- nrow(out1$X)
   detrend <- DCT > 0
   do_nreg <- !is.null(nuisance_too)
   if (do_nreg) {
@@ -198,12 +198,11 @@ CompCor <- function(
     X_constant <- mad < TOL
     if (any(X_constant)) {
       if (all(X_constant)) {
-      stop(paste0("All data locations in noise ROI ", ii, " are zero-variance.\n"))
+      stop(paste0("All data locations are zero-variance.\n"))
       } else {
         warning(paste0("Warning: ", sum(X_constant),
         " constant data locations (out of ", length(X_constant),
-        ") in noise ROI ", ii, 
-        ". These will be removed for estimation of the covariance.\n"))
+        "). These will be removed for estimation of the covariance.\n"))
       }
     }
     mad <- mad[!X_constant]; out1$X <- out1$X[!X_constant,]

@@ -64,7 +64,7 @@ leverage images.}
 \item{center, scale}{Center the columns of the data by their medians, and scale the
 columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
 Centering is necessary for detrending and for computing PCA/ICA, so if this 
-is set to \code{FALSE}, \the input data must already be centered.}
+is set to \code{FALSE}, the input data must already be centered.}
 
 \item{DCT}{Detrend the columns of the data using the discrete cosine
  transform (DCT)? Use an integer to indicate the number of cosine bases to 

@@ -42,7 +42,7 @@
 #' @param center,scale Center the columns of the data by their medians, and scale the
 #'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
 #'  Centering is necessary for detrending and for computing PCA/ICA, so if this 
-#'  is set to \code{FALSE}, \the input data must already be centered.
+#'  is set to \code{FALSE}, the input data must already be centered.
 #' @param DCT Detrend the columns of the data using the discrete cosine
 #'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
 #'  use for detrending. Use \code{0} (default) to forgo detrending. 
@@ -160,17 +160,14 @@ clever = function(
   # Check and format any arguments handled differently than `clever_multi`.
   measure <- match.arg(measure, c("leverage", "DVARS", "DVARS2"))
   stopifnot(length(measure) == 1)
+  stopifnot(is.logical(PESEL))
   projection <- match.arg(projection, c("PCA", "ICA", "PCATF"))
   projection <- switch(projection,
-    PCA = "PCA_kurt",
-    ICA = "ICA_kurt",
+    PCA = ifelse(PESEL, "PCA2_kurt", "PCA_kurt"),
+    ICA = ifelse(PESEL, "ICA2_kurt", "ICA_kurt"),
     PCATF = "PCATF"
   )
-  stopifnot(is.logical(PESEL))
 
-  clever_multi_args <- list(
-
-  )
   if (!is.null(outlier_cutoff)) {
     outlier_cutoff <- list(outlier_cutoff)
     names(outlier_cutoff) <- measure

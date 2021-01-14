@@ -448,7 +448,7 @@ plot.clever_multi <- function(x, measures="all", title=NULL, ...){
   if (length(plots) == 1) {
     plt <- plots[[1]]
     if (!is.null(title)) {
-      plt <- plt + ggtitle(title)
+      plt <- plt + ggplot2::ggtitle(title)
     }
   } else {
     plt <- cowplot::plot_grid(plotlist=plots, ncol=1, vjust=0, align="v", rel_heights=rel_heights)

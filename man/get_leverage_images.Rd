@@ -2,18 +2,16 @@
 % Please edit documentation in R/leverage_images.R
 \name{get_leverage_images}
 \alias{get_leverage_images}
-\title{Calculate the leverage images for each outlier that meets the
- \code{outlier_level} threshold, with 3 (default) being the highest/strictest
- and 1 being the lowest.}
+\title{Calculate the leverage images}
 \usage{
-get_leverage_images(X_svd, timepoints, const_mask = NULL)
+get_leverage_images(clev, timepoints = NULL, const_mask = NULL)
 }
 \arguments{
-\item{X_svd}{A singular value decomposition (list with u, v, and d).}
+\item{clev}{A "clever" object.}
 
 \item{timepoints}{The times for which to compute leverage images (rows of U).}
 
-\item{const_mask}{Mask for the voxels that were removed.}
+\item{const_mask}{Mask that is TRUE where voxels were removed.}
 }
 \value{
 A list of three: the mean leverage image for each outlier meeting
@@ -21,8 +19,6 @@ A list of three: the mean leverage image for each outlier meeting
  the top leverage images.
 }
 \description{
-Calculate the leverage images for each outlier that meets the
- \code{outlier_level} threshold, with 3 (default) being the highest/strictest
- and 1 being the lowest.
+Calculate the leverage images
 }
 \keyword{internal}

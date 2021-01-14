@@ -335,9 +335,6 @@ clever_multi = function(
     "ICA", "ICA_kurt", "ICA2", "ICA2_kurt"
   )
 
-  # [TEMPORARY]
-  if (any(grepl("ICA", projections))) { stopifnot(any(grepl("PCA", projections))) }
-
   if ("all" %in% projections) {
     projections <- valid_projections
   } else {
@@ -642,18 +639,11 @@ clever_multi = function(
 
   nComps <- NULL
 
-  # Compute the PC scores (and directions, if leverage images or PCATF are desired).
-  if (any(grepl("PCA", measures, fixed=TRUE))) {
+  if (any(grepl("PCA|ICA", measures))) {
     if ("PCATF" %in% projections) { solve_dirs <- TRUE }
     if (verbose) {
       cat(paste0(
-        "Computing the",
-        ifelse(
-          ("PCA" %in% projections) | ("PCA_kurt" %in% projections),
-          ifelse("PCATF" %in% projections, " normal and trend-filtered", ""),
-          ifelse("PCATF" %in% projections, " trend-filtered", "INTERNAL ERROR")
-        ),
-        " PC scores",
+        "Computing the PC scores", 
         ifelse(solve_dirs, " and directions", ""), ".\n"
       ))
     }
@@ -671,16 +661,33 @@ clever_multi = function(
       out$PCA$V <- NULL
     }
 
-    # Keep only the above-average variance/chosen by PESEL PCs (whichever is greater).
+    # Keep only the above-average variance/PESEL PCs (whichever is greater).
     out$PCA$nPCs_avgvar <- max(1, sum(out$PCA$D^2 > mean(out$PCA$D^2)))
     out$PCA$nPCs_PESEL <- pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs
     nComps <- max(1, out$PCA$nPCs_avgvar, out$PCA$nPCs_PESEL)
+
+    if (!any(grepl("PCA", measures))) {
+      out$PCA$U <- out$PCA$D <- out$PCA$V <- NULL
+    } else {
+      # Remove smaller PCs.
+      if (!full_PCA) {
+        out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
+        out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
+        if (solve_dirs) { 
+          out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
+        }
+      }
+    }
+  }
+
+  # Compute the PC scores (and directions, if leverage images or PCATF are desired).
+  if (any(grepl("PCA", measures, fixed=TRUE))) {
 
     # Compute PCATF, if requested.
     if("PCATF" %in% projections){
       if (verbose) { cat("Computing PCATF.\n") }
       out$PCATF <- do.call(
-        PCATF_cppcore, 
+        PCATF, 
         c(
           list(
             X=X, X.svd=out$PCA[c("U", "D", "V")], 
@@ -708,14 +715,6 @@ clever_multi = function(
         out$PCA$U, kurt_quantile=kurt_quantile
       )
     }
-
-    if (!full_PCA) {
-      out$PCA$U <- out$PCA$U[, seq_len(nComps), drop=FALSE]
-      out$PCA$D <- out$PCA$D[seq_len(nComps), drop=FALSE]
-      if (solve_dirs) { 
-        out$PCA$V <- out$PCA$V[, seq_len(nComps), drop=FALSE]
-      }
-    }
   }
 
   # Compute ICA
@@ -726,10 +725,6 @@ clever_multi = function(
       stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
     }
 
-    # [TEMPORARY] PCA was required, so `nComps` exists
-    if (is.null(nComps)) { 
-      stop("nComps was NULL.")
-    }
     out$ICA <- ica::icaimax(t(X), nComps, center=FALSE)[c("S", "M")]
     # Issue due to rank.
     if (ncol(out$ICA$M) != nComps) {

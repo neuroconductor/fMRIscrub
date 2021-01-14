@@ -9,6 +9,7 @@ clever_from_multi <- function(clev) {
   names(clev)[names(clev) == "measures"] <- "measure"
   names(clev)[names(clev) == "outlier_cutoffs"] <- "outlier_cutoff"
   clev$measure_name <- as.character(colnames(clev$measure))
+
   if (length(clev$measure_name) == 1) {
     # everything except DVARS2
     clev$measure <- as.numeric(clev$measure[,1])
@@ -17,6 +18,46 @@ clever_from_multi <- function(clev) {
 
   }
   clev$ROIs <- NULL
+
+  if ("PCA" %in% names(clev)) {
+
+    # For all projections
+    PESEL <- any(grepl("PCA2|ICA2", clev$measure_name))
+    nComps <- ifelse(PESEL, clev$PCA$nPCs_PESEL, clev$PCA$nPCs_avgvar)
+
+    # For PCA
+    if ("U" %in% names(clev$PCA)) {
+      clev$PCA$U <- clev$PCA$U[, seq(nComps), drop=FALSE]
+      clev$PCA$D <- clev$PCA$D[seq(nComps), drop=FALSE]
+      if ("V" %in% names(clev$PCA)) { 
+        clev$PCA$V <- clev$PCA$V[, seq(nComps), drop=FALSE]
+      }
+      if ("highkurt" %in% names(clev$PCA)) {
+        clev$PCA$highkurt <- clev$PCA$highkurt[seq(nComps)]
+      }
+      clev$PCA$nPCs_avgvar <- clev$PCA$nPCs_PESEL <- NULL
+    # For PCATF
+    } else if ("PCATF" %in% names(clev)) {
+      clev$PCATF$U <- clev$PCATF$U[, seq(nComps), drop=FALSE]
+      clev$PCATF$D <- clev$PCATF$D[seq(nComps), drop=FALSE]
+      if ("V" %in% names(clev$PCATF)) { 
+        clev$PCATF$V <- clev$PCATF$V[, seq(nComps), drop=FALSE]
+      }
+      if ("highkurt" %in% names(clev$PCATF)) {
+        clev$PCATF$highkurt <- clev$PCATF$highkurt[seq(nComps)]
+      }
+      clev$PCA <- NULL
+    # For ICA
+    } else if ("ICA" %in% names(clev)) {
+      clev$ICA$S <- clev$ICA$S[, seq(nComps), drop=FALSE]
+      clev$ICA$M <- clev$ICA$M[, seq(nComps), drop=FALSE]
+      if ("highkurt" %in% names(clev$ICA)) {
+        clev$ICA$highkurt <- clev$ICA$highkurt[seq(nComps)]
+      }
+      clev$PCA <- NULL
+    }
+  }
+
   clev
 }
 

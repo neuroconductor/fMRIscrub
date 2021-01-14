@@ -57,11 +57,19 @@
 #'  CompCor for, or \code{NULL} (default) to use all timepoints. (Indexing begins
 #'  with 1, so the first timepoint has index 1 and the last has the same index
 #'  as the length of the scan.)
-#' @param center,scale,detrend Center, scale, and detrend data columns? Will
-#'  affect both the NIFTI noise ROIs and the CIFTI greyordinate data. Centering
-#'  and scaling is \code{TRUE} or \code{FALSE} where as detrending should be
-#'  indicated by the number of DCT bases to regress (0 to not detrend). By default,
-#'  the data is centered and scaled but not detrended.
+#' @param center,scale Center the columns of the data by median, and scale the
+#'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
+#'  \code{X} and the noise data.
+#' @param DCT Detrend the columns of the data using the discrete cosine
+#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
+#'  use for detrending. Use \code{0} (default) to forgo detrending. 
+#' 
+#'  The data must be centered, either before input or with \code{center}.
+#' @param nuisance_too A matrix of nuisance signals to regress from the data
+#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
+#'  regression will be performed simultaneously with DCT detrending if 
+#'  applicable. \code{NULL} to not add additional nuisance regressors. Affects 
+#'  both \code{X} and the noise data.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
 #' @export
@@ -69,7 +77,7 @@ CompCor_HCP <- function(
   nii, nii_labels, 
   ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
   timepoints=NULL, cii=NULL, brainstructures=c("left", "right"),
-  center = TRUE, scale = TRUE, detrend = 0,
+  center = TRUE, scale = TRUE, DCT = 0, nuisance_too = NULL,
   verbose=FALSE){
 
   # `nii`
