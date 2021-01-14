@@ -150,7 +150,7 @@ CompCor.regress <- function(X, noise_comps){
 CompCor <- function(
   X, ROI_data="infer", ROI_noise=NULL, 
   noise_nPC=5, noise_erosion=NULL,
-  center_X=TRUE, scale_X=TRUE, DCT_X=0, nuisance_X=NULL
+  center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL
   ){
 
   out1 <- format_data(
@@ -160,7 +160,7 @@ CompCor <- function(
 
   out2 <- CompCor.noise_comps(
     X_noise=out1$X_noise, 
-    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X,
+    center=center, scale=scale, DCT=DCT, nuisance_too=nuisance_too,
     noise_nPC=out1$noise_nPC
   )
 

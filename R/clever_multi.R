@@ -289,12 +289,14 @@
 #' @importFrom robustbase rowMedians
 #' @importFrom stats mad qnorm var setNames
 #'
+#' @keywords internal
+#' 
 #' @examples
 #' n_voxels = 1e4
 #' n_timepoints = 100
 #' X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 #'
-#' clev = clever_multi(X)
+#' clev = clever:::clever_multi(X)
 clever_multi = function(
   X,
   measures=c("leverage", "DVARS2"),

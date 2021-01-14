@@ -21,4 +21,3 @@ A list of three: the mean leverage image for each outlier meeting
 \description{
 Calculate the leverage images
 }
-\keyword{internal}

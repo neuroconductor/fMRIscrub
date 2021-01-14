@@ -8,8 +8,7 @@
 #'  the thresold, the top leverage image for each outlier, and the indices of
 #'  the top leverage images.
 #'
-# TEMPORARY: internal
-#' @keywords internal
+#' @export
 get_leverage_images <- function(clev, timepoints=NULL, const_mask=NULL){
 
   if (is.null(timepoints)) {

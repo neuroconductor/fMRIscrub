@@ -76,7 +76,7 @@
 CompCor_HCP <- function(
   nii, nii_labels, 
   ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
-  timepoints=NULL, cii=NULL, brainstructures=c("left", "right"),
+  frames=NULL, cii=NULL, brainstructures=c("left", "right"),
   center = TRUE, scale = TRUE, DCT = 0, nuisance_too = NULL,
   verbose=FALSE){
 
@@ -130,7 +130,7 @@ CompCor_HCP <- function(
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center_X=center_X, scale_X=scale_X, DCT_X=DCT_X, nuisance_X=nuisance_X
+    center=center, scale=scale, DCT=DCT, nuisance_too=nuisance_too
   )$noise
 
   # `cii`

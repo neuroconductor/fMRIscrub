@@ -10,10 +10,10 @@ CompCor(
   ROI_noise = NULL,
   noise_nPC = 5,
   noise_erosion = NULL,
-  center_X = TRUE,
-  scale_X = TRUE,
-  DCT_X = 0,
-  nuisance_X = NULL
+  center = TRUE,
+  scale = TRUE,
+  DCT = 0,
+  nuisance_too = NULL
 )
 }
 \arguments{
