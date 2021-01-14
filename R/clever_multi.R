@@ -552,6 +552,12 @@ clever_multi = function(
     B <- NULL
     if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
     if (do_nreg) { B <- cbind(B, nuisance_too) }
+    if (center) {
+      # Center design matrix robustly instead of using intercept term.
+      B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
+    } else {
+      B <- cbind(1, B)
+    }
     X <- t((diag(T_) - (B %*% t(B))) %*% t(X)) 
   }
   #	Center again for good measure.
