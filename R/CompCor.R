@@ -4,7 +4,7 @@
 #' @param center,scale,DCT,nuisance_too Center, scale, detrend, and nuisance
 #'  regression
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
-#'
+#' 
 #' @return A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
 #'  noise_erosion, noise_comps, and noise_var.
 #' 
@@ -51,10 +51,13 @@ CompCor.noise_comps <- function(X_noise, center, scale, DCT, nuisance_too, noise
       } else {
         B <- cbind(1, B)
       }
-      # Remove linearly-dependent columns
       # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-      B <- B[, qr(B)$pivot[seq_len(qr(B)$rank)]]
-      X_noise[[ii]] <- t( (diag(T_) - (B %*% solve(t(B) %*% B, t(B)) )) %*% t(X_noise[[ii]]) ) 
+      # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
+      qrB <- qr(B)
+      B <- B[, qrB$pivot[seq_len(qrB$rank)]]
+      QB <- qr.Q(qrB)
+      H <- QB %*% t(QB)
+      X_noise[[ii]] <- X_noise[[ii]] %*% (diag(T_) - H)
     }
     #	Center again for good measure.
     if (detrend && center) { X_noise[[ii]] <- X_noise[[ii]] - c(rowMedians(X_noise[[ii]], na.rm=TRUE)) }
@@ -192,10 +195,13 @@ CompCor <- function(
       } else {
         B <- cbind(1, B)
       }
-      # Remove linearly-dependent columns
       # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-      B <- B[, qr(B)$pivot[seq_len(qr(B)$rank)]]
-      out1$X <- t( (diag(T_) - (B %*% solve(t(B) %*% B, t(B)) )) %*% t(out1$X) ) 
+      # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
+      qrB <- qr(B)
+      B <- B[, qrB$pivot[seq_len(qrB$rank)]]
+      QB <- qr.Q(qrB)
+      H <- QB %*% t(QB)
+      out1$X <- out1$X %*% (diag(T_) - H)
     }
     #	Center again for good measure.
     if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
