@@ -34,7 +34,6 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
     nii_labels <- read_nifti(nii_labels)
   }
   stopifnot(length(dim(nii_labels))==3)
-  stopifnot(dim(nii_labels)==dim(nii)[1:3])
 
   # Get ROI masks.
   ROI_noise.default <- list(
@@ -127,6 +126,7 @@ CompCor_HCP <- function(
   # Get NIFTI ROI masks.
   if (verbose) { cat("Reading labels NIFTI.\n") }
   ROI_noise <- get_NIFTI_ROI_masks(nii_labels, ROI_noise)
+  stopifnot(all( dim(ROI_noise[[1]]) == dim(nii)[1:3] ))
 
   # Drop frames in NIFTI.
   T_ <- dim(nii)[4]
