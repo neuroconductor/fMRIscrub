@@ -505,7 +505,6 @@ clever_multi = function(
   }
 
   if ("FD" %in% measures) {
-    if (verbose) { cat("Computing FD.\n") }
     out$measures$FD <- motion
     if (get_outliers) {
       out$outlier_cutoffs$FD <- outlier_cutoffs$FD
