@@ -21,17 +21,14 @@
 #'    \item{\code{"FD"}}{Framewise Displacement. Requires \code{X_motion}.}
 #'    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
 #'      Requires \code{X_motion}.}
-#'    \item{\code{"CompCor"}}{Anatomical CompCor based on the ROIs. Requires
-#'      \code{ROI_data} and \code{ROI_noise}.}
 #'    \item{\code{"GSR"}}{Global Signal of the data.}
 #'  }
 #' 
-#'  Use \code{"all"} to select all available measures. (CompCor will
-#'  only be computed if the ROIs are provided, and FD and motion will only be 
-#'  computed if the motion realignment parameters are provided.) Default: 
+#'  Use \code{"all"} to select all available measures. (FD and motion will only 
+#'  be computed if the motion realignment parameters are provided.) Default: 
 #'  \code{"leverage", "DVARS2"}.
 #'
-#'  Note that motion, CompCor and GSR are not direct measures of outlyingness,
+#'  Note that motion and GSR are not direct measures of outlyingness,
 #'  so they do not have corresponding \code{outlier_cutoffs}.
 #' @param X_motion Only used if the \code{"FD"} measure is requested. An 
 #'  \eqn{N \times 6} matrix in which the first three columns represent the
@@ -86,6 +83,8 @@
 #'  
 #'  Detrending should not be used with non-time-series data because the 
 #'  observations are not temporally related.
+#' @param CompCor Clean the data with CompCor? Will affect DVARS, leverage
+#'  and robust distance but not GSR. Requires \code{ROI_data} and \code{ROI_noise}.
 #' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 #'  regression will be performed simultaneously with DCT detrending if 
@@ -102,7 +101,7 @@
 #' @param kurt_quantile Only applies to the \code{"PCA_kurt"} and \code{"ICA_kurt"} projections. 
 #'  What cutoff quantile for kurtosis should be used to select the PCs? 
 #'  Default: \code{0.95}.
-#' @param noise_nPC Only applies to the CompCor measure.
+#' @param noise_nPC Only applies to CompCor.
 #'  The number of principal components to compute for each noise
 #'  ROI. Alternatively, values between 0 and 1, in which case they will 
 #'  represent the minimum proportion of variance explained by the PCs used for
@@ -114,7 +113,7 @@
 #'  names are missing, the order of entries. If it is an unnamed vector, its
 #'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
 #'  each noise ROI).
-#' @param noise_erosion Only applies to the CompCor measure.
+#' @param noise_erosion Only applies to CompCor.
 #'  The number of voxel layers to erode the noise ROIs by. 
 #' 
 #'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
@@ -302,7 +301,7 @@ clever_multi = function(
   measures=c("leverage", "DVARS2"),
   ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
   projections = "PCA2_kurt", solve_dirs=FALSE,
-  center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL,
+  center=TRUE, scale=TRUE, DCT=0, CompCor=FALSE, nuisance_too=NULL,
   noise_nPC=5, noise_erosion=NULL,
   PCATF_kwargs=NULL, kurt_quantile=.95,
   get_outliers=TRUE, 
@@ -319,16 +318,15 @@ clever_multi = function(
 
   # Measures and projections ---------------------------------------------------
 
-  measures0 <- measures
+  measures0 <- as.character(measures)
   valid_measures0 <- c(
     "leverage", "robdist", "DVARS", "DVARS2", "FD", # robdist_bootstrap
-    "motion", "CompCor", "GSR" 
+    "motion", "GSR" 
   ) 
   if ("all" %in% measures0) {
     measures0 <- c("leverage", "robdist", "DVARS", "DVARS2", "GSR")
-    if (!is.null(ROI_data) && !is.null(ROI_noise)) { measures0 <- c(measures0, "CompCor") }
     if (!is.null(X_motion)) { measures0 <- c(measures0, "FD", "motion") }
-  } else {
+  } else if (length(measures0) > 0) {
     measures0 <- unique(match.arg(measures0, valid_measures0, several.ok=TRUE))
   }
 
@@ -343,10 +341,12 @@ clever_multi = function(
     projections <- unique(match.arg(projections, valid_projections, several.ok=TRUE))
   }
 
-  if ("CompCor" %in% measures) {
-    if (is.null(ROI_noise)) { stop("`CompCor` requires the noise ROIs.") }
+  if (CompCor & is.null(ROI_noise)) { 
+    stop("`CompCor` requires the noise ROIs.") 
   }
-
+  if ((!is.null(ROI_noise)) & (!CompCor)) {
+    warning("`ROI_noise` was provided but `CompCor` is `FALSE`.")
+  }
 
   # Data -----------------------------------------------------------------------
   temp <- format_data(
@@ -368,7 +368,6 @@ clever_multi = function(
   }
 
   # Full enumeration of measures -----------------------------------------------
-
   measures <- measures0
   use_PCA <- use_PCATF <- use_ICA <- FALSE
   if ("leverage" %in% measures) {
@@ -409,7 +408,7 @@ clever_multi = function(
   if (use_PCATF) { out <- c(out, list(PCATF=NULL)) }
   if (use_ICA) { out <- c(out, list(ICA=NULL)) }
 
-  if ("CompCor" %in% measures) {
+  if (CompCor) {
     out$CompCor <- setNames(vector("list", length(X_noise)), names(X_noise))
   }
   
@@ -515,7 +514,7 @@ clever_multi = function(
   }
 
   # Exit if only GSR and motion/FD are needed
-  if (all(grepl("GSR|motion|FD", measures))) {
+  if (all(grepl("GSR|motion|FD", measures)) & (!CompCor)) {
     out$measures <- as.data.frame(out$measures)
     if (length(out$outlier_flags) > 0) {
       out$outlier_flags <- as.data.frame(out$outlier_flags)
@@ -585,7 +584,7 @@ clever_multi = function(
   }
 
   # CompCor.
-  if (any(grepl("CompCor", measures, fixed=TRUE))) {
+  if (CompCor) {
     if (verbose) { cat("Computing CompCor.\n") }
     X_CompCor <- CompCor.noise_comps(
       X_noise, center, scale, noise_nPC
