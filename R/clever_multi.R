@@ -514,6 +514,22 @@ clever_multi = function(
     }
   }
 
+  # Exit if only GSR and motion/FD are needed
+  if (all(grepl("GSR|motion|FD", measures))) {
+    out$measures <- as.data.frame(out$measures)
+    if (length(out$outlier_flags) > 0) {
+      out$outlier_flags <- as.data.frame(out$outlier_flags)
+    } else {
+      out$outlier_flags <- NULL
+    }
+    if (length(out$outlier_cutoffs) > 0) {
+      out$outlier_cutoffs <- do.call(c, out$outlier_cutoffs)
+    } else {
+      out$outlier_cutoffs <- NULL
+    }
+    return(structure(out, class="clever_multi"))
+  }
+
   # ----------------------------------------------------------------------------
   # Center, scale, and detrend the data. ---------------------------------------
   # Do it here instead of calling `scale_med` to save memory. ------------------
@@ -836,11 +852,14 @@ clever_multi = function(
   # ----------------------------------------------------------------------------
 
   out$measures <- as.data.frame(out$measures)
-  if (get_outliers) {
+  if (length(out$outlier_flags) > 0) {
     out$outlier_flags <- as.data.frame(out$outlier_flags)
-    out$outlier_cutoffs <- do.call(c, out$outlier_cutoffs)
   } else {
     out$outlier_flags <- NULL
+  }
+  if (length(out$outlier_cutoffs) > 0) {
+    out$outlier_cutoffs <- do.call(c, out$outlier_cutoffs)
+  } else {
     out$outlier_cutoffs <- NULL
   }
   structure(out, class="clever_multi")
