@@ -9,7 +9,7 @@ clever_multi(
   measures = c("leverage", "DVARS2"),
   ROI_data = "infer",
   ROI_noise = NULL,
-  X_motion = NULL,
+  motion = NULL,
   projections = "PCA2_kurt",
   solve_dirs = FALSE,
   center = TRUE,
@@ -50,9 +50,9 @@ clever_multi(
    \item{\code{"DVARS"}}{Traditional DVARS}
    \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
      Nichols, 2018)}
-   \item{\code{"FD"}}{Framewise Displacement. Requires \code{X_motion}.}
+   \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-     Requires \code{X_motion}.}
+     Requires \code{motion}.}
    \item{\code{"CompCor"}}{Anatomical CompCor based on the ROIs. Requires
      \code{ROI_data} and \code{ROI_noise}.}
    \item{\code{"GSR"}}{Global Signal of the data.}
@@ -114,7 +114,7 @@ clever_multi(
  ROI, e.g. \code{"white_matter"} and \code{"csf"}. The rows of the matrix 
  must represent noise brainordinate timecourses, separate from \code{X}.}
 
-\item{X_motion}{Only used if the \code{"FD"} measure is requested. An 
+\item{motion}{Only used if the \code{"FD"} measure is requested. An 
  \eqn{N \times 6} matrix in which the first three columns represent the
  translational realignment parameters (mm), and the second three columns represent
  the rotational realignment parameters in (radians). To convert radians to mm,

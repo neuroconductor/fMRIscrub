@@ -18,9 +18,9 @@
 #'    \item{\code{"DVARS"}}{Traditional DVARS}
 #'    \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
 #'      Nichols, 2018)}
-#'    \item{\code{"FD"}}{Framewise Displacement. Requires \code{X_motion}.}
+#'    \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
 #'    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-#'      Requires \code{X_motion}.}
+#'      Requires \code{motion}.}
 #'    \item{\code{"CompCor"}}{Anatomical CompCor based on the ROIs. Requires
 #'      \code{ROI_data} and \code{ROI_noise}.}
 #'    \item{\code{"GSR"}}{Global Signal of the data.}
@@ -33,7 +33,7 @@
 #'
 #'  Note that motion, CompCor and GSR are not direct measures of outlyingness,
 #'  so they do not have corresponding \code{outlier_cutoffs}.
-#' @param X_motion Only used if the \code{"FD"} measure is requested. An 
+#' @param motion Only used if the \code{"FD"} measure is requested. An 
 #'  \eqn{N \times 6} matrix in which the first three columns represent the
 #'  translational realignment parameters (mm), and the second three columns represent
 #'  the rotational realignment parameters in (radians). To convert radians to mm,
@@ -300,7 +300,7 @@
 clever_multi = function(
   X,
   measures=c("leverage", "DVARS2"),
-  ROI_data="infer", ROI_noise=NULL, X_motion=NULL,
+  ROI_data="infer", ROI_noise=NULL, motion=NULL,
   projections = "PCA2_kurt", solve_dirs=FALSE,
   center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL,
   noise_nPC=5, noise_erosion=NULL,
@@ -327,7 +327,7 @@ clever_multi = function(
   if ("all" %in% measures0) {
     measures0 <- c("leverage", "robdist", "DVARS", "DVARS2", "GSR")
     if (!is.null(ROI_data) && !is.null(ROI_noise)) { measures0 <- c(measures0, "CompCor") }
-    if (!is.null(X_motion)) { measures0 <- c(measures0, "FD", "motion") }
+    if (!is.null(motion)) { measures0 <- c(measures0, "FD", "motion") }
   } else {
     measures0 <- unique(match.arg(measures0, valid_measures0, several.ok=TRUE))
   }
@@ -496,21 +496,21 @@ clever_multi = function(
       cat(paste0("Computing ", what, ".\n"))
     }
 
-    stopifnot(!is.null(X_motion))
-    X_motion <- FD(X_motion)
-    stopifnot(nrow(X_motion) == T_)
+    stopifnot(!is.null(motion))
+    motion <- FD(motion)
+    stopifnot(nrow(motion) == T_)
   }
 
   if ("motion" %in% measures) {
-    out$measures[c(paste0("motion_t", 1:3), paste0("motion_r", 1:3))] <- X_motion
+    out$measures[c(paste0("motion_t", 1:3), paste0("motion_r", 1:3))] <- motion
   }
 
   if ("FD" %in% measures) {
     if (verbose) { cat("Computing FD.\n") }
-    out$measures$FD <- X_motion
+    out$measures$FD <- motion
     if (get_outliers) {
       out$outlier_cutoffs$FD <- outlier_cutoffs$FD
-      out$outlier_flags$FD <- X_motion > out$outlier_cutoffs$FD
+      out$outlier_flags$FD <- motion > out$outlier_cutoffs$FD
     }
   }
 
