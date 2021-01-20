@@ -571,38 +571,6 @@ clever_multi = function(
   X <- t(X)
 
   # ----------------------------------------------------------------------------
-  # Compute DVARS. -------------------------------------------------------------
-  # ----------------------------------------------------------------------------
-
-  if (any(grepl("DVARS", measures))) {
-    if (verbose) { cat("Computing DVARS.\n") }
-    X_DVARS <- DVARS(X, normalize=FALSE, norm_I=100, verbose=verbose)
-
-    if ("DVARS__traditional" %in% measures) {
-      out$measures["DVARS__traditional"] <- X_DVARS["DVARS"]
-    }
-
-    if ("DVARS__DPD" %in% measures) {
-      out$measures[c("DVARS__DPD", "DVARS__ZD")] <- X_DVARS[c("DPD", "ZD")]
-    }
-
-    if(get_outliers){
-      if ("DVARS__traditional" %in% measures) {
-        out$outlier_cutoffs["DVARS__traditional"] <- outlier_cutoffs["DVARS__traditional"]
-        out$outlier_flags$DVARS__traditional <- out$measures$DVARS__traditional > out$outlier_cutoffs$DVARS__traditional
-      }
-
-      if ("DVARS__DPD" %in% measures) {
-        out$outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")] <- outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")]
-        DVARS__dual1 <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD
-        DVARS__dual2 <- out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
-        out$outlier_flags$DVARS__dual <- DVARS__dual1 & DVARS__dual2
-        rm(DVARS__dual1, DVARS__dual2)
-      }
-    }
-  }
-
-  # ----------------------------------------------------------------------------
   # Compute CompCor. -----------------------------------------------------------
   # Do nuisance regression. ----------------------------------------------------
   # ----------------------------------------------------------------------------
@@ -652,6 +620,38 @@ clever_multi = function(
     X <- nuisance_regression(X, B)
     #	Center again for good measure.
     if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  }
+
+  # ----------------------------------------------------------------------------
+  # Compute DVARS. -------------------------------------------------------------
+  # ----------------------------------------------------------------------------
+
+  if (any(grepl("DVARS", measures))) {
+    if (verbose) { cat("Computing DVARS.\n") }
+    X_DVARS <- DVARS(X, normalize=FALSE, norm_I=100, verbose=verbose)
+
+    if ("DVARS__traditional" %in% measures) {
+      out$measures["DVARS__traditional"] <- X_DVARS["DVARS"]
+    }
+
+    if ("DVARS__DPD" %in% measures) {
+      out$measures[c("DVARS__DPD", "DVARS__ZD")] <- X_DVARS[c("DPD", "ZD")]
+    }
+
+    if(get_outliers){
+      if ("DVARS__traditional" %in% measures) {
+        out$outlier_cutoffs["DVARS__traditional"] <- outlier_cutoffs["DVARS__traditional"]
+        out$outlier_flags$DVARS__traditional <- out$measures$DVARS__traditional > out$outlier_cutoffs$DVARS__traditional
+      }
+
+      if ("DVARS__DPD" %in% measures) {
+        out$outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")] <- outlier_cutoffs[c("DVARS__DPD", "DVARS__ZD")]
+        DVARS__dual1 <- out$measures$DVARS__DPD > out$outlier_cutoffs$DVARS__DPD
+        DVARS__dual2 <- out$measures$DVARS__ZD > out$outlier_cutoffs$DVARS__ZD
+        out$outlier_flags$DVARS__dual <- DVARS__dual1 & DVARS__dual2
+        rm(DVARS__dual1, DVARS__dual2)
+      }
+    }
   }
 
   # ----------------------------------------------------------------------------
