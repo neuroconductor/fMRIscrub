@@ -15,6 +15,7 @@ clever_multi(
   center = TRUE,
   scale = TRUE,
   DCT = 0,
+  CompCor = FALSE,
   nuisance_too = NULL,
   noise_nPC = 5,
   noise_erosion = NULL,
@@ -53,17 +54,14 @@ clever_multi(
    \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
      Requires \code{motion}.}
-   \item{\code{"CompCor"}}{Anatomical CompCor based on the ROIs. Requires
-     \code{ROI_data} and \code{ROI_noise}.}
    \item{\code{"GSR"}}{Global Signal of the data.}
  }
 
- Use \code{"all"} to select all available measures. (CompCor will
- only be computed if the ROIs are provided, and FD and motion will only be 
- computed if the motion realignment parameters are provided.) Default: 
+ Use \code{"all"} to select all available measures. (FD and motion will only 
+ be computed if the motion realignment parameters are provided.) Default: 
  \code{"leverage", "DVARS2"}.
 
- Note that motion, CompCor and GSR are not direct measures of outlyingness,
+ Note that motion and GSR are not direct measures of outlyingness,
  so they do not have corresponding \code{outlier_cutoffs}.}
 
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
@@ -172,12 +170,15 @@ options will also be applied to the noise ROI data.}
  Detrending should not be used with non-time-series data because the 
  observations are not temporally related.}
 
+\item{CompCor}{Clean the data with CompCor? Will affect DVARS, leverage
+and robust distance but not GSR. Requires \code{ROI_data} and \code{ROI_noise}.}
+
 \item{nuisance_too}{A matrix of nuisance signals to regress from the data
 before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
 regression will be performed simultaneously with DCT detrending if 
 applicable. \code{NULL} to not add additional nuisance regressors.}
 
-\item{noise_nPC}{Only applies to the CompCor measure.
+\item{noise_nPC}{Only applies to CompCor.
  The number of principal components to compute for each noise
  ROI. Alternatively, values between 0 and 1, in which case they will 
  represent the minimum proportion of variance explained by the PCs used for
@@ -190,7 +191,7 @@ applicable. \code{NULL} to not add additional nuisance regressors.}
  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
  each noise ROI).}
 
-\item{noise_erosion}{Only applies to the CompCor measure.
+\item{noise_erosion}{Only applies to CompCor.
  The number of voxel layers to erode the noise ROIs by. 
 
  Should be a list or numeric vector with the same length as \code{ROI_noise}. 

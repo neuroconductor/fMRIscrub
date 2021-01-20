@@ -1,13 +1,7 @@
-#' Run CompCor on the HCP data
+#' Get NIFTI ROI masks
 #'
-#' Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
-#'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
-#'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
+#' Get NIFTI ROI masks
 #'
-#' @param nii \eqn{I \times J \times \K \times T} 
-#'  NIFTI object or array (or file path to the NIFTI) which contains
-#'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
-#'  file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"
 #' @param nii_labels \eqn{I \times J \times K}
 #'  NIFTI object or array (or file path to the NIFTI) which
 #'  contains the corresponding labels to each voxel in \code{nii}. Values should
@@ -31,63 +25,12 @@
 #'  https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
 #'
 #'  Default: \code{c("wm_cort", "csf")}
-#' @param noise_nPC The number of principal components to compute for each noise
-#'  ROI. Alternatively, values between 0 and 1, in which case they will 
-#'  represent the minimum proportion of variance explained by the PCs used for
-#'  each noise ROI. The smallest number of PCs will be used to achieve this 
-#'  proportion of variance explained. 
-#' 
-#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-#'  It will be matched to each ROI based on the name of each entry, or if the 
-#'  names are missing, the order of entries. If it is an unnamed vector, its
-#'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
-#'  each noise ROI).
-#' @param noise_erosion  The number of voxel layers to erode the noise ROIs by. 
-#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-#'  It will be matched to each ROI based on the name of each entry, or if the 
-#'  names are missing, the order of entries. If it is an unnamed vector, its 
-#'  elements will be recycled. Default: \code{NULL}, which will use a value of
-#'  0 (do not erode the noise ROIs).
-#' @param brainstructures Choose among "left", "right", and "subcortical".
-#'  Default: \code{c("left", "right")} (cortical data only)
-#' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
-#'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
-#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
-#' @param frames A numeric vector indicating the timepoints to compute 
-#'  CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
-#'  with 1, so the first timepoint has index 1 and the last has the same index
-#'  as the length of the scan.)
-#' @param center,scale Center the columns of the data by median, and scale the
-#'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
-#'  \code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
-#'  so if it is \code{FALSE}, \code{nuisance_too} must already be centered.
-#' @param DCT Add DCT bases to the nuisance regression? Use an integer to 
-#'  indicate the number of cosine bases. Use \code{0} (default) to forgo detrending. 
-#' 
-#'  The data must be centered, either before input or with \code{center}.
-#' @param nuisance_too A matrix of nuisance signals to add to the nuisance
-#'  regression. Should have \eqn{T} rows. \code{NULL} to not add additional 
-#'  nuisance regressors (default).
-#' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
+#' @return The ROIs
+#' @keywords internal
 #'
-#' @export
-CompCor_HCP <- function(
-  nii, nii_labels, 
-  ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
-  frames=NULL, cii=NULL, brainstructures=c("left", "right"),
-  center = TRUE, scale = TRUE, DCT = 0, nuisance_too = NULL,
-  verbose=FALSE){
-
-  # `nii`
-  if (is.character(nii)) {
-    cat("Reading data NIFTI.\n")
-    nii <- read_nifti(nii)
-  }
-  stopifnot(length(dim(nii))==4)
-
-  # `labs`.
+get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
+  # Read NIFTI labels file.
   if (is.character(nii_labels)) {
-    cat("Reading labels NIFTI.\n")
     nii_labels <- read_nifti(nii_labels)
   }
   stopifnot(length(dim(nii_labels))==3)
@@ -110,10 +53,80 @@ CompCor_HCP <- function(
   } else {
     stop("`ROI_noise` argument is not in a recognized form.")
   }
-  ROI_noise <- lapply(
+  lapply(
     ROI_noise, 
     function(x){array(nii_labels %in% x, dim=dim(nii_labels))}
   )
+}
+
+#' Run CompCor on the HCP data
+#'
+#' Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
+#'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
+#'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
+#'
+#' @inheritParams get_NIFTI_ROI_masks
+#' @param nii \eqn{I \times J \times \K \times T} 
+#'  NIFTI object or array (or file path to the NIFTI) which contains
+#'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
+#'  file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"
+#' @param noise_nPC The number of principal components to compute for each noise
+#'  ROI. Alternatively, values between 0 and 1, in which case they will 
+#'  represent the minimum proportion of variance explained by the PCs used for
+#'  each noise ROI. The smallest number of PCs will be used to achieve this 
+#'  proportion of variance explained. 
+#' 
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its
+#'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
+#'  each noise ROI).
+#' @param noise_erosion  The number of voxel layers to erode the noise ROIs by. 
+#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
+#'  It will be matched to each ROI based on the name of each entry, or if the 
+#'  names are missing, the order of entries. If it is an unnamed vector, its 
+#'  elements will be recycled. Default: \code{NULL}, which will use a value of
+#'  0 (do not erode the noise ROIs).
+#' @param brainstructures Choose among "left", "right", and "subcortical".
+#'  Default: \code{c("left", "right")} (cortical data only)
+#' @param frames A numeric vector indicating the timepoints to use, or 
+#'  \code{NULL} (default) to use all frames. (Indexing begins with 1, so the 
+#'  first timepoint has index 1 and the last has the same index as the length of 
+#'  the scan.)
+#' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
+#'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
+#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
+#' @param center,scale Center the columns of the data by median, and scale the
+#'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
+#'  \code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
+#'  so if it is \code{FALSE}, \code{nuisance_too} must already be centered.
+#' @param DCT Add DCT bases to the nuisance regression? Use an integer to 
+#'  indicate the number of cosine bases. Use \code{0} (default) to forgo detrending. 
+#' 
+#'  The data must be centered, either before input or with \code{center}.
+#' @param nuisance_too A matrix of nuisance signals to add to the nuisance
+#'  regression. Should have \eqn{T} rows. \code{NULL} to not add additional 
+#'  nuisance regressors (default).
+#' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
+#'
+#' @export
+CompCor_HCP <- function(
+  nii, nii_labels, 
+  ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
+  frames=NULL, cii=NULL, brainstructures=c("left", "right"),
+  center = TRUE, scale = TRUE, DCT = 0, nuisance_too = NULL,
+  verbose=FALSE){
+
+  # Get NIFTI data.
+  if (is.character(nii)) {
+    if (verbose) { cat("Reading data NIFTI.\n") }
+    nii <- read_nifti(nii)
+  }
+  stopifnot(length(dim(nii))==4)
+
+  # Get NIFTI ROI masks.
+  if (verbose) { cat("Reading labels NIFTI.\n") }
+  ROI_noise <- get_NIFTI_ROI_masks(nii_labels, ROI_noise)
 
   # Drop frames in NIFTI.
   T_ <- dim(nii)[4]
@@ -126,7 +139,7 @@ CompCor_HCP <- function(
     warning("There are very few frames.\n")
   }
 
-  cat("Computing noise components.\n")
+  if (verbose) { cat("Computing noise components.\n") }
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
@@ -147,12 +160,12 @@ CompCor_HCP <- function(
     }
     stopifnot(all(names(cii) == c("data", "surf", "meta")))
 
-    cii <- do.call(rbind, cii$data)
+    cii <- t(do.call(rbind, cii$data))
 
     # Drop frames.
     if (!is.null(frames)) {
-      stopifnot(all(frames %in% seq(ncol(cii))))
-      cii <- cii[,frames]
+      stopifnot(all(frames %in% seq(nrow(cii))))
+      cii <- cii[frames,]
     }
 
     # Normalize CIFTI.
@@ -179,6 +192,7 @@ CompCor_HCP <- function(
     }
     if (center) { design <- scale(design) } 
 
+    # Return data in TxV form.
     out$data <- nuisance_regression(cii, design)
   }
 

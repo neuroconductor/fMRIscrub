@@ -202,7 +202,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
         noise_erosion = 0
       } else {
         if (!all(noise_erosion==0) & !any(sapply(ROI_noise, is.array))) {
-          warning("`noise_erosion` was provided, but there are no array/NIFTI noise ROIs to erode.")
+          warning("`noise_erosion` was provided, but there are no array/NIFTI noise ROIs to erode.\n")
         }
       }
       noise_erosion <- as.list(noise_erosion)
@@ -220,7 +220,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
       if (!is.null(noise_erosion)) { 
         warning(
           "Erosion requires volumetric data, but the data is not volumetric.\
-          No erosion will happen."
+          No erosion will happen.\n"
         ) 
       }
     }
