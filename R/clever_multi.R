@@ -531,50 +531,23 @@ clever_multi = function(
   }
 
   # ----------------------------------------------------------------------------
-  # Center, scale, and detrend the data. ---------------------------------------
+  # Center and scale the data. -------------------------------------------------
   # Do it here instead of calling `scale_med` to save memory. ------------------
   # ----------------------------------------------------------------------------
-  
-  if (is.null(DCT)) { DCT <- 0 }
-  detrend <- DCT > 0
-  do_nreg <- !is.null(nuisance_too)
-  if (do_nreg) {
-    stopifnot(is.matrix(nuisance_too))
-    stopifnot(nrow(nuisance_too) == T_)
-  }
 
-  # [TO-DO: Skip if only Motion/FD/GSR requested.]
   if (verbose) { 
     action <- c(
       "Centering",
       "Scaling",
-      "Centering and scaling",
-      "Detrending",
-      "Centering and detrending",
-      "Scaling and detrending",
-      "Centering, scaling, and detrending"
-    )[1*center + 2*scale + 4*detrend]
-    cat(action, "the data matrix.")
-    if (do_nreg) { cat(" Also removing nuisance regressors.") }
-    cat("\n")
+      "Centering and scaling"
+    )[1*center + 2*scale]
+    cat(action, "the data matrix.\n")
   }
+
   # Transpose.
   X <- t(X)
   #	Center.
   if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
-  # Detrend and perform nuisance regression.
-  if (detrend | do_nreg) {
-    B <- NULL
-    if (detrend) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
-    if (do_nreg) { B <- cbind(B, nuisance_too) }
-    if (center) {
-      # Center design matrix robustly instead of using intercept term.
-      B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
-    } 
-    X <- nuisance_regression(X, B)
-  }
-  #	Center again for good measure.
-  if (detrend && center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   # Compute MADs.
   mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
   X_constant <- mad < TOL
@@ -582,11 +555,10 @@ clever_multi = function(
     if (all(X_constant)) {
     stop("All data locations are zero-variance.\n")
     } else {
-      warning(paste0("Warning: ", sum(X_constant),
+      warning(paste0("Warning: Removing", sum(X_constant),
       " constant data locations (out of ", length(X_constant),
-      "). These will be removed for estimation of the covariance.\n"))
+      ").\n"))
     }
-
     ROI_constant <- out$ROIs$data
     ROI_constant[ROI_constant][!X_constant] <- FALSE
     out$ROIs$data[out$ROIs$data][X_constant] <- FALSE
@@ -632,13 +604,25 @@ clever_multi = function(
 
   # ----------------------------------------------------------------------------
   # Compute CompCor. -----------------------------------------------------------
+  # Do nuisance regression. ----------------------------------------------------
   # ----------------------------------------------------------------------------
 
+  # Initialize design matrix.
+  B <- NULL
+  
+  # DCT.
+  if (is.null(DCT)) { DCT <- 0 }
+  if (DCT > 0) {
+    B <- dct_bases(T_, DCT) / sqrt((T_+1)/2)
+  }
+
+  # CompCor.
   if (any(grepl("CompCor", measures, fixed=TRUE))) {
     if (verbose) { cat("Computing CompCor.\n") }
     X_CompCor <- CompCor.noise_comps(
-      X_noise, center, scale, DCT, nuisance_too, noise_nPC
+      X_noise, center, scale, noise_nPC
     )
+    # Add to output.
     for (ii in seq_len(length(X_CompCor$noise_comps))) {
       out$CompCor[[names(X_noise)[ii]]] <- list(
         U = X_CompCor$noise_comps[[ii]],
@@ -647,6 +631,27 @@ clever_multi = function(
       )
       names(out$CompCor[[names(X_noise)[ii]]]$Dsq_total) <- NULL
     }
+    # Add to design matrix.
+    B <- cbind(B, do.call(cbind, X_CompCor$noise_comps))
+    rm(X_CompCor)
+  }
+
+  # Additional regressors.
+  if (!is.null(nuisance_too)) {
+    stopifnot(is.matrix(nuisance_too))
+    stopifnot(nrow(nuisance_too) == T_)
+    B <- cbind(B, nuisance_too)
+  }
+
+  # Perform nuisance regression.
+  if (!is.null(B)) {
+    if (center) {
+      # Center design matrix robustly instead of using intercept term.
+      B <- t(t(B) - c(rowMedians(t(B), na.rm=TRUE)))
+    }
+    X <- nuisance_regression(X, B)
+    #	Center again for good measure.
+    if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   }
 
   # ----------------------------------------------------------------------------

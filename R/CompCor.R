@@ -44,10 +44,10 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
       if (all(X_constant)) {
       stop(paste0("All data locations in noise ROI ", ii, " are zero-variance.\n"))
       } else {
-        warning(paste0("Warning: ", sum(X_constant),
+        warning(paste0("Warning: removing ", sum(X_constant),
         " constant data locations (out of ", length(X_constant),
         ") in noise ROI ", ii, 
-        ". These will be removed for estimation of the covariance.\n"))
+        ".\n"))
       }
     }
     mad <- mad[!X_constant]; X_noise[[ii]] <- X_noise[[ii]][!X_constant,]
@@ -73,33 +73,6 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
   }
 
   list(noise_comps=noise_comps, noise_var=noise_var, noise_vartotal=noise_vartotal)
-}
-
-#' Nuisance regression
-#'
-#' Performs nuisance regression. The data and design matrix must both be
-#'  centered, or an intercept must be included in the design matrix!
-#'
-#' @param X The TxV or VxT data.
-#' @param design The TxQ matrix of nuisance regressors
-#'
-#' @return The data after nuisance regression
-#' 
-#' @keywords internal
-nuisance_regression <- function(X, design){
-  # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
-  # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an
-  qrd <- qr(design)
-  design <- design[, qrd$pivot[seq_len(qrd$rank)]]
-  Qd <- qr.Q(qrd)
-  I_m_H <- diag(nrow(design)) - (Qd %*% t(Qd))
-  if (nrow(X)==nrow(design)) {
-    return(I_m_H %*% X)
-  } else if (ncol(X)==nrow(design)) {
-    return(X %*% I_m_H)
-  } else {
-    stop("X and design are not of compatible dimensions.")
-  }
 }
 
 #' CompCor
