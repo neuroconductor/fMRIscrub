@@ -70,10 +70,10 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{frames}{A numeric vector indicating the timepoints to compute 
-CompCor for, or \code{NULL} (default) to use all frames. (Indexing begins
-with 1, so the first timepoint has index 1 and the last has the same index
-as the length of the scan.)}
+\item{frames}{A numeric vector indicating the timepoints to use, or 
+\code{NULL} (default) to use all frames. (Indexing begins with 1, so the 
+first timepoint has index 1 and the last has the same index as the length of 
+the scan.)}
 
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
 ROI components will be regressed. In the HCP, the corresponding file is e.g.
