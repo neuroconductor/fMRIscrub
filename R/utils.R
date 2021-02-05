@@ -91,7 +91,7 @@ fit.F <- function(Q, n, h){
 #' 
 #' @return Matrix with cosine bases along columns
 #' 
-#' @keywords internal
+#' @export
 dct_bases <- function(T_, n){
   b <- matrix(NA, T_, n)
   idx <- (seq(T_)-1)/(T_-1)

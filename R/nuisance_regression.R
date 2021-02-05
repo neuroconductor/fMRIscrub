@@ -8,7 +8,7 @@
 #'
 #' @return The data after nuisance regression
 #' 
-#' @keywords internal
+#' @export
 nuisance_regression <- function(X, design){
   # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
   # https://stackoverflow.com/questions/39167204/in-r-how-does-one-extract-the-hat-projection-influence-matrix-or-values-from-an

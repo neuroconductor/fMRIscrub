@@ -17,4 +17,3 @@ Matrix with cosine bases along columns
 \description{
 Get the cosine bases for DCT
 }
-\keyword{internal}

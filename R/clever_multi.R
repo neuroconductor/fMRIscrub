@@ -578,9 +578,7 @@ clever_multi = function(
   
   # DCT.
   if (is.null(DCT)) { DCT <- 0 }
-  if (DCT > 0) {
-    B <- dct_bases(T_, DCT) / sqrt((T_+1)/2)
-  }
+  if (DCT > 0) { B <- dct_bases(T_, DCT) / sqrt((T_+1)/2) }
 
   # CompCor.
   if (CompCor) {

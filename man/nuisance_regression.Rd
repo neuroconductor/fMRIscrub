@@ -18,4 +18,3 @@ The data after nuisance regression
 Performs nuisance regression. The data and design matrix must both be
  centered, or an intercept must be included in the design matrix!
 }
-\keyword{internal}
