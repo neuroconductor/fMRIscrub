@@ -396,7 +396,7 @@ clever_multi = function(
     measures <- c(measures, paste0("motion_t", 1:3), paste0("motion_r", 1:3))
   }
 
-  # Format output --------------------------------------------------------------
+  # Format. --------------------------------------------------------------------
 
   out <- list(
     measures = list(), 
@@ -475,18 +475,16 @@ clever_multi = function(
   stopifnot((kurt_quantile < 1) & (kurt_quantile > 0))
 
   # ----------------------------------------------------------------------------
-  # Compute GSR. ---------------------------------------------------------------
+  # Compute measures which do not require projections. -------------------------
   # ----------------------------------------------------------------------------
 
+  # Compute GSR. ---------------------------------------------------------------
   if ("GSR" %in% measures) {
     if (verbose) { cat("Computing GSR.\n") }
     out$measures$GSR <- apply(X, 1, mean)
   }
 
-  # ----------------------------------------------------------------------------
   # Compute Motion and FD. -----------------------------------------------------
-  # ----------------------------------------------------------------------------
-
   if ("motion" %in% measures | "FD" %in% measures) {
     if (verbose) {
       what <- c("motion", "FD", "motion and FD")[
@@ -512,7 +510,7 @@ clever_multi = function(
     }
   }
 
-  # Exit if only GSR and motion/FD are needed
+  # Exit if only GSR and motion/FD are needed. ---------------------------------
   if (all(grepl("GSR|motion|FD", measures)) & (!CompCor)) {
     out$measures <- as.data.frame(out$measures)
     if (length(out$outlier_flags) > 0) {
@@ -529,49 +527,10 @@ clever_multi = function(
   }
 
   # ----------------------------------------------------------------------------
-  # Center and scale the data. -------------------------------------------------
-  # Do it here instead of calling `scale_med` to save memory. ------------------
+  # Data cleaning. -------------------------------------------------------------
   # ----------------------------------------------------------------------------
 
-  if (verbose) { 
-    action <- c(
-      "Centering",
-      "Scaling",
-      "Centering and scaling"
-    )[1*center + 2*scale]
-    cat(action, "the data matrix.\n")
-  }
-
-  # Transpose.
-  X <- t(X)
-  #	Center.
-  if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
-  # Compute MADs.
-  mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
-  X_constant <- mad < TOL
-  if (any(X_constant)) {
-    if (all(X_constant)) {
-    stop("All data locations are zero-variance.\n")
-    } else {
-      warning(paste0("Warning: Removing", sum(X_constant),
-      " constant data locations (out of ", length(X_constant),
-      ").\n"))
-    }
-    ROI_constant <- out$ROIs$data
-    ROI_constant[ROI_constant][!X_constant] <- FALSE
-    out$ROIs$data[out$ROIs$data][X_constant] <- FALSE
-    out$ROIs <- c(out$ROIs["data"], list(constant=ROI_constant), out$ROIs[names(out$ROIs) != "data"])
-  }
-  mad <- mad[!X_constant]; X <- X[!X_constant,]; V_ <- ncol(X)
-  # Scale.
-  if (scale) { X <- X/c(mad) }
-  # Revert transpose.
-  X <- t(X)
-
-  # ----------------------------------------------------------------------------
-  # Compute CompCor. -----------------------------------------------------------
-  # Do nuisance regression. ----------------------------------------------------
-  # ----------------------------------------------------------------------------
+  # Nuisance regression. -------------------------------------------------------
 
   # Initialize design matrix.
   B <- NULL
@@ -617,6 +576,44 @@ clever_multi = function(
     #	Center again for good measure.
     if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
   }
+
+  # Center and scale the data. -------------------------------------------------
+  # (Do it here instead of calling `scale_med` to save memory.)
+
+  if (verbose) { 
+    action <- c(
+      "Centering",
+      "Scaling",
+      "Centering and scaling"
+    )[1*center + 2*scale]
+    cat(action, "the data matrix.\n")
+  }
+
+  # Transpose.
+  X <- t(X)
+  #	Center.
+  if (center) { X <- X - c(rowMedians(X, na.rm=TRUE)) }
+  # Compute MADs.
+  mad <- 1.4826 * rowMedians(abs(X), na.rm=TRUE)
+  X_constant <- mad < TOL
+  if (any(X_constant)) {
+    if (all(X_constant)) {
+    stop("All data locations are zero-variance.\n")
+    } else {
+      warning(paste0("Warning: Removing", sum(X_constant),
+      " constant data locations (out of ", length(X_constant),
+      ").\n"))
+    }
+    ROI_constant <- out$ROIs$data
+    ROI_constant[ROI_constant][!X_constant] <- FALSE
+    out$ROIs$data[out$ROIs$data][X_constant] <- FALSE
+    out$ROIs <- c(out$ROIs["data"], list(constant=ROI_constant), out$ROIs[names(out$ROIs) != "data"])
+  }
+  mad <- mad[!X_constant]; X <- X[!X_constant,]; V_ <- ncol(X)
+  # Scale.
+  if (scale) { X <- X/c(mad) }
+  # Revert transpose.
+  X <- t(X)
 
   # ----------------------------------------------------------------------------
   # Compute DVARS. -------------------------------------------------------------
@@ -849,7 +846,7 @@ clever_multi = function(
   }
 
   # ----------------------------------------------------------------------------
-  # Done. ----------------------------------------------------------------------
+  # Format output. -------------------------------------------------------------
   # ----------------------------------------------------------------------------
 
   out$measures <- as.data.frame(out$measures)
