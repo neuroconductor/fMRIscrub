@@ -136,10 +136,6 @@
 #'  \item{call}{The call to this function.}
 #' }
 #'
-#' @importFrom pesel pesel
-#' @importFrom robustbase rowMedians
-#' @importFrom stats mad qnorm var setNames
-#'
 #' @export
 #'
 #' @examples

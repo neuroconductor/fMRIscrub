@@ -56,9 +56,6 @@ Suggests:
     gridExtra,
     testthat (>= 2.1.0),
     covr
-Remotes:
-    psobczyk/pesel,
-    mandymejia/ciftiTools
 VignetteBuilder: knitr
 LinkingTo: 
     Rcpp,
