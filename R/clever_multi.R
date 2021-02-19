@@ -773,23 +773,26 @@ clever_multi = function(
     # [TEMPORARY] PCA was required, so `out$PCA` exists
     Comps_ii <- switch(proj_ii,
       PCA = seq_len(out$PCA$nPCs_avgvar),
-      PCA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$PCA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
+      PCA_kurt = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar)])],
       PCA2 = seq_len(out$PCA$nPCs_PESEL),
-      PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$PCA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
+      PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_PESEL)])],
       PCATF = NULL,
       ICA = seq_len(out$PCA$nPCs_avgvar),
-      ICA_kurt = seq_len(out$PCA$nPCs_avgvar)[out$ICA$highkurt[seq_len(out$PCA$nPCs_avgvar)]],
+      ICA_kurt = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar)])],
       ICA2 = seq_len(out$PCA$nPCs_PESEL),
-      ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[out$ICA$highkurt[seq_len(out$PCA$nPCs_PESEL)]],
+      ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_PESEL)])],
     )
 
-    # [TO DO]: Fix this in high_kurtosis
-    if (length(Comps_ii) == 0 && grepl("2_", proj_ii, fixed=FALSE)) {
-      cat(" (Temporary notice: using single highest-kurtosis PC in smaller PC subset.)")
+    if (length(Comps_ii)==0 && grepl("kurt", proj_ii)) {
+      if (grepl("kurt", proj_ii)) {
+        cat("Using the component with the highest kurtosis.\n")
+      } else {
+        cat("Using the first component.\n")
+      }
       Comps_ii <- switch(proj_ii,
-        PCA2 = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        PCA_kurt = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
         PCA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
-        ICA2 = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+        ICA_kurt = seq_len(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
         ICA2_kurt = seq_len(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)]
       )
     }
