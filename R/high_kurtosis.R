@@ -1,10 +1,12 @@
 #' Identifies the components of sufficient kurtosis.
 #'
-#' Each component is detrended (this can be disabled) before computing kurtosis. 
-#'  The kurtosis cutoff is the 90% quantile of the sampling distribution of 
+#' The kurtosis cutoff is the 90% quantile of the sampling distribution of 
 #'  kurtosis for Normal data of the same length as the components; it is
 #'  estimated by simulation or calculated from the theoretical asymptotic
 #'  distribution if the components are long enough.
+#' 
+#' The components should not have any strong low-frequency trends, because trends
+#'  can affect kurtosis in unpredictable ways unrelated to outlier presence. 
 #'
 #' @param Comps A matrix; each column is a component. For PCA, this is the U
 #'  matrix. For ICA, this is the M matrix.
