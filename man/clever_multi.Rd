@@ -6,7 +6,7 @@
 \usage{
 clever_multi(
   X,
-  projection = c("PCA_kurt", "PCATF_kurt", "ICA_kurt"),
+  projection = "PCA_kurt",
   nuisance = cbind(1, dct_bases(nrow(X), 4)),
   center = TRUE,
   scale = TRUE,
@@ -118,7 +118,7 @@ A \code{"clever_multi"} object, i.e. a list with components
  \item{mask}{
    A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
    \describe{
-     \item{0}{The data location was not masked out.}
+     \item{1}{The data location was not masked out.}
      \item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
      \item{-2}{The data location was masked out, because it was constant.}
    }

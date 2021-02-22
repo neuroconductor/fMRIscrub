@@ -6,8 +6,6 @@
 #' @keywords internal
 clever_from_multi <- function(clev) {
   class(clev) <- "clever"
-  names(clev)[names(clev) == "measures"] <- "measure"
-  names(clev)[names(clev) == "outlier_cutoffs"] <- "outlier_cutoff"
   clev$measure_name <- as.character(colnames(clev$measure))
 
   if (length(clev$measure_name) == 1) {

@@ -198,7 +198,7 @@ PCATF <- function(
                      
   full_time <- Sys.time() - time
 
-  out <- list(d=stuff$d, u=stuff$U, PC_exec_times=full_time, nItes=stuff$iters)
+  out <- list(u=stuff$U, d=as.vector(stuff$d), PC_exec_times=full_time, nItes=as.vector(stuff$iters))
   if(solve_directions){ out$v = stuff$V }
   out
 }

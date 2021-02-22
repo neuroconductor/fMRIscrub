@@ -35,7 +35,7 @@
 #'  \item{mask}{
 #'    A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
 #'    \describe{
-#'      \item{0}{The data location was not masked out.}
+#'      \item{1}{The data location was not masked out.}
 #'      \item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
 #'      \item{-2}{The data location was masked out, because it was constant.}
 #'    }
@@ -83,7 +83,7 @@
 #'
 #' clev = clever:::clever_multi(X)
 clever_multi = function(
-  X, projection = c("PCA_kurt", "PCATF_kurt", "ICA_kurt"), 
+  X, projection = "PCA_kurt", 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
   center=TRUE, scale=TRUE, 
   kurt_quantile=.95, PCATF_kwargs=NULL,
@@ -128,7 +128,7 @@ clever_multi = function(
     measure = list(),
     outlier_cutoff = list(),
     outlier_flag = list(),
-    mask = rep(0, T_),
+    mask = rep(1, V_),
     PCA = NULL,
     PCATF = NULL,
     ICA = NULL
@@ -218,41 +218,28 @@ clever_multi = function(
   # Compute PCA. (Even if only ICA is being used, since we need `nComps`)
   if (verbose) {
     cat(paste0(
-      "Computing the PC scores", ifelse(get_dirs, " and directions", ""), ".\n"
+      "Computing PCA.\n"
     ))
   }
   if (get_dirs || "PCATF" %in% base_projection) {
-    out$PCA <- svd(X)
+    out$PCA <- svd(X)[c("u", "d", "v")]
     names(out$PCA) <- toupper(names(out$PCA))
   } else {
     # Conserve memory by using `XXt`.
-    out$PCA <- svd(tcrossprod(X))
+    out$PCA <- svd(tcrossprod(X))[c("u", "d", "v")]
     names(out$PCA) <- toupper(names(out$PCA))
     out$PCA$D <- sqrt(out$PCA$D)
     out$PCA$V <- NULL
   }
   # Keep only the above-average variance/PESEL PCs (whichever is greater).
-  nComps <- 1
+  maxK_PCA <- 1
   if (any(valid_projection_PESEL %in% projection)) {
     out$PCA$nPCs_PESEL <- with(set.seed(0), pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs)
-    nComps <- max(nComps, out$PCA$nPCs_PESEL)
+    maxK_PCA <- max(maxK_PCA, out$PCA$nPCs_PESEL)
   }
   if (any(valid_projection_avgvar %in% projection)) {
     out$PCA$nPCs_avgvar <- max(1, sum(out$PCA$D^2 > mean(out$PCA$D^2)))
-    nComps <- max(nComps, out$PCA$nPCs_avgvar)
-  }
-  # Remove PCA information if only ICA is being used.
-  if (!("PCA" %in% base_projection)) {
-    out$PCA$U <- out$PCA$D <- out$PCA$V <- NULL
-  } else {
-    # Remove smaller PCs.
-    if (!full_PCA) {
-      out$PCA$U <- out$PCA$U[, seq(nComps), drop=FALSE]
-      out$PCA$D <- out$PCA$D[seq(nComps), drop=FALSE]
-      if (!is.null(out$PCA$V)) { 
-        out$PCA$V <- out$PCA$V[, seq(nComps), drop=FALSE]
-      }
-    }
+    maxK_PCA <- max(maxK_PCA, out$PCA$nPCs_avgvar)
   }
   # Identify which PCs have high kurtosis.
   if (any(c("PCA_kurt", "PCA2_kurt") %in% projection)) {
@@ -262,17 +249,24 @@ clever_multi = function(
 
   # Compute PCATF.
   if ("PCATF" %in% base_projection) {
+    maxK_PCATF <- max(as.numeric(list(
+      PCATF = out$PCA$nPCs_PESEL,
+      PCATF_kurt = out$PCA$nPCs_PESEL,
+      PCATF2 = out$PCA$nPCs_avgvar,
+      PCATF2_kurt = out$PCA$nPCs_avgvar
+    )[projection[grepl("PCATF", projection)]]))
     if (verbose) { cat("Computing PCATF.\n") }
     out$PCATF <- do.call(
       PCATF, 
       c(
         list(
           X=X, X.svd=out$PCA[c("U", "D", "V")], 
-          K=out$PCA$nComps, solve_directions=get_dirs
+          K=maxK_PCATF, solve_directions=get_dirs
         ), 
         PCATF_kwargs
       )
-    )[c("u", "d", "v")]
+    )
+    out$PCATF$PC_exec_times <- NULL; out$PCATF$nItes <- NULL
     # V matrix from PCA no longer needed.
     if(!get_dirs){ out$PCA$V <- NULL }
 
@@ -283,7 +277,7 @@ clever_multi = function(
         "trend-filtered PC scores are zero-variance.\n"
       )
     }
-    names(out$PCATF) <- toupper(names(out$PCATF))
+    names(out$PCATF)[names(out$PCATF) %in% c("u", "d", "v")] <- toupper(names(out$PCATF)[names(out$PCATF) %in% c("u", "d", "v")])
   }
   # Identify which trend-filtered PCs have high kurtosis.
   if (any(c("PCATF_kurt", "PCATF2_kurt") %in% projection)) {
@@ -292,17 +286,23 @@ clever_multi = function(
 
   # Compute ICA
   if (any(c("ICA", "ICA2") %in% base_projection)) {
+    maxK_ICA <- max(as.numeric(list(
+      ICA = out$PCA$nPCs_PESEL,
+      ICA_kurt = out$PCA$nPCs_PESEL,
+      ICA2 = out$PCA$nPCs_avgvar,
+      ICA2_kurt = out$PCA$nPCs_avgvar
+    )[projection[grepl("ICA", projection)]]))
     if (verbose) { cat("Computing ICA.\n" ) }
     if (!requireNamespace("ica", quietly = TRUE)) {
       stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
     }
-    out$ICA <- ica::icaimax(t(X), nComps, center=FALSE)[c("S", "M")]
+    out$ICA <- ica::icaimax(t(X), maxK_ICA, center=FALSE)[c("S", "M")]
     # Issue due to rank.
-    if (ncol(out$ICA$M) != nComps) {
+    if (ncol(out$ICA$M) != maxK_ICA) {
       cat("Rank issue with ICA: adding constant zero columns.\n")
-      nComps_missing <- nComps - ncol(out$ICA$M)
-      out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=nComps_missing))
-      out$ICA$S <- cbind(out$ICA$S, matrix(0, nrow=nrow(out$ICA$S), ncol=nComps_missing))
+      K_missing <- maxK_ICA - ncol(out$ICA$M)
+      out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=K_missing))
+      out$ICA$S <- cbind(out$ICA$S, matrix(0, nrow=nrow(out$ICA$S), ncol=K_missing))
     }
 
     if (any(c("ICA_kurt", "ICA2_kurt") %in% projection)) {
@@ -313,9 +313,22 @@ clever_multi = function(
   }
   # Identify which ICs have high kurtosis.
   if (any(c("ICA_kurt", "ICA2_kurt") %in% projection)) {
-    out$PCATF$highkurt <- high_kurtosis(
-      out$PCATF$U, kurt_quantile=kurt_quantile
-    )
+    out$ICA$highkurt <- high_kurtosis(out$ICA$M, kurt_quantile=kurt_quantile)
+  }
+
+  # Remove PCA information if only ICA is being used.
+  # Do this after PCA info was given to PCATF
+  if (!("PCA" %in% base_projection)) {
+    out$PCA$U <- out$PCA$D <- out$PCA$V <- NULL
+  } else {
+    # Remove smaller PCs.
+    if (!full_PCA) {
+      out$PCA$U <- out$PCA$U[, seq(maxK_PCA), drop=FALSE]
+      out$PCA$D <- out$PCA$D[seq(maxK_PCA), drop=FALSE]
+      if (!is.null(out$PCA$V)) { 
+        out$PCA$V <- out$PCA$V[, seq(maxK_PCA), drop=FALSE]
+      }
+    }
   }
 
   rm(X); gc()
@@ -324,10 +337,12 @@ clever_multi = function(
   # Compute leverage. ----------------------------------------------------------
   # ----------------------------------------------------------------------------
 
+  if (verbose) { cat("Computing leverage.\n") }
+
   for (ii in seq(length(projection))) {
     proj_ii <- projection[ii]
-
-    if (verbose) { cat("Computing", proj_ii, ".\n") }
+    base_ii <- gsub("2", "", gsub("_kurt", "", proj_ii))
+    scores_ii <- ifelse(grepl("ICA", proj_ii), "M", "U")
 
     # Make projection.
     Comps_ii <- switch(proj_ii,
@@ -344,7 +359,7 @@ clever_multi = function(
       ICA2 = seq(out$PCA$nPCs_avgvar),
       ICA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)]
     )
-    Comps_ii <- out[[gsub("2", "", gsub("_kurt", "", proj_ii))]][[ifelse(grepl("ICA", proj_ii), "M", "U")]][, Comps_ii, drop=FALSE]
+    Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]
 
     # Compute leverage.
     result_ii <- out_measures.leverage(Comps=Comps_ii, median_cutoff=cutoff)
@@ -353,8 +368,6 @@ clever_multi = function(
       out$outlier_cutoff[[proj_ii]] <- result_ii$cut
       out$outlier_flag[[proj_ii]] <- result_ii$flag
     }
-
-    if (verbose) { cat("\n") }
   }
 
   # ----------------------------------------------------------------------------
