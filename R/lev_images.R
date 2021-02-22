@@ -23,13 +23,13 @@ lev_images <- function(clev, timepoints=NULL, const_mask=NULL){
   if ("PCA" %in% names(clev)) {
     U <- clev$PCA$U
     if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run clever again with `solve_dirs=TRUE`.") 
+      stop("No directions. Run clever again with `get_dirs=TRUE`.") 
     }
     V <- clev$PCA$V
   } else if ("PCATF" %in% names(clev)) {
     U <- clev$PCATF$U
     if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run clever again with `solve_dirs=TRUE`.")
+      stop("No directions. Run clever again with `get_dirs=TRUE`.")
     }
     V <- clev$PCATF$V
   } else if ("ICA" %in% names(clev)) {

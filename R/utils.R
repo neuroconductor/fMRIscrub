@@ -1,3 +1,16 @@
+#' Is a numeric vector constant?
+#' 
+#' @param x The numeric vector
+#' @param TOL minimum range of \code{x} to be considered non-constant.
+#'  Default: \code{1e-8}
+#' 
+#' @return Is \code{x} constant? 
+#' 
+#' @keywords internal
+is_constant <- function(x, TOL=1e-8) {
+  abs(max(x) - min(x)) < TOL
+}
+
 #' Scale data columns robustly
 #' 
 #' Centers and scales the columns of a matrix robustly for the purpose of 

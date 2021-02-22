@@ -2,317 +2,125 @@
 % Please edit documentation in R/clever_multi.R
 \name{clever_multi}
 \alias{clever_multi}
-\title{Compare multiple scrubbing measures with \code{clever_multi}}
+\title{Compare multiple leverage measures with \code{clever_multi}}
 \usage{
 clever_multi(
   X,
-  measures = c("leverage", "DVARS2"),
-  ROI_data = "infer",
-  ROI_noise = NULL,
-  motion = NULL,
-  projections = "PCA2_kurt",
-  solve_dirs = FALSE,
+  projection = c("PCA_kurt", "PCATF_kurt", "ICA_kurt"),
+  nuisance = cbind(1, dct_bases(nrow(X), 4)),
   center = TRUE,
   scale = TRUE,
-  DCT = 0,
-  CompCor = FALSE,
-  nuisance_too = NULL,
-  noise_nPC = 5,
-  noise_erosion = NULL,
-  PCATF_kwargs = NULL,
   kurt_quantile = 0.95,
-  get_outliers = TRUE,
-  outlier_cutoffs = list(leverage = 4, robdist = 0.9999, DVARS = 5, DVARS2 =
-    "Afyouni-Nichols", FD = 0.5),
+  PCATF_kwargs = NULL,
+  get_dirs = FALSE,
   full_PCA = FALSE,
+  get_outliers = TRUE,
+  cutoff = 4,
   verbose = FALSE
 )
 }
 \arguments{
-\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
- For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
- of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, 
+\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
+number of timepoints and \eqn{V} should be the number of brainordinate 
+vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
 
- Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I \times J \times K \times T} 
- observations), in which case \code{ROI_data} must be provided. 
- (\eqn{V_{in-mask voxels} \times T observations})
-
- Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
- (\eqn{V_{left} + V_{right} + V_{subcortical} \times T observations}).}
-
-\item{measures}{Character vector indicating the measures to compute. Choose 
- at least one of the following: 
-
- \describe{
-   \item{\code{"leverage"}}{Leverage scrubbing, which is based on
-     projecting the data onto directions thought to express outlier 
-     information.}
-   \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-   \item{\code{"DVARS"}}{Traditional DVARS}
-   \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
-     Nichols, 2018)}
-   \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
-   \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-     Requires \code{motion}.}
-   \item{\code{"GSR"}}{Global Signal of the data.}
- }
-
- Use \code{"all"} to select all available measures. (FD and motion will only 
- be computed if the motion realignment parameters are provided.) Default: 
- \code{"leverage", "DVARS2"}.
-
- Note that motion and GSR are not direct measures of outlyingness,
- so they do not have corresponding \code{outlier_cutoffs}.}
-
-\item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
-
- If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where
- the data ROI is indicated by \code{TRUE} values. If \code{"infer"} (default), all 
- columns of \code{X} will be included in the data ROI (\code{rep(TRUE, V)}).
-
- If \code{X} is an array or NIFTI, this must be either a vector of values
- to expect for out-of-mask voxels in \code{X}, or a (file path to a) 3D NIFTI.
- In the latter case, each of the volume dimensions should match the first
- three dimensions of \code{X}. Voxels in the data ROI should be indicated by
- \code{TRUE} and all other voxels by \code{FALSE}. If \code{"infer"} (default),
- will be set to \code{c(0, NA, NaN)} (include all voxels which are not
- \code{0}, \code{NA}, or \code{NaN}).
-
- If \code{X} is a \code{"xifti"} all data locations will be used and this
- should be left as \code{"infer"} (default).
-
- If \code{NULL}, the data ROI will be empty. This is useful for obtaining just
- the noise ROI, if the data and noise are located in separate files.}
-
-\item{ROI_noise}{Indicates the noise ROIs. Only used if the \code{"CompCor"} 
- measure is requested.
- 
- If \code{X} is a matrix, this must be a list of length \eqn{V} logical
- vectors, or a list of matrices with \code{T} rows. The names of each entry should
- indicate the name of the noise ROI, e.g. \code{"white_matter"} and \code{"csf"}.
- In the first case, \code{TRUE} values should indicate the locations of \code{X} 
- within that noise ROI. Since the ROIs must not overlap, the masks must be 
- mutually exclusive with each other, and with \code{ROI_data}. In the second
- case, the rows of the matrix must represent noise brainordinate timecourses,
- separate from \code{X}. 
-
- If \code{X} is an array or NIFTI, this must be a list of (file paths to) 3D 
- NIFTIs or arrays, or a list of matrices with \code{T} rows. The names of 
- each entry should indicate the name of the noise ROI, e.g. 
- \code{"white_matter"} and \code{"csf"}. In the first case, each of the volume 
- dimensions should match the first three dimensions of \code{X}. Voxels in 
- each noise ROI should be indicated by \code{TRUE} and all other voxels by 
- \code{FALSE}. Since the ROIs must not overlap, the masks must be mutually 
- exclusive with each other, and with \code{ROI_data}. In the second case,
- the rows of the matrix must represent noise brainordinate timecourses,
- separate from \code{X}. 
-
- If \code{X} is a \code{"xifti"}, this must be a list of matrices with 
- \code{T} rows. The names of each entry should indicate the name of the noise
- ROI, e.g. \code{"white_matter"} and \code{"csf"}. The rows of the matrix 
- must represent noise brainordinate timecourses, separate from \code{X}.}
-
-\item{motion}{Only used if the \code{"FD"} measure is requested. An 
- \eqn{N \times 6} matrix in which the first three columns represent the
- translational realignment parameters (mm), and the second three columns represent
- the rotational realignment parameters in (radians). To convert radians to mm,
- the displacement on a sphere of radius 50 mm will be computed.
-
- Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
- read with \code{\link{read.table}} (fields separated by white-space; no
- header).}
-
-\item{projections}{Only applies to the \code{"leverage"} and \code{"robdist"} 
- measures. These work by projecting the data onto directions likely to 
+\item{projection}{Leverage works by projecting the data onto directions likely to 
  contain outlier information. Choose at least one of the following:
 
  \describe{
-   \item{\code{"PCA"}}{PCA using the PCs of above-average variance.}
-   \item{\code{"PCA_kurt"}}{PCA using the PCs of above-average variance and with high kurtosis.}
-   \item{\code{"PCA2"}}{PCA using the PCs selected by PESEL.}
-   \item{\code{"PCA2_kurt"}}{PCA using the PCs selected by PESEL and with high kurtosis.}
-   \item{\code{"PCATF"}}{PCATF using the trend-filtered PCs of above-average variance. Compatible with leverage only.}
-   \item{\code{"ICA"}}{ICA using the ICs of above-average variance.}
-   \item{\code{"ICA_kurt"}}{ICA using the ICs of above-average variance and with high kurtosis.}
-   \item{\code{"ICA2"}}{ICA using the ICs selected by PESEL.}
-   \item{\code{"ICA2_kurt"}}{ICA using the ICs selected by PESEL and with high kurtosis.}
+   \item{\code{"PCA"}}{PCA using the top \eqn{k} PCs.}
+   \item{\code{"PCA_kurt"}}{PCA using the high-kurtosis PCs among the top \eqn{k}.}
+   \item{\code{"PCA2"}}{PCA using the top \eqn{k2} PCs.}
+   \item{\code{"PCA2_kurt"}}{PCA using the high-kurtosis PCs among the top \eqn{k2}.}
+   \item{\code{"PCATF"}}{PCATF using the top \eqn{k} trend-filtered PCs.}
+   \item{\code{"PCATF_kurt"}}{PCATF using the high-kurtosis trend-filtered PCs among the top \eqn{k}.}
+   \item{\code{"PCATF2"}}{PCATF using the top \eqn{k2} trend-filtered PCs.}
+   \item{\code{"PCATF2_kurt"}}{PCATF using the high-kurtosis trend-filtered PCs among the top \eqn{k2}.}
+   \item{\code{"ICA"}}{ICA using the top \eqn{k} ICs.}
+   \item{\code{"ICA_kurt"}}{ICA using the high-kurtosis ICs among the top \eqn{k}.}
+   \item{\code{"ICA2"}}{ICA using the top \eqn{k2} ICs.}
+   \item{\code{"ICA2_kurt"}}{ICA using the high-kurtosis ICs among the top \eqn{k2}.}
  }
+
+ where \eqn{k} is the number of PCs selected by PESEL, and \eqn{k2} is the number
+ of PCs with above-average variance.
  
- Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
- 
- Each compatible combination between \code{projections} and the applicable 
- \code{measures} will yield its own result.}
+ Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.}
 
-\item{solve_dirs}{Only applies to the \code{"leverage"} and \code{"robdist"} 
-measures. Should the projection directions be computed? Default:
-\code{FALSE}. This will save memory, especially for PCA since the full SVD
-can be avoided. However, \code{solve_dirs=TRUE} is required to compute the
-leverage images.}
-
-\item{center, scale}{Center the columns of the data by median, and scale the
-columns of the data by MAD? Default: \code{TRUE} for both. Centering is
-necessary for detrending and for computing PCA/ICA, so if this is set to 
-\code{FALSE}, the input data must already be centered. For aCompCor, these 
-options will also be applied to the noise ROI data.}
-
-\item{DCT}{Detrend the columns of the data using the discrete cosine
- transform (DCT)? Use an integer to indicate the number of cosine bases to 
- use for detrending. Use \code{0} (default) to forgo detrending. 
-
- The data must be centered, either before input or with \code{center}.
+\item{nuisance}{Nuisance signals to regress from each column of \code{X}.
+ Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
+ number of nuisance signals. Default: a matrix with a constant column
+ (this is the intercept term in the design matrix) and four DCT bases. 
+ Regressing these nuisance signals will have the effect of detrending the
+ data by removing low-frequency components. 
 
  Detrending is highly recommended for time-series data, especially if there 
  are many time points or evolving circumstances affecting the data. Additionally,
  if kurtosis is being used to select the projection directions, trends can 
  induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. 
- 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
+ high kurtosis and outlier presence. Detrending should not be used with 
+ non-time-series data because the observations are not temporally related.
 
-\item{CompCor}{Clean the data with CompCor? Will affect DVARS, leverage
-and robust distance but not GSR. Requires \code{ROI_data} and \code{ROI_noise}.}
+ To perform nuisance regression with an intercept, DCT bases, and additional
+ signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
 
-\item{nuisance_too}{A matrix of nuisance signals to regress from the data
-before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-regression will be performed simultaneously with DCT detrending if 
-applicable. \code{NULL} to not add additional nuisance regressors.}
+\item{center}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
 
-\item{noise_nPC}{Only applies to CompCor.
- The number of principal components to compute for each noise
- ROI. Alternatively, values between 0 and 1, in which case they will 
- represent the minimum proportion of variance explained by the PCs used for
- each noise ROI. The smallest number of PCs will be used to achieve this 
- proportion of variance explained. 
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its
- elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
- each noise ROI).}
+\item{scale}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
 
-\item{noise_erosion}{Only applies to CompCor.
- The number of voxel layers to erode the noise ROIs by. 
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its 
- elements will be recycled. Default: \code{NULL}, which will use a value of
- 0 (do not erode the noise ROIs).}
+\item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
+for kurtosis should be used to select the components? Default: \code{0.95}.}
 
 \item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
 entries are:
 
 \describe{
-  \item{K}{Maximum number of PCs to compute. Default: \code{100}.}
   \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
   \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+  \item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
   \item{verbose}{Print updates? Default: \code{FALSE}.}
 }}
 
-\item{kurt_quantile}{Only applies to the \code{"PCA_kurt"} and \code{"ICA_kurt"} projections. 
-What cutoff quantile for kurtosis should be used to select the PCs? 
-Default: \code{0.95}.}
+\item{get_dirs}{Do the projection directions need to be returned? This is the 
+\eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
+to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
 
-\item{get_outliers}{Should outliers be flagged based on cutoffs? Default: \code{TRUE}.}
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+Default: \code{FALSE} (return only the components used to compute the measures).}
 
-\item{outlier_cutoffs}{Named list indicating the cutoff for each outlyingness measure.
- Only used if \code{get_outliers}. Each cutoff is specified in a particular way:
+\item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}
 
- \describe{
-   \item{\code{"leverage"}}{Minimum leverage value, in multiples of the median leverage. Default: \code{4} (will flag leverage scores more than four times the median).}
-   \item{\code{"robdist"}}{Minimum robust distance quantile, based on the estimated F distribution. Default: \code{.9999} (will flag robust distance scores above the 99.99th percentile).}
-   \item{\code{"DVARS"}}{Minimum traditional-DVARS value. Default: \code{5}}
-   \item{\code{"DVARS2"}}{A length-2 numeric vector representing a dual 
-     Delta-percent-DVARS and z-score-DVARS cutoff. Both must be met for a 
-     timepoint to be flagged. The Delta-percent-DVARS cutoff should be given
-     in percentages; the z-score-DVARS cutoff should be given as a z-score. 
-     Or, set this to "Afyouni-Nichols" (default) to require a
-     Delta-percent-DVARS of more than 5\% and a z-score-DVARS greater than
-     the right-tail 5\% significance level with Bonferroni FWER correction).}
-   \item{\code{"FD"}}{Minimum FD. Default: 0.5 mm (will flag FD scores greater than 0.5 mm).}
- }}
-
-\item{full_PCA}{Return the full SVD? Default: \code{FALSE} (return
-only the components used to compute the measures).}
+\item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
 A \code{"clever_multi"} object, i.e. a list with components
 \describe{
- \item{measures}{
-   A data.frame of the measures (only those requested will be included):
+ \item{measure}{A \eqn{T \times P} data.frame of numeric leverage values for each of the P projections in \code{projection}.}
+ \item{outlier_cutoff}{A \eqn{1 \times P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
+ \item{outlier_flag}{A \eqn{T \times P} data.frame of logical values where \code{TRUE} indicates suspected outlier presence.}
+ \item{mask}{
+   A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
    \describe{
-     \item{leverage__PCA}{Leverage values of the "PCA" projection.}
-     \item{leverage__PCA_kurt}{Leverage values of the "PCA_kurt" projection.}
-     \item{leverage__PCA2}{Leverage values of the "PCA2" projection.}
-     \item{leverage__PCA2_kurt}{Leverage values of the "PCA2_kurt" projection.}
-     \item{leverage__PCATF}{Leverage values of the "PCATF" projection.}
-     \item{leverage__ICA}{Leverage values of the "ICA" projection.}
-     \item{leverage__ICA_kurt}{Leverage values of the "ICA_kurt" projection.}
-     \item{leverage__ICA2}{Leverage values of the "ICA2" projection.}
-     \item{leverage__ICA2_kurt}{Leverage values of the "ICA2_kurt" projection.}
-     \item{robdist__PCA}{Robust distances of the "PCA" projection.}
-     \item{robdist__PCA_kurt}{Robust distances of the "PCA_kurt" projection.}
-     \item{robdist__PCA2}{Robust distances of the "PCA2" projection.}
-     \item{robdist__PCA2_kurt}{Robust distances of the "PCA2_kurt" projection.}
-     \item{robdist__PCATF}{Robust distances of the "PCATF" projection.}
-     \item{robdist__ICA}{Robust distances of the "ICA" projection.}
-     \item{robdist__ICA_kurt}{Robust distances of the "ICA_kurt" projection.}
-     \item{robdist__ICA2}{Robust distances of the "ICA2" projection.}
-     \item{robdist__ICA2_kurt}{Robust distances of the "ICA2_kurt" projection.}
-     \item{DVARS}{Traditional DVARS values.}
-     \item{DVARS__DPD}{Delta-percent-DVARS values.}
-     \item{DVARS_ZD}{z-score-DVARS values.}
-     \item{FD}{Framewise Displacement values}
-     \item{motion_t1}{First translation realignment parameter.}
-     \item{motion_t2}{Second translation realignment parameter.}
-     \item{motion_t3}{Third translation realignment parameter.}
-     \item{motion_r1}{First rotation realignment parameter.}
-     \item{motion_r2}{Second rotation realignment parameter.}
-     \item{motion_r3}{Third rotation realignment parameter.}
-     \item{GSR}{The global signal of the data.}
-   }
- }
- \item{outlier_cutoffs}{
-   A vector of the outlier cutoffs for each outlyingness measure (see the 
-   \code{outlier_cutoffs} argument; only those requested will be included):
-   \describe{
-     \item{leverage__PCA}{Minimum leverage value.}
-     \item{leverage__PCA_kurt}{Minimum leverage value.}
-     \item{leverage__PCA2}{Minimum leverage value.}
-     \item{leverage__PCA2_kurt}{Minimum leverage value.}
-     \item{leverage__PCATF}{Minimum leverage value.}
-     \item{leverage__ICA}{Minimum leverage value.}
-     \item{leverage__ICA_kurt}{Minimum leverage value.}
-     \item{leverage__ICA2}{Minimum leverage value.}
-     \item{leverage__ICA2_kurt}{Minimum leverage value.}
-     \item{robdist__PCA}{Minimum robust distance.}
-     \item{robdist__PCA_kurt}{Minimum robust distance.}
-     \item{robdist__PCA2}{Minimum robust distance.}
-     \item{robdist__PCA2_kurt}{Minimum robust distance.}
-     \item{robdist__PCATF}{Minimum robust distance.}
-     \item{robdist__ICA}{Minimum robust distance.}
-     \item{robdist__ICA_kurt}{Minimum robust distance.}
-     \item{robdist__ICA2}{Minimum robust distance.}
-     \item{robdist__ICA2_kurt}{Minimum robust distance.}
-     \item{DVARS}{Minimum traditional DVARS.}
-     \item{DVARS__DPD}{Minimum Delta-percent-DVARS.}
-     \item{DVARS_ZD}{Minimum z-score-DVARS.}
-     \item{FD}{Minimum Framewise Displacement.}
-   }
- }
- \item{outlier_flags}{
-   Applies \code{outlier_cutoffs} to \code{measures}: a logical data.frame with
-   \eqn{T} rows where \code{TRUE} values indicate suspected outlier presence. The DVARS2 flag indicates where both DPDVARS and ZDVARS exceeded their cutoffs.
- }
- \item{ROIs}{
-   \describe{
-     \item{data}{The mask of locations in the data ROI.}
-     \item{[Noise1]}{The mask of locations in the first noise ROI, if it was relative to \code{X}.}
-     \item{...}{...}
-     \item{[Noisek]}{The mask of locations in the kth (last) noise ROI, if it was relative to \code{X}.}
+     \item{0}{The data location was not masked out.}
+     \item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
+     \item{-2}{The data location was masked out, because it was constant.}
    }
  }
  \item{PCA}{
@@ -320,72 +128,46 @@ A \code{"clever_multi"} object, i.e. a list with components
    \describe{
      \item{U}{The \eqn{T \times Q} PC score matrix.}
      \item{D}{The standard deviation of each PC.}
-     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}.}
      \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+     \item{nPCs_PESEL}{The number of PCs selected by PESEL.}
+     \item{nPCs_avgvar}{The number of above-average variance PCs.}
    }
+   where \code{Q} is the number of PCs selected by PESEL or of above-average variance (or the greater of the two if both were used).
  }
  \item{PCATF}{
    If PCATF was used, this will be a list with components:
    \describe{
      \item{U}{The \eqn{T \times Q} PC score matrix.}
      \item{D}{The standard deviation of each PC.}
-     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{solve_dirs}}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}}
    }
  }
  \item{ICA}{
    If ICA was used, this will be a list with components:
    \describe{
-     \item{S}{The \eqn{P \times Q} source signals matrix.} 
+     \item{S}{The \eqn{P \times Q} source signals matrix. Included only if \code{get_dirs}} 
      \item{M}{The \eqn{T \times Q} mixing matrix.}
-     \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
-   }
- }
- \item{CompCor}{
-   If CompCor was computed, this will be a list with components: 
-   \describe{
-     \item{[Noise1]}{
-       \describe{
-         \item{U}{The \eqn{T \times Q} PC score matrix for Noise1.}
-         \item{D}{The standard deviation of each PC for Noise1.}
-         \item{Dsq_total}{The sum of squared D values (total variance).}
-       }
-     }
-     \item{...}{...}
-     \item{[Noisek]}{
-       \describe{
-         \item{U}{The \eqn{T \times Q} PC score matrix for Noisek.}
-         \item{D}{The standard deviation of each PC for Noisek.}
-         \item{Dsq_total}{The sum of squared D values (total variance).}
-       }
-     }
-   }
- }
- \item{robdist_info}{
-   If the "robdist" measure was used, this will be a list with components:
-   \describe{
-     \item{PCA}{
-     If the "PCA" projection was used, this will be a list with components:
-       \describe{
-         \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-         \item{outMCD_scale}{The scale for out-of-MCD observations.}
-         \item{Fparam}{Named numeric vector: \code{c}, \code{m}, \code{df1}, and \code{df2}.}
-       }
-     }
-     \item{PCA_kurt}{same components as those for PCA...}
-     \item{ICA}{same components as those for PCA...}
-     \item{ICA_kurt}{same components as those for PCA...}
+     \item{highkurt}{The length \code{Q} logical vector indicating mixing scores of high kurtosis.}
    }
  }
 }
 }
 \description{
-Calculates data-driven scrubbing measures and identifies outliers in 
- high-dimensional data.
+Calculates leverage to identify outliers in high-dimensional data. 
+ Can compute multiple kinds of leverage at once.
 }
-\details{
-In addition to the measures supported by \code{\link{clever}}, this function
- also can perform FD or CompCor.
+\section{Order of operations}{
+
+ The input data undergo a nuisance regression to remove low frequency trends
+ (see the \code{DCT} argument to control or disable this behavior) and any
+ other nuisance signals (see the \code{nuisance_too} argument to specify them).
+ (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
+ is performed.) Then the data are centered and scaled (see the \code{center}
+ and \code{scale} arguments to control or disable this behavior). Leverage
+ is computed afterward.
 }
+
 \examples{
 n_voxels = 1e4
 n_timepoints = 100

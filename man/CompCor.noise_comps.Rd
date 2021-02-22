@@ -9,8 +9,7 @@ CompCor.noise_comps(X_noise, center, scale, noise_nPC)
 \arguments{
 \item{X_noise}{The noise ROIs data}
 
-\item{center, scale}{Center & scale robustly
-regression}
+\item{center, scale}{Center & scale robustly}
 
 \item{noise_nPC}{Number of PCs to obtain for each noise ROI}
 }
@@ -20,9 +19,5 @@ A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
 }
 \description{
 Get noise components for aCompCor.
-}
-\details{
-DCT should be 0 and nuisance_too should be NULL, because these should
- be added to the final nuisance design matrix along with the CompCor components!
 }
 \keyword{internal}

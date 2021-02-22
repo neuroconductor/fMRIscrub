@@ -91,9 +91,12 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
       if (!requireNamespace("ciftiTools", quietly = TRUE)) {
         stop("Package \"ciftiTools\" needed to read `X`. Please install it", call. = FALSE)
       }
-      X <- ciftiTools::read_cifti(X, brainstructures="all")
-    } else {
+      if (identical(ROI_data, "infer")) { ROI_data <- "all" }
+      X <- ciftiTools::read_cifti(X, brainstructures=ROI_data)
+    } else if (endsWith(X, ".nii")) {
       X <- read_nifti(X)
+    } else {
+      stop("The argument `X`,", X, ", does not look like a CIFTI or NIFTI file name.")
     }
   } 
 

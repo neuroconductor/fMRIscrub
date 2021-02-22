@@ -56,7 +56,6 @@ Suggests:
     gridExtra,
     testthat (>= 2.1.0),
     covr
-VignetteBuilder: knitr
 LinkingTo: 
     Rcpp,
     RcppArmadillo

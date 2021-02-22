@@ -21,9 +21,12 @@ If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)}
 A logical vector indicating whether each component has high kurtosis.
 }
 \description{
-Each component is detrended (this can be disabled) before computing kurtosis. 
- The kurtosis cutoff is the 90% quantile of the sampling distribution of 
+The kurtosis cutoff is the 90% quantile of the sampling distribution of 
  kurtosis for Normal data of the same length as the components; it is
  estimated by simulation or calculated from the theoretical asymptotic
  distribution if the components are long enough.
+}
+\details{
+The components should not have any strong low-frequency trends, because trends
+ can affect kurtosis in unpredictable ways unrelated to outlier presence.
 }

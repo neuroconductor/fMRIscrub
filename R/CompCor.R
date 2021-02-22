@@ -2,12 +2,8 @@
 #' 
 #' Get noise components for aCompCor.
 #'
-#' DCT should be 0 and nuisance_too should be NULL, because these should
-#'  be added to the final nuisance design matrix along with the CompCor components!
-#'
 #' @param X_noise The noise ROIs data
 #' @param center,scale Center & scale robustly
-#'  regression
 #' @param noise_nPC Number of PCs to obtain for each noise ROI
 #' 
 #' @return A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
@@ -148,18 +144,14 @@ CompCor <- function(
 
     # Make design matrix.
     design <- do.call(cbind, out2$noise_comps)
-    if (DCT > 0) { 
-      DCTb <- dct_bases(T_, DCT)
-      if (!center) { DCTb <- scale(DCTb) }
-      design <- cbind(design, DCTb) 
-    }
+    if (DCT > 0) { design <- cbind(design, dct_bases(T_, DCT)) }
     if (!is.null(nuisance_too)) {
       stopifnot(is.matrix(nuisance_too))
       if(nrow(nuisance_too) != T_) { stop("Extra nuisance regressors must be same length as data, after dropping frames.") }
       design <- cbind(design, nuisance_too)
     }
-    if (center) { design <- scale(design) } 
-
+    design <- scale(design, center=!center)
+    #if ()
 
     out1$X <- nuisance_regression(out1$X, design)
   } else {
