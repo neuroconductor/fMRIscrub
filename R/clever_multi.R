@@ -96,6 +96,7 @@ clever_multi = function(
   # ----------------------------------------------------------------------------
 
   # `X` ------------------------------------------------------------------------
+  if (verbose) { cat("Checking for missing, infinite, and constant data in `X`.\n") }
   X <- as.matrix(X); class(X) <- "numeric"
   X_NA_mask <- apply(X, 2, function(x){any(x %in% c(NA, NaN, -Inf, Inf))})
   if (any(X_NA_mask)) {
@@ -149,7 +150,7 @@ clever_multi = function(
   base_projection <- unique(gsub("2", "", gsub("_kurt", "", projection)))
 
   # `nuisance`------------------------------------------------------------------
-  do_nuisance <- !(is.null(nuisance) || isFALSE(nuisance))
+  do_nuisance <- !(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))
   if (do_nuisance) {
     class(nuisance) <- "numeric"
     if (identical(nuisance, 1)) { nuisance <- matrix(1, nrow=T_) }
@@ -243,7 +244,7 @@ clever_multi = function(
   }
   # Identify which PCs have high kurtosis.
   if (any(c("PCA_kurt", "PCA2_kurt") %in% projection)) {
-    out$PCA$highkurt <- high_kurtosis(out$PCA$U, kurt_quantile=kurt_quantile)
+    out$PCA$highkurt <- high_kurtosis(out$PCA$U[, maxK_PCA, drop=FALSE], kurt_quantile=kurt_quantile)
   }
   # [TO DO]: Resolve case where no PC has high kurtosis
 
