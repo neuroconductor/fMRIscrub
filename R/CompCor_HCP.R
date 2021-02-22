@@ -143,58 +143,51 @@ CompCor_HCP <- function(
   out <- CompCor(
     nii, ROI_data=NULL, ROI_noise=ROI_noise, 
     noise_erosion=noise_erosion, noise_nPC=noise_nPC,
-    center=center, scale=scale, 
+    center=center, scale=scale,
     # We do nuisance regression with aCompCor, not prior.
-    DCT=0, nuisance_too=NULL
+    nuisance=NULL
   )$noise
 
-  # `cii`
-  if (!is.null(cii)) {
-    if (is.character(cii)) { 
-      if (requireNamespace("ciftiTools", quietly = TRUE)) {
-        cii <- ciftiTools::read_cifti(cii, brainstructures=brainstructures, verbose=verbose) 
-      } else {
-        stop("Package `ciftiTools` required to read the CIFTI file. Please install\
-        it from the github repo `mandymejia/ciftiTools`.")
-      }
-    }
-    stopifnot(all(names(cii) == c("data", "surf", "meta")))
+  if (is.null(cii)) { return(out) }
 
-    cii <- t(do.call(rbind, cii$data))
-
-    # Drop frames.
-    if (!is.null(frames)) {
-      stopifnot(all(frames %in% seq(nrow(cii))))
-      cii <- cii[frames,]
+  if (is.character(cii)) { 
+    if (requireNamespace("ciftiTools", quietly = TRUE)) {
+      cii <- ciftiTools::read_cifti(cii, brainstructures=brainstructures, verbose=verbose) 
+    } else {
+      stop("Package `ciftiTools` required to read the CIFTI file. Please install it.")
     }
+  }
+  stopifnot(all(names(cii) == c("data", "surf", "meta")))
 
-    # Normalize CIFTI.
-    cii <- t(cii)
-    if (center) { cii <- cii - c(rowMedians(cii, na.rm=TRUE)) }
-    if (scale) { 
-      mad <- 1.4826 * rowMedians(abs(cii), na.rm=TRUE)
-      mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
-      cii <- cii * mad_inv
-    }
-    cii <- t(cii)
+  cii <- t(do.call(rbind, cii$data))
 
-    # Make design matrix.
-    design <- do.call(cbind, out$PCs)
-    if (DCT > 0) { 
-      DCTb <- dct_bases(T_, DCT)
-      if (!center) { DCTb <- scale(DCTb) }
-      design <- cbind(design, DCTb) 
-    }
-    if (!is.null(nuisance_too)) {
-      stopifnot(is.matrix(nuisance_too))
-      if(nrow(nuisance_too) != T_) { stop("Extra nuisance regressors must be same length as data, after dropping frames.") }
-      design <- cbind(design, nuisance_too)
-    }
-    if (center) { design <- scale(design) } 
-
-    # Return data in TxV form.
-    out$data <- nuisance_regression(cii, design)
+  # Drop frames.
+  if (!is.null(frames)) {
+    stopifnot(all(frames %in% seq(nrow(cii))))
+    cii <- cii[frames,]
   }
 
-  out
+  # We no longer center and scale the data prior to nuisance regression.
+  # This should be done after for the purpose of computing leverage.
+  # # Normalize CIFTI.
+  # cii <- t(cii)
+  # if (center) { cii <- cii - c(rowMedians(cii, na.rm=TRUE)) }
+  # if (scale) { 
+  #   mad <- 1.4826 * rowMedians(abs(cii), na.rm=TRUE)
+  #   mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
+  #   cii <- cii * mad_inv
+  # }
+  # cii <- t(cii)
+
+  # Make design matrix.
+  design <- do.call(cbind, out$PCs)
+  if (DCT > 0) { design <- cbind(design, dct_bases(T_, DCT)) }
+  if (!is.null(nuisance_too)) {
+    nuisance_too <- check_design_matrix(nuisance_too)
+    design <- cbind(design, nuisance_too)
+  }
+  design <- check_design_matrix(cbind(1, design))
+
+  # Return data in TxV form.
+  out$data <- nuisance_regression(cii, design)
 }

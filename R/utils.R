@@ -11,6 +11,30 @@ is_constant <- function(x, TOL=1e-8) {
   abs(max(x) - min(x)) < TOL
 }
 
+#' Check design matrix
+#' 
+#' @param design The design matrix
+#' 
+#' @return The (modified) design matrix
+#' 
+#' @keywords internal
+check_design_matrix <- function(design, T_) {
+  class(design) <- "numeric"
+  if (identical(design, 1)) { design <- matrix(1, nrow=T_) }
+  design <- as.matrix(design)
+  stopifnot(nrow(design) == T_)
+  # Set constant columns (intercept regressor) to 1, and scale the other columns.
+  design_const_mask <- apply(design, 2, is_constant)
+  if (any(design_const_mask)) {
+    if (any(design_const_mask & abs(design[1,]) < 1e-8)) {
+      stop("Constant zero design regressor detected in `design`.")
+    }
+  }
+  design[,design_const_mask] <- 1
+  design[,!design_const_mask] <- scale(design[,!design_const_mask])
+  design
+}
+
 #' Scale data columns robustly
 #' 
 #' Centers and scales the columns of a matrix robustly for the purpose of 

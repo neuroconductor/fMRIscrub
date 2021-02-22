@@ -12,8 +12,7 @@ CompCor(
   noise_erosion = NULL,
   center = TRUE,
   scale = TRUE,
-  DCT = 0,
-  nuisance_too = NULL
+  nuisance = NULL
 )
 }
 \arguments{
@@ -93,21 +92,16 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{center, scale}{Center the columns of the data by median, and scale the
-columns of the data by MAD? Default: \code{TRUE} for both. Affects both
-\code{X} and the noise data.}
+\item{center, scale}{Center the columns of the noise ROI data by their medians, 
+and scale by their MADs? Default: \code{TRUE} for both. Note that this argument
+affects the noise ROI data and not the data that is being cleaned with aCompCor.
+Centering and scaling of the data being cleaned can be done after this function call.}
 
-\item{DCT}{Detrend the columns of the data using the discrete cosine
- transform (DCT)? Use an integer to indicate the number of cosine bases to 
- use for detrending. Use \code{0} (default) to forgo detrending. 
-
- The data must be centered, either before input or with \code{center}.}
-
-\item{nuisance_too}{A matrix of nuisance signals to regress from the data
-before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-regression will be performed simultaneously with DCT detrending if 
-applicable. \code{NULL} to not add additional nuisance regressors. Affects 
-both \code{X} and the noise data.}
+\item{nuisance}{Nuisance signals to regress from each data column in addition
+to the noise ROI PCs. Should be a \eqn{T \times N} numeric matrix where 
+\eqn{N} represents the number of nuisance signals. To not perform any nuisance
+regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+Default: \code{NULL}.}
 }
 \value{
 A list with entries \code{"data"} and \code{"noise"}
@@ -121,10 +115,18 @@ A list with entries \code{"data"} and \code{"noise"}
  scores, one for each \code{ROI_noise}.
 }
 \description{
-The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+The aCompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
 }
 \details{
-The data are centered on each voxel timecourse's median. If the data ROI is
- empty, the CompCor regressors will be calculated, but not regression will
- be performed.
+First, the principal components (PCs) of each noise ROI are calculated. For each ROI,
+ voxels are centered and scaled (can be disabled with the arguments 
+ \code{center} and \code{scale}), and then the PCs are calculated via the
+ singular value decomposition. 
+
+Next, aCompCor is performed to remove the shared variation between the noise ROI
+ PCs and each location in the data. This is accomplished by a nuisance regression
+ using a design matrix with the noise ROI PCs, any additional regressors specified
+ by \code{nuisance}, and an intercept term. (To detrend the data and perform aCompCor
+ in the same regression, \code{nuisance} can be set to DCT bases obtained with
+ the function \code{\link{dct_bases}}.)
 }

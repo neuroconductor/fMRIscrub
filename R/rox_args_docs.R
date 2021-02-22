@@ -109,8 +109,9 @@ NULL
 #'  Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
 #'  number of nuisance signals. Default: a matrix with a constant column
 #'  (this is the intercept term in the design matrix) and four DCT bases. 
-#'  Regressing these nuisance signals will have the effect of detrending the
-#'  data by removing low-frequency components. 
+#'  This default nuisance regression will have the effect of detrending the
+#'  data by removing low-frequency components. To not perform any nuisance
+#'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,

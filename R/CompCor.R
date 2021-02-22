@@ -73,28 +73,31 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 
 #' CompCor
 #'
-#' The CompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+#' The aCompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
 #' 
-#' The data are centered on each voxel timecourse's median. If the data ROI is
-#'  empty, the CompCor regressors will be calculated, but not regression will
-#'  be performed.
+#' First, the principal components (PCs) of each noise ROI are calculated. For each ROI,
+#'  voxels are centered and scaled (can be disabled with the arguments 
+#'  \code{center} and \code{scale}), and then the PCs are calculated via the
+#'  singular value decomposition. 
+#' 
+#' Next, aCompCor is performed to remove the shared variation between the noise ROI
+#'  PCs and each location in the data. This is accomplished by a nuisance regression
+#'  using a design matrix with the noise ROI PCs, any additional regressors specified
+#'  by \code{nuisance}, and an intercept term. (To detrend the data and perform aCompCor
+#'  in the same regression, \code{nuisance} can be set to DCT bases obtained with
+#'  the function \code{\link{dct_bases}}.)
 #'
 #' @inheritParams data_clever_CompCor_Params
 #' @inheritParams noise_Params
-#' @param center,scale Center the columns of the data by median, and scale the
-#'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
-#'  \code{X} and the noise data.
-#' @param DCT Detrend the columns of the data using the discrete cosine
-#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
-#'  use for detrending. Use \code{0} (default) to forgo detrending. 
-#' 
-#'  The data must be centered, either before input or with \code{center}.
-#' @param nuisance_too A matrix of nuisance signals to regress from the data
-#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-#'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} to not add additional nuisance regressors. Affects 
-#'  both \code{X} and the noise data.
-#'
+#' @param center,scale Center the columns of the noise ROI data by their medians, 
+#'  and scale by their MADs? Default: \code{TRUE} for both. Note that this argument
+#'  affects the noise ROI data and not the data that is being cleaned with aCompCor.
+#'  Centering and scaling of the data being cleaned can be done after this function call.
+#' @param nuisance Nuisance signals to regress from each data column in addition
+#'  to the noise ROI PCs. Should be a \eqn{T \times N} numeric matrix where 
+#'  \eqn{N} represents the number of nuisance signals. To not perform any nuisance
+#'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+#'  Default: \code{NULL}.
 #' @return A list with entries \code{"data"} and \code{"noise"}
 #'
 #'  The entry \code{"data"} will be a \code{V x T} matrix where each row is a 
@@ -110,8 +113,8 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #' @export
 CompCor <- function(
   X, ROI_data="infer", ROI_noise=NULL, 
-  noise_nPC=5, noise_erosion=NULL,
-  center=TRUE, scale=TRUE, DCT=0, nuisance_too=NULL
+  noise_nPC=5, noise_erosion=NULL, 
+  center=TRUE, scale=TRUE, nuisance=NULL
   ){
 
   out1 <- format_data(
@@ -124,42 +127,31 @@ CompCor <- function(
   )
 
   T_ <- nrow(out1$X)
-  detrend <- DCT > 0
-  do_nreg <- !is.null(nuisance_too)
-  if (do_nreg) {
-    stopifnot(is.matrix(nuisance_too))
-    stopifnot(nrow(nuisance_too) == T_)
-  }
 
   if (any(ROI_data)) {
-    # Normalize data.
-    out1$X <- t(out1$X)
-    if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
-    if (scale) { 
-      mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
-      mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
-      out1$X <- out1$X * mad_inv
-    }
-    out1$X <- t(out1$X)
-
-    # Make design matrix.
+    # Perform nuisance regression.
     design <- do.call(cbind, out2$noise_comps)
-    if (DCT > 0) { design <- cbind(design, dct_bases(T_, DCT)) }
-    if (!is.null(nuisance_too)) {
-      stopifnot(is.matrix(nuisance_too))
-      if(nrow(nuisance_too) != T_) { stop("Extra nuisance regressors must be same length as data, after dropping frames.") }
-      design <- cbind(design, nuisance_too)
+    if (!(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))) {
+      nuisance <- check_design_matrix(nuisance, T_)
+      design <- cbind(design, nuisance)
     }
-    design <- scale(design, center=!center)
-    #if ()
-
+    design <- check_design_matrix(cbind(1, design))
     out1$X <- nuisance_regression(out1$X, design)
+
+    # # Normalize data.
+    # out1$X <- t(out1$X)
+    # if (center) { out1$X <- out1$X - c(rowMedians(out1$X, na.rm=TRUE)) }
+    # if (scale) { 
+    #   mad <- 1.4826 * rowMedians(abs(out1$X), na.rm=TRUE)
+    #   mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
+    #   out1$X <- out1$X * mad_inv
+    # }
+    # out1$X <- t(out1$X)
   } else {
     out1["X"] <- list(NULL)
   }
 
   list(
-    X=out1$X, 
-    noise=list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise)
+    X=out1$X, noise=list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise)
   )
 }

@@ -151,24 +151,12 @@ clever_multi = function(
 
   # `nuisance`------------------------------------------------------------------
   do_nuisance <- !(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))
-  if (do_nuisance) {
-    class(nuisance) <- "numeric"
-    if (identical(nuisance, 1)) { nuisance <- matrix(1, nrow=T_) }
-    nuisance <- as.matrix(nuisance)
-    stopifnot(nrow(nuisance) == nrow(X))
-    # Set constant columns (intercept regressor) to 1, and scale the other columns.
-    nuisance_const_mask <- apply(nuisance, 2, is_constant)
-    if (any(nuisance_const_mask)) {
-      if (any(nuisance_const_mask & abs(nuisance[1,]) < 1e-8)) {
-        stop("Constant zero nuisance regressor detected in `nuisance`.")
-      }
-    } else {
-      if (!any(abs(apply(X, 2, mean)) < 1e-8)) {
-        warning("No intercept detected in `nuisance`, yet the data are not centered.")
-      }
+  if (do_nuisance) { nuisance <- check_design_matrix(nuisance, T_) }
+  design_const_mask <- apply(nuisance, 2, is_constant)
+  if (!any(design_const_mask)) {
+    if (!any(abs(apply(X, 2, mean)) < 1e-8)) {
+      warning("No intercept detected in `design`, yet the data are not centered.")
     }
-    nuisance[,nuisance_const_mask] <- 1
-    nuisance[,!nuisance_const_mask] <- scale(nuisance[,!nuisance_const_mask])
   }
 
   # other arguments ------------------------------------------------------------
