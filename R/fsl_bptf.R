@@ -9,7 +9,9 @@
 fsl_bptf <- function(orig_data, HP_sigma=2000) {
   T_ <- nrow(orig_data)
 
-  HP_filt_size <- round(HP_sigma*8)
+  orig_data <- nuisance_regression(orig_data, cbind(1, seq(T_)))
+
+  HP_filt_size <- ceiling(HP_sigma*3)#round(HP_sigma*8)
   HP_lin <- seq(-HP_filt_size/2, HP_filt_size/2, length.out=HP_filt_size)
   HP_gfilt <- exp( -(HP_lin^2) / (2*(HP_sigma^2)) )
   HP_gfilt <- HP_gfilt/sum(HP_gfilt)
@@ -25,13 +27,13 @@ fsl_bptf <- function(orig_data, HP_sigma=2000) {
     } else if (t-back < 1) {
       trunc_HP_gfilt <- HP_gfilt[seq(back-t+2, HP_filt_size)]
       trunc_HP_gfilt <- trunc_HP_gfilt/sum(trunc_HP_gfilt)
-      filt_data[t,] <- trunc_HP_gfilt %*% orig_data[seq(t+front)]
+      filt_data[t,] <- trunc_HP_gfilt %*% orig_data[seq(t+front),]
     } else if (t+front > T_) {
       trunc_HP_gfilt <- HP_gfilt[seq(HP_filt_size-(t+front-T_))]
       trunc_HP_gfilt <- trunc_HP_gfilt/sum(trunc_HP_gfilt)
-      filt_data[t,] <- trunc_HP_gfilt %*% orig_data[seq(t-back, HP_filt_size)]
+      filt_data[t,] <- trunc_HP_gfilt %*% orig_data[seq(t-back, T_),]
     } else {
-      filt_data[t,] <- HP_gfilt %*% orig_data[seq(t-back, t+front)]
+      filt_data[t,] <- HP_gfilt %*% orig_data[seq(t-back, t+front),]
     }
   }
   orig_data - filt_data

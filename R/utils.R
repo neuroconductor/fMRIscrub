@@ -187,6 +187,6 @@ read_nifti <- function(nifti_fname){
   } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
     return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
   } else {
-    stop("Package \"ciftiTools\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
+    stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
   }
 }
