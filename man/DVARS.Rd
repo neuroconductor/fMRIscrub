@@ -8,7 +8,7 @@ Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)}
 DVARS(X, normalize = FALSE, norm_I = 100, verbose = FALSE)
 }
 \arguments{
-\item{X}{a T x N numeric matrix representing an fMRI run.}
+\item{X}{a \eqn{T x N} numeric matrix representing an fMRI run.}
 
 \item{normalize}{Normalize the data as proposed in the original paper? Default is 
 \code{FALSE}.}

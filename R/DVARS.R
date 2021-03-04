@@ -1,4 +1,7 @@
+#' Estimate SD robustly using the half IQR
+#' 
 #' Estimates standard deviation robustly using the half IQR (and power trans.).
+#'  Used to measure DVARS in Afyouni and Nichols, 2018. 
 #'
 #' @param x Numeric vector of data to estimate standard deviation for. 
 #' @param d The scalar power transformation parameter. \eqn{w = x^{1/d}} is
@@ -8,6 +11,8 @@
 #' 
 #' @return Scalar for the robust estimate of standard deviation.
 #' 
+#' @keywords internal
+#' 
 sd_hIQR <- function(x, d=1){
   w <- x^(1/d) # Power trans.: w~N(mu_w, sigma_w^2)
   sd <- (quantile(w, .5) - quantile(w, .25)) / (1.349/2) # hIQR
@@ -15,6 +20,58 @@ sd_hIQR <- function(x, d=1){
   # In the paper, the above formula incorrectly has d^2 instead of d.
   # The code on github correctly uses d.
   return(as.numeric(out))
+}
+
+#' Mode of data vector
+#' 
+#' Get mode of a data vector. But use the median instead of the mode if all 
+#'  data values are unique.
+#' 
+#' @param x The data vector
+#' 
+#' @return The mode
+#' 
+#' @keywords internal
+#' 
+Mode <- function(x) {
+  q <- unique(x)
+  # Use median instead of the mode if all data values are unique.
+  if (length(q) == length(x)) { return(median(x)) }
+  q[which.max(tabulate(match(x, q)))]
+}
+
+#' Convert data values to percent signal.
+#' 
+#' Convert data values to percent signal.
+#' 
+#' @param X a \eqn{T x N} numeric matrix. The columns will be normalized to
+#'  percent signal.
+#' @param center A function that computes the center of a numeric vector.
+#'  Default: \code{median}. Other common options include \code{mean} and 
+#'  \code{mode}.
+#' @param by Should the center be measured individualy for each \code{"column"}
+#'  (default), or should the center be the same across \code{"all"} columns?
+#' 
+#' @return \code{X} with its columns normalized to percent signal. (A value of
+#'  85 will represent a -15% signal change.)
+#' 
+#' @export
+pct_sig <- function(X, center=median, by=c("column", "all")){
+  stopifnot(is.numeric(X))
+  stopifnot(length(dim(X))==2)
+  stopifnot(is.function(center))
+  by <- match.arg(by, c("column", "all"))
+
+  T_ <- nrow(X); N_ <- ncol(X)
+  X <- t(X)
+
+  if (by=="column") {
+    m <- apply(X, 1, center)
+  } else {
+    m <- center(as.numeric(X))
+  }
+
+  t(X / m * 100)
 }
 
 #' Computes the DSE decomposition and DVARS-related statistics.
@@ -28,7 +85,7 @@ sd_hIQR <- function(x, d=1){
 #'  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
 #' }
 #'
-#' @param X a T x N numeric matrix representing an fMRI run.
+#' @param X a \eqn{T x N} numeric matrix representing an fMRI run.
 #' @param normalize Normalize the data as proposed in the original paper? Default is 
 #'  \code{FALSE}.
 #' @param norm_I The value to scale to. Default is \code{100}, as in the original
@@ -39,8 +96,7 @@ sd_hIQR <- function(x, d=1){
 #' @importFrom stats median pchisq qnorm
 #' 
 DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
-  T_ <- nrow(X)
-  N_ <- ncol(X)
+  T_ <- nrow(X); N_ <- ncol(X)
 
   if(normalize){
     # Normalization procedure from original DVARS paper and code.
