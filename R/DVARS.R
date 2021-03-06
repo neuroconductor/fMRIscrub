@@ -44,7 +44,7 @@ Mode <- function(x) {
 #' 
 #' Convert data values to percent signal.
 #' 
-#' @param X a \eqn{T x N} numeric matrix. The columns will be normalized to
+#' @param X a \eqn{T \times N} numeric matrix. The columns will be normalized to
 #'  percent signal.
 #' @param center A function that computes the center of a numeric vector.
 #'  Default: \code{median}. Other common options include \code{mean} and 
@@ -74,28 +74,32 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
   t(X / m * 100)
 }
 
+#' DVARS
+#' 
 #' Computes the DSE decomposition and DVARS-related statistics.
+#' 
 #' Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
 #' 
-#' Differences from implementation at github.com/asoroosh/DVARS:
-#' \itemize{
-#'  \item The matrix is transposed.
-#'  \item We center and scale the matrix differently (see \code{\link{scale_med}})
-#'  \item We set all zero-variance voxels to zero during centering & scaling. This means that when we remove constant 0 or NA voxels, constant non-zero voxels are also removed.
-#'  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
-#' }
+#' github.com/asoroosh/DVARS
 #'
-#' @param X a \eqn{T x N} numeric matrix representing an fMRI run.
-#' @param normalize Normalize the data as proposed in the original paper? Default is 
-#'  \code{FALSE}.
-#' @param norm_I The value to scale to. Default is \code{100}, as in the original
-#'  paper.
+#' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+#'  not be any missing data (\code{NA} or \code{NaN}).
+#' @param normalize Normalize the data as proposed in the original paper? Default:
+#'  \code{FALSE}. Normalization removes constant-zero voxels, scales by 100 / the
+#'  median of the mean image, and then centers each voxel on its mean.
+#'
+#'  To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
+#'  HCP scans are already normalized to 10,000, just divide the data by 100 and
+#'  center the voxels on their means:
+#'
+#'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
+#'  \eqn{V \times T} data matrix.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @export
 #' @importFrom stats median pchisq qnorm
 #' 
-DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
+DVARS <- function(X, normalize=FALSE, verbose=FALSE){
   T_ <- nrow(X); N_ <- ncol(X)
 
   if(normalize){
@@ -108,11 +112,11 @@ DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
       N_ <- ncol(X)
     }
     
-    # Scale the entire image so that the median average of each voxel is norm_I.
-    X <- X / median(apply(X, 2, mean)) * norm_I
+    # Scale the entire image so that the median average of the voxels is 100.
+    X <- X / median(apply(X, 2, mean)) * 100
 
     # Center each voxel on its mean.
-    X <- t(t(X) - apply(t(X), 1, mean))
+    X <- t(t(X) - apply(X, 2, mean))
   }
 
   # compute D/DVARS
@@ -121,7 +125,7 @@ DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
   D_3D <- (Diff^2)/4
   A <- apply(A_3D, 1, mean)
   D <- apply(D_3D, 1, mean)
-  DVARS_ <- 2*sqrt(D) # == sqrt(apply(Diff, 1, mean))
+  DVARS_ <- 2*sqrt(D) # == sqrt(apply(Diff^2, 1, mean))
 
   # compute DPD
   DPD <- (D - median(D))/mean(A) * 100

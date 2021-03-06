@@ -151,11 +151,13 @@ clever_multi = function(
 
   # `nuisance`------------------------------------------------------------------
   do_nuisance <- !(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))
-  if (do_nuisance) { nuisance <- check_design_matrix(nuisance, T_) }
-  design_const_mask <- apply(nuisance, 2, is_constant)
-  if (!any(design_const_mask)) {
-    if (!any(abs(apply(X, 2, mean)) < 1e-8)) {
-      warning("No intercept detected in `design`, yet the data are not centered.")
+  if (do_nuisance) { 
+    nuisance <- check_design_matrix(nuisance, T_)
+    design_const_mask <- apply(nuisance, 2, is_constant)
+    if (!any(design_const_mask)) {
+      if (!any(abs(apply(X, 2, mean)) < 1e-8)) {
+        warning("No intercept detected in `design`, yet the data are not centered.")
+      }
     }
   }
 
