@@ -287,7 +287,7 @@ clever_multi = function(
     if (!requireNamespace("ica", quietly = TRUE)) {
       stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
     }
-    out$ICA <- ica::icaimax(t(X), maxK_ICA, center=FALSE)[c("S", "M")]
+    out$ICA <- with(set.seed(0), ica::icaimax(t(X), maxK_ICA, center=FALSE))[c("S", "M")]
     # Issue due to rank.
     if (ncol(out$ICA$M) != maxK_ICA) {
       cat("Rank issue with ICA: adding constant zero columns.\n")
