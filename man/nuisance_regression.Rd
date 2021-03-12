@@ -4,15 +4,15 @@
 \alias{nuisance_regression}
 \title{Nuisance regression}
 \usage{
-nuisance_regression(X, design)
+nuisance_regression(Y, design)
 }
 \arguments{
-\item{X}{The TxV or VxT data.}
+\item{Y}{The TxV or VxT data.}
 
-\item{design}{The TxQ matrix of nuisance regressors}
+\item{design}{The TxQ matrix of nuisance regressors.}
 }
 \value{
-The data after nuisance regression
+The data after nuisance regression.
 }
 \description{
 Performs nuisance regression. The data and design matrix must both be
