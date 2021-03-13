@@ -213,11 +213,43 @@ clever_multi = function(
     ))
   }
   if (get_dirs || "PCATF" %in% base_projection) {
-    out$PCA <- svd(X)[c("u", "d", "v")]
+    out$PCA <- tryCatch(
+      {
+        svd(X)[c("u", "d", "v")]
+      },
+      error = function(cond) {
+        message(cond)
+        cat(
+          "Trying `corpcor::fast.svd`. An error will occur if this package ",
+          "is not available, in which case the package should be installed ",
+          "and `clever` should be run again.\n"
+        )
+        if (!requireNamespace("corpcor", quietly = TRUE)) {
+          stop("Package \"corpcor\" needed since `svd` failed. Please install it.", call. = FALSE)
+        }
+        return(corpcor::fast.svd(X)[c("u", "d", "v")])
+      }
+    )
     names(out$PCA) <- toupper(names(out$PCA))
   } else {
     # Conserve memory by using `XXt`.
-    out$PCA <- svd(tcrossprod(X))[c("u", "d", "v")]
+    out$PCA <- tryCatch(
+      {
+        svd(tcrossprod(X))[c("u", "d", "v")]
+      },
+      error = function(cond) {
+        message(cond)
+        cat(
+          "Trying `corpcor::fast.svd`. An error will occur if this package",
+          "is not available, in which case the package should be installed",
+          "and `clever` should be run again.\n"
+        )
+        if (!requireNamespace("corpcor", quietly = TRUE)) {
+          stop("Package \"corpcor\" needed since `svd` failed. Please install it.", call. = FALSE)
+        }
+        return(corpcor::fast.svd(tcrossprod(X))[c("u", "d", "v")])
+      }
+    )
     names(out$PCA) <- toupper(names(out$PCA))
     out$PCA$D <- sqrt(out$PCA$D)
     out$PCA$V <- NULL
