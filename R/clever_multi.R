@@ -266,7 +266,7 @@ clever_multi = function(
   }
   # Identify which PCs have high kurtosis.
   if (any(c("PCA_kurt", "PCA2_kurt") %in% projection)) {
-    out$PCA$highkurt <- high_kurtosis(out$PCA$U[, maxK_PCA, drop=FALSE], kurt_quantile=kurt_quantile)
+    out$PCA$highkurt <- high_kurtosis(out$PCA$U[, seq(maxK_PCA), drop=FALSE], kurt_quantile=kurt_quantile)
   }
   # [TO DO]: Resolve case where no PC has high kurtosis
 
