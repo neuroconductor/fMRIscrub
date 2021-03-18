@@ -87,7 +87,7 @@
 clever_multi = function(
   X, projection = "PCA_kurt", 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
-  center=TRUE, scale=TRUE, 
+  center=TRUE, scale=TRUE, var_detrend=TRUE,
   kurt_quantile=.95, PCATF_kwargs=NULL,
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4,
@@ -365,6 +365,12 @@ clever_multi = function(
     }
   }
 
+  if (var_detrend) {
+    if (!is.null(out$PCA$U)) { out$PCA$U_vdt <- apply(out$PCA$U, 2, var_stabilize) }
+    if (!is.null(out$PCATF$U)) { out$PCATF$U_vdt <- apply(out$PCATF$U, 2, var_stabilize) }
+    if (!is.null(out$ICA$M)) { out$ICA$M_vdt <- apply(out$ICA$M, 2, var_stabilize) }
+  }
+
   rm(X); gc()
 
   # ----------------------------------------------------------------------------
@@ -376,22 +382,25 @@ clever_multi = function(
   for (ii in seq(length(projection))) {
     proj_ii <- projection[ii]
     base_ii <- gsub("2", "", gsub("_kurt", "", proj_ii))
-    scores_ii <- ifelse(grepl("ICA", proj_ii), "M", "U")
+    scores_ii <- paste0(
+      ifelse(grepl("ICA", proj_ii), "M", "U"), 
+      ifelse(var_detrend, "_vdt", "")
+    )
 
     # Make projection.
     Comps_ii <- switch(proj_ii,
       PCA = seq(out$PCA$nPCs_PESEL),
-      PCA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
       PCA2 = seq(out$PCA$nPCs_avgvar),
-      PCA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
       PCATF = seq(out$PCA$nPCs_PESEL),
-      PCATF_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCATF$U[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCATF_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCATF[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
       PCATF2 = seq(out$PCA$nPCs_avgvar),
-      PCATF2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCATF$U[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCATF2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCATF[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
       ICA = seq(out$PCA$nPCs_PESEL),
-      ICA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      ICA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
       ICA2 = seq(out$PCA$nPCs_avgvar),
-      ICA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA$M[,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)]
+      ICA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)]
     )
     Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]
 

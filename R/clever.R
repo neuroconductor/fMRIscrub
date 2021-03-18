@@ -68,7 +68,7 @@
 clever = function(
   X, projection=c("PCA", "PCATF", "ICA"), 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
-  center=TRUE, scale=TRUE, 
+  center=TRUE, scale=TRUE, var_detrend=TRUE,
   PESEL=TRUE, kurt_quantile=.95, PCATF_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4, 
@@ -86,7 +86,7 @@ clever = function(
   clev <- clever_multi(
     X=X, projection=projection, 
     nuisance=nuisance,
-    center=center, scale=scale, 
+    center=center, scale=scale, var_detrend=var_detrend,
     kurt_quantile=kurt_quantile, PCATF_kwargs=PCATF_kwargs,
     get_dirs=get_dirs, full_PCA=full_PCA,
     get_outliers=get_outliers, cutoff=cutoff,

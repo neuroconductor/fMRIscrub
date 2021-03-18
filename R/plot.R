@@ -106,10 +106,24 @@ clever_plot <- function(
   # }
 
   if (id_outs) {
-    flag <- stack(flag)
-    names(flag)[names(flag)=="values"] <- "isOutlier"
-    names(flag)[names(flag)=="ind"] <- "name"
+    if (length(dim(flag)) < 2) {
+      flag <- data.frame(
+        isOutlier = flag,
+        name = ifelse(all(name==c("DPD", "ZD")), "DVARS Dual Cutoff", "Cutoff")
+      )
+    } else {
+      flag <- stack(flag)
+      names(flag)[names(flag)=="values"] <- "isOutlier"
+      names(flag)[names(flag)=="ind"] <- "name"
+    }
     flag$idx <- rep(1:T_)
+    flag_name <- unique(flag$name)
+
+    if (flag_intersect) {
+      flag_colors <- setNames("#B8B8B8", flag_name)
+    } else {
+      flag_colors <- colors
+    }
   }
 
   # Log values if applicable.
@@ -131,15 +145,14 @@ clever_plot <- function(
   #   ifelse(log_y, min(meas$measure), 0)
   # )
 
-  ylim_min <- 0; ylim_max <- 1.05
+  ylim_min <- 0; ylim_max <- max(meas$measure) #1.05
 
   # Check if any outliers were detected.
   if(id_outs){
     any_outs <- any(flag$isOutlier)
-    drop_line <- vector("list", length(name))
-    names(drop_line) <- name
-    for (ii in 1:length(drop_line)) {
-      flag_ii <- flag[flag$isOutlier & flag$name==name[ii], "idx"]
+    drop_line <- vector("list", length(flag_name))
+    for (ii in seq(length(flag_name))) {
+      flag_ii <- flag[flag$isOutlier & flag$name==flag_name[ii], "idx"]
       if (length(flag_ii) < 1) { next }
       drop_line[[ii]] <- data.frame(
         xmin = flag_ii - 0.5,
@@ -174,12 +187,12 @@ clever_plot <- function(
 
   # Draw drop-down lines for outliers.
   if(any_outs){
-    for (ii in seq_len(length(drop_line))) {
+    for (ii in seq(length(drop_line))) {
       if (is.null(drop_line[[ii]])) { next }
       plt <- plt +
         ggplot2::geom_rect(
           data=drop_line[[ii]],
-          ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=colors[ii]
+          ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=flag_colors[ii]
         )
       #Text label if any outlier is detected.
     }
@@ -250,12 +263,18 @@ clever_plot <- function(
 #' @export
 plot.clever <- function(x, title=NULL, ...){
   gg_args <- list(...)
-  meas <- setNames(as.data.frame(x$measure), as.character(x$measure_info["name"]))
+  mtype <- as.character(x$measure_info["type"])
+  stopifnot(mtype %in% c("Leverage", "DVARS", "FD"))
+  meas <- x$measure
+  if (!is.data.frame(meas)) {
+    meas <- setNames(as.data.frame(meas), as.character(x$measure_info["name"]))
+  }
+  if (mtype == "DVARS") { meas <- meas[,c("DPD", "ZD")] }
 
   if ("legend.position" %in% names(gg_args)) {
-    plt <- clever_plot(meas, x$outlier_cutoff, ylab=x$measure_info["type"], ...)
+    plt <- clever_plot(meas, x$outlier_cutoff, flag_intersect= mtype=="DVARS", ylab=mtype, ...)
   } else {
-    plt <- clever_plot(meas, x$outlier_cutoff, legend.position="none", ylab=x$measure_info["type"], ...)
+    plt <- clever_plot(meas, x$outlier_cutoff, legend.position="none", flag_intersect= mtype=="DVARS", ylab=mtype, ...)
   }
 
   # Add title.
