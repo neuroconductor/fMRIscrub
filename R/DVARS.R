@@ -25,18 +25,25 @@ sd_hIQR <- function(x, d=1){
 #'  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
 #' }
 #'
-#' @param X a T x N numeric matrix representing an fMRI run.
-#' @param normalize Normalize the data as proposed in the original paper? Default is 
-#'  \code{FALSE}.
-#' @param norm_I The value to scale to. Default is \code{100}, as in the original
-#'  paper.
+#'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
+#'  \eqn{V \times T} data matrix.
+#' @param cutoff_DVARS,cutoff_DPD,cutoff_ZD Numeric outlier cutoffs. Timepoints
+#'  exceeding these cutoffs will be flagged as outliers.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @export
 #' 
-DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
-  T_ <- nrow(X)
-  N_ <- ncol(X)
+DVARS <- function(
+  X, normalize=FALSE, 
+  cutoff_DVARS=NULL, 
+  cutoff_DPD=5,
+  cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix(X))),
+  verbose=FALSE){
+
+  X <- as.matrix(X)
+  T_ <- nrow(X); N_ <- ncol(X)
+
+  cutoff <- list(DVARS=cutoff_DVARS, DPD=cutoff_DPD, ZD=cutoff_ZD)
 
   if(normalize){
     # Normalization procedure from original DVARS paper and code.
@@ -79,6 +86,23 @@ DVARS <- function(X, normalize=FALSE, norm_I=100, verbose=FALSE){
     (DV2-mu_0)/sigma_0  # avoid overflow by approximating
   )
 
-  out <- list(D=D, DVARS=DVARS_, DPD=DPD, ZD=ZD)
-  return(out)
+  out <- list(
+    measure = data.frame(D=c(0,D), DVARS=c(0,DVARS_), DPD=c(0,DPD), ZD=c(0,ZD)),
+    measure_info = setNames("DVARS", "type")
+  )
+
+  if ((!is.null(cutoff)) || (!all(vapply(cutoff, is.null, FALSE)))) {
+    cutoff <- cutoff[!vapply(cutoff, is.null, FALSE)]
+    cutoff <- setNames(as.numeric(cutoff), names(cutoff))
+    out$outlier_cutoff <- cutoff
+    out$outlier_flag <- out$measure[,names(cutoff)]
+    for (dd in seq(ncol(out$outlier_flag))) {
+      out$outlier_flag[,dd] <- out$outlier_flag[,dd] > cutoff[colnames(out$outlier_flag)[dd]]
+    }
+    if (all(c("DPD", "ZD") %in% colnames(out$outlier_flag))) {
+      out$outlier_flag$Dual <- out$outlier_flag$DPD & out$outlier_flag$ZD
+    }
+  }
+
+  structure(out, class="clever")
 }

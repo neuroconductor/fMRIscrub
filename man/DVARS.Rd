@@ -5,16 +5,18 @@
 \title{Computes the DSE decomposition and DVARS-related statistics.
 Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)}
 \usage{
-DVARS(X, normalize = FALSE, norm_I = 100, verbose = FALSE)
+DVARS(
+  X,
+  normalize = FALSE,
+  cutoff_DVARS = NULL,
+  cutoff_DPD = 5,
+  cutoff_ZD = qnorm(1 - 0.05/nrow(as.matrix(X))),
+  verbose = FALSE
+)
 }
 \arguments{
-\item{X}{a T x N numeric matrix representing an fMRI run.}
-
-\item{normalize}{Normalize the data as proposed in the original paper? Default is 
-\code{FALSE}.}
-
-\item{norm_I}{The value to scale to. Default is \code{100}, as in the original
-paper.}
+\item{cutoff_DVARS, cutoff_DPD, cutoff_ZD}{Numeric outlier cutoffs. Timepoints
+exceeding these cutoffs will be flagged as outliers.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
@@ -26,4 +28,8 @@ Differences from implementation at github.com/asoroosh/DVARS:
  \item We set all zero-variance voxels to zero during centering & scaling. This means that when we remove constant 0 or NA voxels, constant non-zero voxels are also removed.
  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
 }
+}
+\details{
+\code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
+ \eqn{V \times T} data matrix.
 }
