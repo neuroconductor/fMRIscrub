@@ -1,26 +1,20 @@
 test_that("clever works with all methods and default settings", {
   data(Dat1)
-  clev <- clever(
-    Dat1, 
-    projection = "all", 
-    out_meas = "all"
+  clev <- clever:::clever_multi(
+    Dat1,
+    projection = "all"
   )
-  myplot <- plot(clev, "all")
+  #myplot <- plot(clev, "all")
 })
 
 test_that("clever works with some custom parameter settings", {
-  data(Dat1)
-  clev <- clever(
-    Dat1, 
-    projection = "all", 
-    out_meas = "all",
-    DVARS = FALSE,
-    PCATF_kwargs = list(lambda = 0.1, niter_max = 1100, TOL = 2e-8),
+  data(Dat2)
+  clev <- clever:::clever_multi(
+    Dat2,
+    projection = c("PCATF", "ICA_kurt"),
     kurt_quantile = .95,
-    lev_cutoff = 5,
-    rbd_cutoff = .9,
-    lev_images = FALSE,
+    cutoff = 5,
     verbose = TRUE
   )
-  myplot <- plot(clev, "all", plot_title = "My Plot")
+  #myplot <- plot(clev, "all", title = "My Plot")
 })

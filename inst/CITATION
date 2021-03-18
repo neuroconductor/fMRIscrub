@@ -1,20 +1,40 @@
-structure(list(
-	mejia2017pca = structure(list(
-		title = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",
-		author = structure(list(
-			list(given = c("Amanda", "F"), family = "Mejia", role = NULL, email = NULL, comment = NULL), 
-			list(given = c("Mary", "Beth"), family = "Nebel", role = NULL, email = NULL, comment = NULL),
-			list(given = "Ani", family = "Eloyan", role = NULL, email = NULL, comment = NULL), 
-			list(given = "Brian", family = "Caffo", role = NULL, email = NULL, comment = NULL), 
-			list(given = c("Martin", "A"), family = "Lindquist", role = NULL, email = NULL, comment = NULL)), 
-			class = "person"),
-		journal = "Biostatistics", volume = "18", number = "3", pages = "521--536", year = "2017", publisher = "Oxford University Press"), 
-		bibtype = "Article", key = "mejia2017pca"),
-	afyouni2018insight = structure(list(
-		title = "Insight and inference for DVARS",
-		author = structure(list(list(given = c("Soroosh"), family = "Afyouni", role = NULL, email = NULL, comment = NULL), 
-			list(given = c("Thomas", "E"), family = "Nichols", role = NULL, email = NULL, comment = NULL)), 
-			class = "person"),
-		journal = "Neuroimage", volume = "172", pages = "291--312", year = "2018", publisher = "Elsevier"), 
-		bibtype = "Article", key = "afyouni2018insight")), 
-	class = "bibentry", strings = structure(character(0), .Names = character(0)))
+citHeader("To cite {clever} in publications use:")
+
+clever_citations <- c(
+	bibentry(
+		bibtype      = "Article",
+		title        = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",
+		author       = personList(
+			as.person("Amanda F Mejia"),
+			as.person("Mary Beth Nebel"),
+			as.person("Ani Eloyan"),
+			as.person("Brian Caffo"),
+			as.person("Martin A. Lindquist")
+		),
+		journal      = "Biostatistics",
+		year         = "2017",
+		volume       = "18",
+		number       = "3",
+		pages        = "521--536",
+		publisher    = "Oxford University Press",
+		doi          = "10.1093/biostatistics/kxw050",
+		key          = "mejiaPCALeverageOutlier2017a"
+	),
+
+	bibentry(
+		bibtype      = "Article",
+		note         = "This citation is for the DVARS measure of outlyingness.",
+		title        = "Insight and inference for DVARS",
+		author       = personList(
+			as.person("Soroosh Afyouni"),
+			as.person("Thomas E Nichols")
+		),
+		journal      = "Neuroimage",
+		year         = "2018",
+		volume       = "172",
+		pages        = "291--312",
+		publisher    = "Elsevier",
+		doi          = "10.1016/j.neuroimage.2017.12.098",
+		key          = "afyouniInsightInferenceDVARS2018a"
+	)
+)

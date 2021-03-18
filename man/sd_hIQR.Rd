@@ -2,7 +2,7 @@
 % Please edit documentation in R/DVARS.R
 \name{sd_hIQR}
 \alias{sd_hIQR}
-\title{Estimates standard deviation robustly using the half IQR (and power trans.).}
+\title{Estimate SD robustly using the half IQR}
 \usage{
 sd_hIQR(x, d = 1)
 }
@@ -17,4 +17,6 @@ Scalar for the robust estimate of standard deviation.
 }
 \description{
 Estimates standard deviation robustly using the half IQR (and power trans.).
+ Used to measure DVARS in Afyouni and Nichols, 2018.
 }
+\keyword{internal}

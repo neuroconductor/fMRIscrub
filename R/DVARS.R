@@ -1,9 +1,17 @@
+#' Estimate SD robustly using the half IQR
+#' 
 #' Estimates standard deviation robustly using the half IQR (and power trans.).
+#'  Used to measure DVARS in Afyouni and Nichols, 2018. 
 #'
 #' @param x Numeric vector of data to estimate standard deviation for. 
 #' @param d The scalar power transformation parameter. \eqn{w = x^{1/d}} is
 #'  computed to obtain \eqn{w \sim N(\mu_w, \sigma_w^2)}.
+#' 
+#' @importFrom stats quantile median
+#' 
 #' @return Scalar for the robust estimate of standard deviation.
+#' 
+#' @keywords internal
 #' 
 sd_hIQR <- function(x, d=1){
   w <- x^(1/d) # Power trans.: w~N(mu_w, sigma_w^2)
@@ -14,16 +22,75 @@ sd_hIQR <- function(x, d=1){
   return(as.numeric(out))
 }
 
+#' Mode of data vector
+#' 
+#' Get mode of a data vector. But use the median instead of the mode if all 
+#'  data values are unique.
+#' 
+#' @param x The data vector
+#' 
+#' @return The mode
+#' 
+#' @keywords internal
+#' 
+Mode <- function(x) {
+  q <- unique(x)
+  # Use median instead of the mode if all data values are unique.
+  if (length(q) == length(x)) { return(median(x)) }
+  q[which.max(tabulate(match(x, q)))]
+}
+
+#' Convert data values to percent signal.
+#' 
+#' Convert data values to percent signal.
+#' 
+#' @param X a \eqn{T \times N} numeric matrix. The columns will be normalized to
+#'  percent signal.
+#' @param center A function that computes the center of a numeric vector.
+#'  Default: \code{median}. Other common options include \code{mean} and 
+#'  \code{mode}.
+#' @param by Should the center be measured individualy for each \code{"column"}
+#'  (default), or should the center be the same across \code{"all"} columns?
+#' 
+#' @return \code{X} with its columns normalized to percent signal. (A value of
+#'  85 will represent a -15% signal change.)
+#' 
+#' @export
+pct_sig <- function(X, center=median, by=c("column", "all")){
+  stopifnot(is.numeric(X))
+  stopifnot(length(dim(X))==2)
+  stopifnot(is.function(center))
+  by <- match.arg(by, c("column", "all"))
+
+  T_ <- nrow(X); N_ <- ncol(X)
+  X <- t(X)
+
+  if (by=="column") {
+    m <- apply(X, 1, center)
+  } else {
+    m <- center(as.numeric(X))
+  }
+
+  t(X / m * 100)
+}
+
+#' DVARS
+#' 
 #' Computes the DSE decomposition and DVARS-related statistics.
+#' 
 #' Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
 #' 
-#' Differences from implementation at github.com/asoroosh/DVARS:
-#' \itemize{
-#'  \item The matrix is transposed.
-#'  \item We center and scale the matrix differently (see \code{\link{scale_med}})
-#'  \item We set all zero-variance voxels to zero during centering & scaling. This means that when we remove constant 0 or NA voxels, constant non-zero voxels are also removed.
-#'  \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
-#' }
+#' github.com/asoroosh/DVARS
+#'
+#' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+#'  not be any missing data (\code{NA} or \code{NaN}).
+#' @param normalize Normalize the data as proposed in the original paper? Default:
+#'  \code{FALSE}. Normalization removes constant-zero voxels, scales by 100 / the
+#'  median of the mean image, and then centers each voxel on its mean.
+#'
+#'  To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
+#'  HCP scans are already normalized to 10,000, just divide the data by 100 and
+#'  center the voxels on their means:
 #'
 #'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
 #'  \eqn{V \times T} data matrix.
@@ -32,6 +99,7 @@ sd_hIQR <- function(x, d=1){
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
 #' @export
+#' @importFrom stats median pchisq qnorm
 #' 
 DVARS <- function(
   X, normalize=FALSE, 
@@ -55,11 +123,11 @@ DVARS <- function(
       N_ <- ncol(X)
     }
     
-    # Scale the entire image so that the median average of each voxel is norm_I.
-    X <- X / median(apply(X, 2, mean)) * norm_I
+    # Scale the entire image so that the median average of the voxels is 100.
+    X <- X / median(apply(X, 2, mean)) * 100
 
     # Center each voxel on its mean.
-    X <- t(t(X) - apply(t(X), 1, mean))
+    X <- t(t(X) - apply(X, 2, mean))
   }
 
   # compute D/DVARS
@@ -68,7 +136,7 @@ DVARS <- function(
   D_3D <- (Diff^2)/4
   A <- apply(A_3D, 1, mean)
   D <- apply(D_3D, 1, mean)
-  DVARS_ <- 2*sqrt(D) # == sqrt(apply(Diff, 1, mean))
+  DVARS_ <- 2*sqrt(D) # == sqrt(apply(Diff^2, 1, mean))
 
   # compute DPD
   DPD <- (D - median(D))/mean(A) * 100

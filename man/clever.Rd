@@ -2,202 +2,160 @@
 % Please edit documentation in R/clever.R
 \name{clever}
 \alias{clever}
-\title{Identify outliers with \code{clever}}
+\title{Leverage scrubbing with \code{clever}}
 \usage{
 clever(
   X,
-  projection = "PCA_kurt",
-  out_meas = "leverage",
-  DVARS = TRUE,
-  detrend_PCs = TRUE,
-  PCATF_kwargs = NULL,
+  projection = c("PCA", "PCATF", "ICA"),
+  nuisance = cbind(1, dct_bases(nrow(X), 4)),
+  center = TRUE,
+  scale = TRUE,
+  PESEL = TRUE,
   kurt_quantile = 0.95,
-  kurt_detrend = TRUE,
-  id_outliers = TRUE,
-  lev_cutoff = 4,
-  rbd_cutoff = 0.9999,
-  lev_images = FALSE,
+  PCATF_kwargs = NULL,
+  get_dirs = FALSE,
+  full_PCA = FALSE,
+  get_outliers = TRUE,
+  cutoff = 4,
   verbose = FALSE
 )
 }
 \arguments{
-\item{X}{Numerical data matrix. Should be wide (N observations x P variables, 
-\eqn{N >> P}).}
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, 
+\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
+number of timepoints and \eqn{V} should be the number of brainordinate 
+vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
 
-\item{projection}{Character vector indicating the projection methods
-to use. Choose at least one of the following: \code{"PCA_var"} for 
-PCA + variance, \code{"PCA_kurt"} for PCA + kurtosis, and \code{"PCATF"} for
-PCA Trend Filtering + variance. Or, use \code{"all"} to use all projection 
-methods. Default: \code{c("PCA_kurt")}.}
+\item{projection}{Leverage works by projecting the data onto directions likely to 
+contain outlier information. Choose one of the following: \code{"PCA"}, 
+\code{"PCATF"}, or \code{"ICA"}. The directions of outlyingness will be 
+selected from the high-kurtosis components among the top \eqn{k}, where
+\eqn{k} is the number of PCs selected by PESEL or that are above-average
+variance (see the \code{PESEL} argument).}
 
-\item{out_meas}{Character vector indicating the outlyingness measures to 
-compute. Choose at least one of the following: \code{"leverage"} for 
-leverage, or \code{"robdist"} for robust distance. Or, use \code{"all"} 
-to use both methods. Default: \code{c("leverage")}.}
+\item{nuisance}{Nuisance signals to regress from each column of \code{X}.
+ Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
+ number of nuisance signals. Default: a matrix with a constant column
+ (this is the intercept term in the design matrix) and four DCT bases. 
+ This default nuisance regression will have the effect of detrending the
+ data by removing low-frequency components. To not perform any nuisance
+ regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 
-\item{DVARS}{Should DVARS (Afyouni and Nichols, 2017) be computed too? Default 
-is \code{TRUE}.}
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. Additionally,
+ if kurtosis is being used to select the projection directions, trends can 
+ induce positive or negative kurtosis, contaminating the connection between 
+ high kurtosis and outlier presence. Detrending should not be used with 
+ non-time-series data because the observations are not temporally related.
 
-\item{detrend_PCs}{Detrend all PCs before computing leverage or robust 
- distance? Default: \code{TRUE}.
+ To perform nuisance regression with an intercept, DCT bases, and additional
+ signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
 
- Detrending is recommended for time-series data, especially if there are many
- time points or changing circumstances, such as in task-based fMRI. 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
+\item{center}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
 
-\item{PCATF_kwargs}{Named list of arguments for PCATF projection method.
- Only applies if \code{("PCATF" \%in\% projection)}.
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
 
- Valid entries are: 
- 
- \describe{
-   \item{K}{maximum number of PCs to compute (Default: \code{1000})}
-   \item{lambda}{trend filtering parameter (Default: \code{0.05})}
-   \item{niter_max}{maximum number of iterations (Default: \code{1000})}
-   \item{verbose}{Print updates? (Default: \code{FALSE})}
- }}
+\item{scale}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
 
-\item{kurt_quantile}{What cutoff quantile for kurtosis should be used? Only 
-applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{0.95}.}
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
 
-\item{kurt_detrend}{Should the PCs be detrended before measuring kurtosis? 
- Only applies if \code{("PCA_kurt" \%in\% projection)}. Default: \code{TRUE}. 
+\item{PESEL}{Use \code{\link[pesel]{pesel}} to select the components? Default:
+\code{TRUE}. Otherwise, use the number of above-average variance PCs.}
 
- Detrending is highly recommended for time-series data, because trends can 
- induce high kurtosis even in the absence of outliers. Detrending should not
- be done with non-time-series data because the observations are not 
- temporally related.}
+\item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
+for kurtosis should be used to select the components? Default: \code{0.95}.}
 
-\item{id_outliers}{Should the outliers be identified? Default: \code{TRUE}.}
+\item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
+entries are:
 
-\item{lev_cutoff}{The outlier cutoff value for leverage, as a multiple of the
-median leverage. Only used if 
-\code{"leverage" \%in\% projection} and \code{id_outliers}. Default: 
-\code{4}, or \eqn{4 * median}.}
+\describe{
+  \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
+  \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+  \item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
+  \item{verbose}{Print updates? Default: \code{FALSE}.}
+}}
 
-\item{rbd_cutoff}{The outlier cutoff quantile for MCD distance. Only used if 
- \code{"robdist" \%in\% projection} and \code{id_outliers}. Default: 
- \code{0.9999}, for the \eqn{0.9999} quantile.
+\item{get_dirs}{Do the projection directions need to be returned? This is the 
+\eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
+to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
 
- The quantile is computed from the estimated F distribution.}
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+Default: \code{FALSE} (return only the components used to compute the measures).}
 
-\item{lev_images}{Should leverage images be computed? If \code{FALSE} memory
-is conserved. Default: \code{FALSE}.}
+\item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}
+
+\item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
-A clever object, i.e. a list with components
+A \code{"clever_multi"} object, i.e. a list with components
 \describe{
- \item{params}{A list of all the arguments used.}
- \item{projections}{
+ \item{measure}{A numeric vector of leverage values.}
+ \item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}
+ \item{outlier_flag}{A logical vector where \code{TRUE} indicates suspected outlier presence.}
+ \item{mask}{
+   A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
    \describe{
-     \item{PC_var}{
-       \describe{
-         \item{indices}{The indices retained from the original SVD 
-           projection to make the variance-based PC projection.} 
-         \item{PCs}{The PC projection.}  
-       }
-     }
-     \item{PC_kurt}{
-       \describe{
-         \item{indices}{The indices retained from the original SVD 
-           projection to make the kurtosis-based PC projection. They are 
-           ordered from highest kurtosis to lowest kurtosis.}  
-         \item{PCs}{The PC projection. PCs are ordered in the standard
-           way, from highest variance to lowest variance, instead of by 
-           kurtosis.}  
-       }
-     }
-     \item{PCATF}{
-       \describe{
-         \item{indices}{The indices of the trend-filtered PCs used to make the
-           projection.}  
-         \item{PCs}{The PCATF result.}  
-       }
-     }
+     \item{0}{The data location was not masked out.}
+     \item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
+     \item{-2}{The data location was masked out, because it was constant.}
    }
  }
- \item{outlier_measures}{
+ \item{PCA}{
+   If PCA was used, this will be a list with components:
    \describe{
-     \item{PC_var__lev}{The leverage values for the PC_var projection.}
-     \item{PC_kurt__lev}{The leverage values for the PC_kurt projection.}
-     \item{PCATF__lev}{The leverage values for the PCATF projection.}
-     \item{PC_var__rbd}{The robust MCD distance values for the PC_var projection.}
-     \item{PC_kurt__rbd}{The robust MCD distance values for the PC_kurt projection.}
-     \item{DVARS_DPD}{The Delta percent DVARS values.}
-     \item{DVARS_ZD}{The DVARS z-scores.}
+     \item{U}{The \eqn{T \times Q} PC score matrix.}
+     \item{D}{The standard deviation of each PC.}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}.}
+     \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+     \item{nPCs_PESEL}{The number of PCs selected by PESEL.}
+     \item{nPCs_avgvar}{The number of above-average variance PCs.}
+   }
+   where \code{Q} is the number of PCs selected by PESEL or of above-average variance (or the greater of the two if both were used).
+ }
+ \item{PCATF}{
+   If PCATF was used, this will be a list with components:
+   \describe{
+     \item{U}{The \eqn{T \times Q} PC score matrix.}
+     \item{D}{The standard deviation of each PC.}
+     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}}
    }
  }
- \item{outlier_cutoffs}{
+ \item{ICA}{
+   If ICA was used, this will be a list with components:
    \describe{
-     \item{lev}{The leverage cutoff for outlier detection: \code{lev_cutoff} times
-       the median leverage.}
-     \item{MCD}{The robust distance cutoff for outlier detection: the 
-       \code{rbd_cutoff} quantile of the estimated F distribution.}
-     \item{DVARS_DPD}{The Delta percent DVARS cutoff: +/- 5 percent}
-     \item{DVARS_ZD}{The DVARS z-score cutoff: the one-sided 5 percent 
-       significance level with Bonferroni FWER correction.}
-   }
- }
- \item{outlier_flags}{
-   \describe{
-     \item{PC_var__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{PC_kurt__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{PCATF__leverage}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{PC_var__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{PC_kurt__robdist}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{DVARS_DPD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-     \item{DVARS_ZD}{Logical vector idnicating whether each observation surpasses the outlier cutoff.}
-   }
- }
- \item{robdist_info}{
-   \describe{
-     \item{PC_var__robdist}{
-       \describe{
-         \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-         \item{outMCD_scale}{The scale for out-of-MCD observations.}
-         \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
-       }
-     }
-     \item{PC_var__robdist}{
-       \describe{
-         \item{inMCD}{Logical vector indicating whether each observation was in the MCD estimate.}
-         \item{outMCD_scale}{The scale for out-of-MCD observations.}
-         \item{Fparam}{Named numeric vector: c, m, df1, and df2.}
-       }
-     }
-   }
- }
- \item{MCD_scale}{The scale value for out-of-MCD observations, and NA for
-   in-MCD observations. NULL if \code{method} is not robust distance.}
- \item{lev_images}{
-   \describe{
-     \item{mean}{The average of the PC directions, weighted by the unscaled
-       PC scores at each outlying time point (U[i,] * V^T). Row names are
-       the corresponding time points.}
-     \item{top}{The PC direction with the highest PC score at each outlying
-       time point. Row names are the corresponding time points.}
-     \item{top_dir}{The index of the PC direction with the highest PC score
-       at each outlying time point. Named by timepoint.}
+     \item{S}{The \eqn{P \times Q} source signals matrix. Included only if \code{get_dirs}} 
+     \item{M}{The \eqn{T \times Q} mixing matrix.}
+     \item{highkurt}{The length \code{Q} logical vector indicating mixing scores of high kurtosis.}
    }
  }
 }
 }
 \description{
-Calculates PCA leverage or robust distance and identifies outliers.
+Calculates leverage to identify outliers in high-dimensional data.
 }
-\details{
-\code{clever} will use all combinations of the requested projection and 
- out_meas methods that make sense. For example, if  
- \code{projection=c("PCATF", "PCA_var", "PCA_kurt")} and 
- \code{out_meas=c("leverage", "robdist")} then these five
- combinations will be used: PCATF with leverage, PCA + variance with 
- leverage, PCA + variance with robust distance, PCA + kurtosis with leverage,
- and PCA + kurtosis with robust distance. Each method combination will yield 
- its own out_meas time series.
+\section{Order of operations}{
+
+ The input data undergo a nuisance regression to remove low frequency trends
+ (see the \code{DCT} argument to control or disable this behavior) and any
+ other nuisance signals (see the \code{nuisance_too} argument to specify them).
+ (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
+ is performed.) Then the data are centered and scaled (see the \code{center}
+ and \code{scale} arguments to control or disable this behavior). Leverage
+ is computed afterward.
 }
+
 \examples{
 n_voxels = 1e4
 n_timepoints = 100

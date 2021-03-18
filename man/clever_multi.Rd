@@ -20,6 +20,11 @@ clever_multi(
 )
 }
 \arguments{
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, 
+\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
+number of timepoints and \eqn{V} should be the number of brainordinate 
+vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
+
 \item{projection}{Leverage works by projecting the data onto directions likely to 
  contain outlier information. Choose at least one of the following:
 
@@ -42,6 +47,68 @@ clever_multi(
  of PCs with above-average variance.
  
  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.}
+
+\item{nuisance}{Nuisance signals to regress from each column of \code{X}.
+ Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
+ number of nuisance signals. Default: a matrix with a constant column
+ (this is the intercept term in the design matrix) and four DCT bases. 
+ This default nuisance regression will have the effect of detrending the
+ data by removing low-frequency components. To not perform any nuisance
+ regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+
+ Detrending is highly recommended for time-series data, especially if there 
+ are many time points or evolving circumstances affecting the data. Additionally,
+ if kurtosis is being used to select the projection directions, trends can 
+ induce positive or negative kurtosis, contaminating the connection between 
+ high kurtosis and outlier presence. Detrending should not be used with 
+ non-time-series data because the observations are not temporally related.
+
+ To perform nuisance regression with an intercept, DCT bases, and additional
+ signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
+
+\item{center}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
+
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
+
+\item{scale}{Center the columns of the data by their medians, and scale the
+ columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+ Centering is necessary for computing the projections, so if \code{center} is
+ \code{FALSE}, the data must already be centered.
+
+ Note that centering and scaling occur after nuisance regression, so even if
+ \code{center} is \code{FALSE}, the data will be centered on the means if
+ the nuisance regression included an intercept term, as it does by default.}
+
+\item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
+for kurtosis should be used to select the components? Default: \code{0.95}.}
+
+\item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
+entries are:
+
+\describe{
+  \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
+  \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+  \item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
+  \item{verbose}{Print updates? Default: \code{FALSE}.}
+}}
+
+\item{get_dirs}{Do the projection directions need to be returned? This is the 
+\eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
+to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
+
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+Default: \code{FALSE} (return only the components used to compute the measures).}
+
+\item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}
+
+\item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
+
+\item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
 A \code{"clever_multi"} object, i.e. a list with components
@@ -93,6 +160,17 @@ A \code{"clever_multi"} object, i.e. a list with components
 Calculates leverage to identify outliers in high-dimensional data. 
  Can compute multiple kinds of leverage at once.
 }
+\section{Order of operations}{
+
+ The input data undergo a nuisance regression to remove low frequency trends
+ (see the \code{DCT} argument to control or disable this behavior) and any
+ other nuisance signals (see the \code{nuisance_too} argument to specify them).
+ (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
+ is performed.) Then the data are centered and scaled (see the \code{center}
+ and \code{scale} arguments to control or disable this behavior). Leverage
+ is computed afterward.
+}
+
 \examples{
 n_voxels = 1e4
 n_timepoints = 100

@@ -1,5 +1,5 @@
 ---
-title: "Clever: Using PCA Leverage for Outlier Detection in High-Dimensional Data"
+title: "PCA leverage for outlier detection in high-dimensional data with `clever`"
 author: "Amanda Mejia, Preya Shah & Damon Pham"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -14,29 +14,38 @@ library(knitr)
 opts_chunk$set(autodep = TRUE, cache = TRUE)
 ```
 
-## Overview
+# Overview
+`clever` implements the _PCA leverage_ outlier detection method for high-dimensional (HD) data, as detailed in this manuscript:
 
-The Clever package implements the PCA leverage outlier detection method for high-dimensional (HD) data, as detailed in this manuscript:
+```{r}
+citation("clever")[1]
+```
 
-Citation: Mejia, Amanda F., Mary Beth Nebel, Ani Eloyan, Brian Caffo, and Martin A. Lindquist. "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data." Biostatistics 18, no. 3 (2017): 521-536. [paper link](https://academic.oup.com/biostatistics/article/18/3/521/3056185)
+In summary, the manuscript proposes a measure of "outlyingness" for HD data observations by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While its primary application is detecting outlying timepoints in an fMRI scan, the method can also be applied to other forms of HD data such as gene expression data.
 
-In summary, the manuscript proposes a method to detect outlier observations in HD data by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While the primary application is for detecting outlying time points in an fMRI scan, the method can also be applied to other forms of HD data, such as gene expression data.
+In addition to PCA leverage, we have also implemented two other measures of outlyingness: _robust distance_, described in the same manuscript as PCA leverage, and _DVARS_, as formulated by this manuscript:
 
-## Method Outline
+```{r}
+citation("clever")[2]
+```
 
-As input, the algorithm takes a __T__ x __V__ matrix, __Y__. In our case, __Y__ represents an fMRI run, where each row of __Y__ is a vectorized volume, and each column represents one timepoint. Next, the algorithm performs the following steps: 
+### Method outline
 
-1. Normalize the __Y__ matrix.
+As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an fMRI run: each row is a vectorized volume, and each column represents one timepoint. Next, the algorithm performs the following steps: 
 
-2. Perform PCA on the normalized __Y__ matrix using singular value decomposition (SVD), in order to obtain the PC score matrix, __U__ (of dimension __T__ x __T__).
+1. Normalize $Y$ by centering and scaling its columns robustly.
 
-3. To reduce the dimensions, retain the first __Q__ rows of the __U__ matrix corresponding to the first __Q__ < __T__ principal components.  We will refer to this submatrix as __A__ (of dimension __T__ x __Q__). _Note_: To choose the model order __Q__, we retain only components with a greater-than-average eigenvalue for the "mean" method, or components with kurtosis greater than 2 for the "kurtosis" method. The number kept will be further restricted if _robust distance_ will be used, since it requires __T__ to be appropriately large relative to __Q__ for estimation of the covariance matrix.
+2. Perform PCA on the normalized $Y$ matrix using the singular value decomposition (SVD) in order to obtain the $T \times T$ PC score matrix, $U$.
 
-4. Now we can apply outlier detection on __A__. The primary method is _PCA leverage_, though we also propose an alternative called _robust distance_ (see paper for further details). The output of either of these outlier detection methods is a __T__ x __1__ vector representing the "outlyingness" of each time point.  
+3. Some PCs are removed from $U$ to obtain the $Q \times T$ ($Q < T$) matrix, $U'$. The PCs which are retained are those likley to contain outlier information: PCs with greater-than-average variance, or PCs with both high variance and high kurtosis. (The removal of at least one PC is also a theoretical requirement for leverage; additionally, the robust distance method requires $Q$ to be appropriately small relative to $T$.)
 
-5. Thresholds are used to identify the outliers. We choose 3 thresholds, with increasing level of stringency. Our function outputs the outliers associated with each threshold.  
+4. Next, leverage and/or robust distance is measured. The output of each is a length $T$ vector representing the "outlyingness" of each time point.  
 
-## Installation
+5. The outlyingness measures are thresholded to obtain the set of identified outliers. 
+
+We also include the DVARS outlier detection method in `clever`. It normalizes the data as explained in step 1 (and not as described in the paper cited above), but otherwise follows the algorithm as described in the paper and implemented in the [MATLAB code](https://github.com/asoroosh/DVARS) provided by the authors.
+
+### Installation
 
 Install the package from GitHub and load it:
 
@@ -48,68 +57,52 @@ devtools::install_github('mandymejia/clever')
 library(clever)
 ```
 
-## Tutorial Data
+# Tutorial
 
-ABIDE is a publicly available resource of neuroimaging and phenotypic information from 1112 subjects consisting of 20 datasets collected at 16 sites (Di Martino and others, 2014). Our simulated dataset is based on resting-state fMRI scans from two subjects collected as part of the ABIDE dataset. The first dataset contains artifacts toward the beginning time point; the second is relatively artifact-free. Axial slices are used instead of the entire volumes to minimize the clever package's download time. 
+### Data
+
+`clever` includes data from the Autism and Brain Imaging Data Exchange (ABIDE), a publicly available resource of neuroimaging and phenotypic information [(Di Martino and others, 2014)](https://doi.org/10.1038/mp.2013.78). Our simulated datasets are based on resting-state fMRI scans from two ABIDE subjects: the first contains artifacts likely due to a couple periods of high subject head motion; the second is relatively artifact-free. Axial slices are used instead of the entire volumes to minimize the download time of `clever`.
  
-## A Simple Example
+### Example results
 
-Here, we will run through a simple example. First let's pull the data, as follows:
+Here we will run through a simple example. First let's pull the data:
 
-```{r, warning = FALSE, message = FALSE}
+```{r}
 data(Dat1)
 data(Dat2)
 ```
 
-The fMRI data for both subjects consist of a single slice from a volume. A brain mask has been applied to vectorize the data, forming a $T\times V$ (time by voxels or vertices) data *matrix*.
+The data for both subjects consist of a single slice from an fMRI volume. A brain mask has been applied to vectorize the data, forming a $T \times V$ (time by voxel) matrix.
 
 ```{r}
 dim(Dat1)
 dim(Dat2)
 ```
 
-We next run clever on both datasets. We could just measure leverage using the variance-based PC projection:
+We next run `clever` on both datasets. First, we will begin by looking at the standard implementation of PCA leverage:
 
 ```{r}
-clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
-clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, DVARS=FALSE, lev_images=FALSE)
+clever.Dat1.var.lev = clever(Dat1, verbose=TRUE)
+clever.Dat2.var.lev = clever(Dat2, verbose=TRUE)
 ```
 
-```{r fig.width=4, fig.height=3}
-plot(clever.Dat1.var.lev, plot_title="Dat1", show.legend=FALSE)
+```{r fig.width=10, fig.height=3}
+p1 <- plot(clever.Dat1.var.lev, title="Dat1", show.legend=FALSE)
+p2 <- plot(clever.Dat2.var.lev, title="Dat2", show.legend=FALSE)
+cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-```{r fig.width=4, fig.height=3}
-plot(clever.Dat2.var.lev, plot_title="Dat2", show.legend=FALSE)
+PCA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, PCA leverage does indicate a few potential outliers including around the 40th and 110th timepoints. We can confirm that the results for DVARS look similar:
+
+```{r fig.width=10, fig.height=3}
+p1 <- plot(clever(Dat1, measure="DVARS2"), title="Dat1", show.legend=FALSE)
+p2 <- plot(clever(Dat2, measure="DVARS2"), title="Dat2", show.legend=FALSE)
+cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
+### fMRI image reconstruction
 
-We could also use all combinations of projection and outlyingness methods and compare them:
-
-```{r}
-clever.Dat1 = clever(Dat1, projection="all", out_meas="all", 
-                     lev_images=TRUE, verbose=TRUE)
-clever.Dat2 = clever(Dat2, projection="all", out_meas="all", 
-                     lev_images=TRUE, verbose=TRUE)
-```
-
-Here are the outliers for the first dataset:
-
-```{r fig.height=8}
-plot(clever.Dat1, "all", plot_title="Dat1")
-```
-
-And for the second:
-
-```{r fig.height=8}
-plot(clever.Dat2, "all", plot_title="Dat2")
-```
-
-For the first dataset, clever identifies outliers at timepoints 59-61 and 150-151 consistently across most methods. A few other time points are flagged as well. There seems to be strong agreement between leverage scrubbing and DVARS. Weaker outliers around the 40th time point are identified in the second dataset, and DVARS flags a couple frames in this region as well. Overall, these results are consistent with our prior knowledge of both datasets. 
-
-### Image reconstruction
-
-We can reconstruct the original fMRI images with the mask used for vectorizing the data. See `Matrix_to_VolumeTimeSeries` in `clever/R/visualize.R` for a helper function to do this.
+To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `clever::Matrix_to_VolumeTimeSeries` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
@@ -139,11 +132,11 @@ Mask2 = readNIfTI(fname)
 Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
 ```
 
-Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second). We choose to use the kurtosis and leverage parameter settings.
+Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second) in the first dataset. We choose to use the kurtosis PC-selection method and leverage outlyingness measurement.
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
-levs = clever.Dat1$outlier_measures$PCA_var__leverage
+levs = clever.Dat1.var.lev$measure
 t_med = order(levs)[ceiling(length(levs)/2)]
 t_max = which.max(levs)
 
@@ -151,31 +144,46 @@ image(Img1[,,,t_med], main=paste0('Median leverage (T = ', t_med, ')'))
 image(Img1[,,,t_max], main=paste0('Maximum leverage (T = ', t_max, ')'))
 ```
 
-The median time point appears normal, whereas the most outlying time point clearly has banding artifacts.
+The median time point appears normal, whereas the most outlying time point clearly has banding artifacts likely due to subject motion.
 
 ### Leverage images
 
-clever can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. To solve for these images, be sure to use `lev_images=TRUE` (already the default option).
+`clever` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation.
 
-```{r}
-Lev_Img1 = clever.Dat1$outlier_lev_imgs$PCA_var__leverage
-print('The timepoints meeting the first outlier level threshold:')
-paste(row.names(Lev_Img1$mean), collapse=", ")
+```{r eval=FALSE}
+clev <- clever(Dat1, get_dirs=TRUE)
+const_mask <- apply(Dat1, 2, sd) < 1e-8
+Lev_Img1 = lev_images(clev, const_mask=const_mask)
+cat('The timepoints meeting the first outlier level threshold:\n')
+cat(paste(row.names(Lev_Img1$mean), collapse=", "))
 ```
 
-Here are the leverage images at the 59th timepoint for the first dataset:
+Here are the leverage images at timepoint `r t_max` for the first dataset:
 
-```{r, fig.width=7, fig.height=4}
+```{r, fig.width=7, fig.height=4, eval=FALSE}
 par(mfrow=c(1,2))
 
-# Constant voxels are deleted during the clever algorithm, so the leverage images will have
+# Constant voxels are deleted during the `clever` algorithm, so the leverage images will have
 # missing values where the constant voxels were. The NA_fill option is used here to make
 # these voxels have the same color as the background (out-of-mask voxels).
-Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1, NA_fill=0)
-Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1, NA_fill=0)
+Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
+Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
 
-image(Lev_Img1.mean[,,,1], main=paste0('Lev. img., mean dir. (T=59)'))
-image(Lev_Img1.top[,,,1], main=paste0('Lev. img., top dir. (T=59)'))
+idx = which(as.numeric(row.names(Lev_Img1$mean)) == t_max)
+image(Lev_Img1.mean[,,,idx], main=paste0('Lev. img., mean dir. (T=',t_max,')'))
+image(Lev_Img1.top[,,,idx], main=paste0('Lev. img., top dir. (T=',t_max,')'))
 ```
 
-The leverage image highlights the banding artifact present at this time point.
+The leverage images highlight the banding artifact present at this time point.
+
+# Appendix
+
+For testing purposes, we can run multiple methods at the same time using the internal function `clever_multi`:
+
+```{r fig.height=20, fig.width=6}
+clever.Dat1.all <- clever:::clever_multi(
+  Dat1, measures="all", projections="all", verbose=TRUE
+)
+
+plot(clever.Dat1.all)
+```

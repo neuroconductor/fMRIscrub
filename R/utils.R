@@ -1,4 +1,44 @@
-#' Centers and scales a matrix robustly for the purpose of covariance estimation.
+#' Is a numeric vector constant?
+#' 
+#' @param x The numeric vector
+#' @param TOL minimum range of \code{x} to be considered non-constant.
+#'  Default: \code{1e-8}
+#' 
+#' @return Is \code{x} constant? 
+#' 
+#' @keywords internal
+is_constant <- function(x, TOL=1e-8) {
+  abs(max(x) - min(x)) < TOL
+}
+
+#' Check design matrix
+#' 
+#' @param design The design matrix
+#' 
+#' @return The (modified) design matrix
+#' 
+#' @keywords internal
+check_design_matrix <- function(design, T_) {
+  class(design) <- "numeric"
+  if (identical(design, 1)) { design <- matrix(1, nrow=T_) }
+  design <- as.matrix(design)
+  stopifnot(nrow(design) == T_)
+  # Set constant columns (intercept regressor) to 1, and scale the other columns.
+  design_const_mask <- apply(design, 2, is_constant)
+  if (any(design_const_mask)) {
+    if (any(design_const_mask & abs(design[1,]) < 1e-8)) {
+      stop("Constant zero design regressor detected in `design`.")
+    }
+  }
+  design[,design_const_mask] <- 1
+  design[,!design_const_mask] <- scale(design[,!design_const_mask])
+  design
+}
+
+#' Scale data columns robustly
+#' 
+#' Centers and scales the columns of a matrix robustly for the purpose of 
+#'  covariance estimation.
 #'
 #' Centers each column on its median, and scales each column by its median
 #' absolute deviation (MAD). If any column MAD is zero, its values become zero
@@ -6,7 +46,7 @@
 #'
 #' @param mat A numerical matrix.
 #'
-#' @return The input matrix centered and scaled.
+#' @return The input matrix with its columns centered and scaled.
 #'
 #' @importFrom robustbase rowMedians
 scale_med <- function(mat){
@@ -52,6 +92,7 @@ scale_med <- function(mat){
 #'  scale.
 #'
 #' @return A list containing the estimated F distribution's c, m, and df.
+#' @importFrom stats pchisq qchisq
 #' @export
 fit.F <- function(Q, n, h){
   # Estimate c.
@@ -80,6 +121,21 @@ fit.F <- function(Q, n, h){
   return(result)
 }
 
+#' Get the cosine bases for DCT
+#' 
+#' @param T_ Length of timeseries
+#' @param n Number of cosine bases
+#' 
+#' @return Matrix with cosine bases along columns
+#' 
+#' @export
+dct_bases <- function(T_, n){
+  b <- matrix(NA, T_, n)
+  idx <- (seq(T_)-1)/(T_-1)
+  for (ii in seq(n)) { b[,ii] <- cos(idx*pi*ii) }
+  b
+}
+
 #' Wrapper to common functions for reading NIFTIs
 #' 
 #' @param nifti_fname The file name of the NIFTI.
@@ -91,8 +147,6 @@ read_nifti <- function(nifti_fname){
   } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
     return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
   } else {
-    trend <- lm(ts~p1+p2+p3+p4, df)$fitted.values
+    stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
   }
-
-  trend
 }
