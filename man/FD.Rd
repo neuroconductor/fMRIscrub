@@ -40,6 +40,8 @@ or one of the \code{trans_units} options.}
 \item{detrend}{Detrend each RP with the DCT before computing FD?
 Default: \code{FALSE}. Can be a number of DCT bases to use, or \code{TRUE}
 to use 4.}
+
+\item{cutoff}{[TO DO]}
 }
 \value{
 A length \eqn{N} vector of FD values in \code{trans_units}.

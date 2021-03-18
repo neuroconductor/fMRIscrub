@@ -34,6 +34,7 @@
 #' @param detrend Detrend each RP with the DCT before computing FD?
 #'  Default: \code{FALSE}. Can be a number of DCT bases to use, or \code{TRUE}
 #'  to use 4.
+#' @param cutoff [TO DO]
 #' @return A length \eqn{N} vector of FD values in \code{trans_units}.
 #'
 #' @importFrom utils read.table
