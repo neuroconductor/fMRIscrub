@@ -86,8 +86,10 @@ vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
  the nuisance regression included an intercept term, as it does by default.}
 
 \item{var_detrend}{Stabilize the variance of the PCA, PCATF, and ICA components
- prior to computing leverage? Default: \code{TRUE}. Note that variance stabilization
- is performed on the projection scores and not the data itself.
+ prior to computing leverage? \code{TRUE} (default), \code{FALSE}, or the number
+ of DCT bases to use for variance detrending (\code{TRUE} will use 2). 
+ Note that variance stabilization is performed on the projection scores and 
+ not the data itself.
 
  For each component, a linear model of four DCT bases and an intercept is fit
  on the log squared values after demeaning. The score timeseries of this 

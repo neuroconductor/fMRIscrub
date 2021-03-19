@@ -9,8 +9,8 @@ out_measures.leverage(Comps, are_orthogonal = FALSE, median_cutoff = NULL)
 \arguments{
 \item{Comps}{The n x Q PC score matrix/IC mixing matrix.}
 
-\item{are_orthogonal}{Can the columns of \code{Comps} be assumed to be orthogonal?
-Speeds up the computation.}
+\item{are_orthogonal}{Can the columns of \code{Comps} be assumed to be orthogonal
+and have a 2-norm of 1? Speeds up the computation.}
 
 \item{median_cutoff}{The outlier cutoff, in multiples of the median leverage.
 Default: \code{NULL} (do not compute outliers).}

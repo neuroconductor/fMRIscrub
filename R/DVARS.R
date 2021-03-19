@@ -85,7 +85,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
 #'  not be any missing data (\code{NA} or \code{NaN}).
 #' @param normalize Normalize the data as proposed in the original paper? Default:
-#'  \code{FALSE}. Normalization removes constant-zero voxels, scales by 100 / the
+#'  \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
 #'  median of the mean image, and then centers each voxel on its mean.
 #'
 #'  To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
@@ -94,6 +94,9 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #'
 #'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
 #'  \eqn{V \times T} data matrix.
+#' 
+#'  Note that while voxel centering doesn't affect DVARS, it does affect
+#'  DPD and ZD.
 #' @param cutoff_DVARS,cutoff_DPD,cutoff_ZD Numeric outlier cutoffs. Timepoints
 #'  exceeding these cutoffs will be flagged as outliers.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
@@ -102,7 +105,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' @importFrom stats median pchisq qnorm
 #' 
 DVARS <- function(
-  X, normalize=FALSE, 
+  X, normalize=TRUE, 
   cutoff_DVARS=NULL, 
   cutoff_DPD=5,
   cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix(X))),

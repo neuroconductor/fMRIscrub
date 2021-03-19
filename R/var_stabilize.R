@@ -13,8 +13,15 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
   x <- as.vector(x)
   T_ <- length(x)
   
-  mat <- data.frame(cbind(1, dct_bases(T_, nDCT)))
-  colnames(mat) <- c("x_int", paste0("x_dct", seq(nDCT)))
+  nDCT <- as.numeric(nDCT)
+  stopifnot(nDCT == round(nDCT)); stopifnot(nDCT >= 0)
+  if (nDCT == 0) {
+    mat <- data.frame(rep(1, T_))
+    colnames(mat) <- "x_int"
+  } else {
+    mat <- data.frame(cbind(1, dct_bases(T_, nDCT)))
+    colnames(mat) <- c("x_int", paste0("x_dct", seq(nDCT)))
+  }
   mat$y <- x
   
   robustbase::lmrob(y~., mat, method=lmrob_method)
@@ -33,11 +40,11 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
 #' @return The variance stabilized timeseries
 #' 
 #' @export 
-var_stabilize <- function(x, nDCT=4, lmrob_method="MM", rescale=TRUE) {
+var_stabilize <- function(x, nDCT=2, lmrob_method="MM", rescale=TRUE) {
   x_mean <- mean(x); x_var <- var(x)
   x <- as.numeric(scale(x))
   s <- fitted(rob_trend(log(x^2), nDCT, lmrob_method))
-  x <- as.numeric(scale(x/s))
+  x <- - as.numeric(scale(x/s))
   if (rescale) { x <- (x * sqrt(x_var)) + x_mean }
   x
 }

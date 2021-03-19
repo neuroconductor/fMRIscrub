@@ -4,8 +4,8 @@
 #'  Optionally can identify the outliers.
 #'
 #' @param Comps The n x Q PC score matrix/IC mixing matrix.
-#' @param are_orthogonal Can the columns of \code{Comps} be assumed to be orthogonal?
-#'  Speeds up the computation.
+#' @param are_orthogonal Can the columns of \code{Comps} be assumed to be orthogonal
+#'  and have a 2-norm of 1? Speeds up the computation.
 #' @param median_cutoff The outlier cutoff, in multiples of the median leverage.
 #'  Default: \code{NULL} (do not compute outliers).
 #' 
@@ -21,7 +21,8 @@ out_measures.leverage <- function(Comps, are_orthogonal=FALSE, median_cutoff=NUL
   if (are_orthogonal) {
     lev <- apply(Comps^2, 1, sum)
   } else {
-    lev <- diag( Comps %*% solve(t(Comps) %*% Comps, t(Comps)) )
+    #lev <- diag( Comps %*% solve(t(Comps) %*% Comps, t(Comps)) )
+    lev <- diag(hat_matrix(Comps))
   }
 
   out <- list(meas=lev)

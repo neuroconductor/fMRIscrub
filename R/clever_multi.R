@@ -175,6 +175,12 @@ clever_multi = function(
   # other arguments ------------------------------------------------------------
   center <- as.logical(center); stopifnot(isTRUE(center) || isFALSE(center))
   scale <- as.logical(scale); stopifnot(isTRUE(scale) || isFALSE(scale))
+  if (isTRUE(var_detrend)) { 
+    var_detrend <- 2
+  } else if (!isFALSE(var_detrend)) {
+    var_detrend <- as.numeric(var_detrend)
+    stopifnot(var_detrend >= 0)
+  }
   kurt_quantile <- as.numeric(kurt_quantile)
   stopifnot(kurt_quantile >= 0 && kurt_quantile <= 1)
   if(!identical(PCATF_kwargs, NULL)){
@@ -365,10 +371,19 @@ clever_multi = function(
     }
   }
 
-  if (var_detrend) {
-    if (!is.null(out$PCA$U)) { out$PCA$U_vdt <- apply(out$PCA$U, 2, var_stabilize) }
-    if (!is.null(out$PCATF$U)) { out$PCATF$U_vdt <- apply(out$PCATF$U, 2, var_stabilize) }
-    if (!is.null(out$ICA$M)) { out$ICA$M_vdt <- apply(out$ICA$M, 2, var_stabilize) }
+  if (!isFALSE(var_detrend)) {
+    if (!is.null(out$PCA$U)) { 
+      out$PCA$U_vdt <- apply(out$PCA$U, 2, var_stabilize, nDCT=var_detrend)
+      out$PCA$highkurt_vdt <- high_kurtosis(out$PCA$U_vdt, kurt_quantile=kurt_quantile)
+    }
+    if (!is.null(out$PCATF$U)) { 
+      out$PCATF$U_vdt <- apply(out$PCATF$U, 2, var_stabilize, nDCT=var_detrend)
+      out$PCATF$highkurt_vdt <- high_kurtosis(out$PCATF$U_vdt, kurt_quantile=kurt_quantile)
+    }
+    if (!is.null(out$ICA$M)) { 
+      out$ICA$M_vdt <- apply(out$ICA$M, 2, var_stabilize, nDCT=var_detrend)
+      out$ICA$highkurt_vdt <- high_kurtosis(out$ICA$M_vdt, kurt_quantile=kurt_quantile)
+    }
   }
 
   rm(X); gc()
@@ -384,7 +399,7 @@ clever_multi = function(
     base_ii <- gsub("2", "", gsub("_kurt", "", proj_ii))
     scores_ii <- paste0(
       ifelse(grepl("ICA", proj_ii), "M", "U"), 
-      ifelse(var_detrend, "_vdt", "")
+      ifelse(!isFALSE(var_detrend), "_vdt", "")
     )
 
     # Make projection.

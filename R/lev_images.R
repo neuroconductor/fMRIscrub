@@ -12,7 +12,7 @@
 lev_images <- function(clev, timepoints=NULL, const_mask=NULL){
 
   if (is.null(timepoints)) {
-    timepoints <- which(clev$outlier_flags)
+    timepoints <- which(clev$outlier_flag)
     if (!(length(timepoints) > 0)) {
       stop("`timepoints=NULL` will get leverage images for outliers, but no outliers detected.")
     }
