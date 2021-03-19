@@ -267,7 +267,10 @@ plot.clever <- function(x, title=NULL, ...){
   stopifnot(mtype %in% c("Leverage", "DVARS", "FD"))
   meas <- x$measure
   if (!is.data.frame(meas)) {
-    meas <- setNames(as.data.frame(meas), as.character(x$measure_info["name"]))
+    meas <- setNames(
+      as.data.frame(meas), 
+      as.character(ifelse("name" %in% names(x$measure_info), x$measure_info["name"], x$measure_info["type"]))
+    )
   }
   if (mtype == "DVARS") { meas <- meas[,c("DPD", "ZD")] }
 
