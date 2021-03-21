@@ -44,6 +44,7 @@ var_stabilize <- function(x, nDCT=2, lmrob_method="MM", rescale=TRUE) {
   x_mean <- mean(x); x_var <- var(x)
   x <- as.numeric(scale(x))
   s <- as.numeric(rob_trend(log(x^2), nDCT, lmrob_method)$fitted.values)
+  s <- sqrt(exp(s))
   x <- - as.numeric(scale(x/s))
   if (rescale) { x <- (x * sqrt(x_var)) + x_mean }
   x
