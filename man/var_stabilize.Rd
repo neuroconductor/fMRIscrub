@@ -7,7 +7,8 @@
 var_stabilize(x, nDCT = 2, lmrob_method = "MM", rescale = TRUE)
 }
 \arguments{
-\item{x}{The timeseries to variance stabilize}
+\item{x}{The timeseries to variance stabilize. It should be mean-detrended
+already; otherwise, the results will be invalid.}
 
 \item{nDCT}{The number of DCT bases to use. Default: \code{4}}
 
