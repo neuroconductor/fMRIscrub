@@ -46,6 +46,7 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
 #' @export
 #' 
 var_stabilize <- function(x, nDCT=2, lmrob_method="MM", rescale=TRUE) {
+  if (length(x) < 5) { warning("Timeseries to short to variane stabilize."); return(x) }
   x_mean <- mean(x); x_var <- var(x)
   x <- as.numeric(scale(x))
   s <- as.numeric(rob_trend(log((x^2) + 1), nDCT, lmrob_method)$fitted.values)
