@@ -15,3 +15,4 @@ The \eqn{T \times T} hat matrix
 \description{
 Get the hat matrix from a design matrix
 }
+\keyword{internal}

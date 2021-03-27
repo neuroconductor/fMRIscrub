@@ -6,7 +6,7 @@
 #'
 #' @return The \eqn{T \times T} hat matrix
 #' 
-#' @export
+#' @keywords internal
 hat_matrix <- function(design){
   design <- as.matrix(design)
   # https://stackoverflow.com/questions/19100600/extract-maximal-set-of-independent-columns-from-a-matrix
