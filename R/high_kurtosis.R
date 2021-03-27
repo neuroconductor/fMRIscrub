@@ -15,6 +15,9 @@
 #'  distribution of kurtosis. Only used if a new simulation is performed. (If
 #'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
 #'  If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)
+#' @param min1 Require at least one component to be selected? In other words, if
+#'  no components meet the quantile cutoff, should the component with the highest
+#'  kurtosis be returned? Default: \code{TRUE}.
 #'
 #' @return A logical vector indicating whether each component has high kurtosis.
 #'
@@ -22,8 +25,7 @@
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-high_kurtosis <- function(Comps, 
-  kurt_quantile = 0.9, n_sim = 5000){
+high_kurtosis <- function(Comps, kurt_quantile = 0.9, n_sim = 5000, min1=TRUE){
 
   m <- nrow(Comps); n <- ncol(Comps)
 
@@ -50,7 +52,7 @@ high_kurtosis <- function(Comps,
   high <- kurt > cut
 
   # Keep at least 1 PC.
-  if (!any(high)) { high <- rep(FALSE, n); high[which(kurt==max(kurt))[1]] <- TRUE }
+  if (all(!high) && min1) { high[which(kurt==max(kurt))[1]] <- TRUE }
 
   high
 }
