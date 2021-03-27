@@ -26,7 +26,7 @@ Description: Computes principal Components LEVERage (“CLEVER”), a data-drive
     measure of outlyingness for high-dimensional data such as fMRI scans. Also
     includes other quality-control measures commonly used for fMRI: framewise 
     displacement, DVARS, and anatomical CompCor.
-Depends: R (>= 2.10)
+Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

@@ -49,7 +49,7 @@ vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
  mean and variance, yielding the variance stabilized scores.}
 
 \item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
-for kurtosis should be used to select the components? Default: \code{0.95}.}
+for kurtosis should be used to select the components? Default: \code{0.99}.}
 
 \item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
 entries are:

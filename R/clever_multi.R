@@ -88,7 +88,7 @@ clever_multi = function(
   X, projection = "PCA_kurt", 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
   center=TRUE, scale=TRUE, var_detrend=TRUE,
-  kurt_quantile=.95, PCATF_kwargs=NULL,
+  kurt_quantile=.99, PCATF_kwargs=NULL,
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4,
   verbose=FALSE){
@@ -351,10 +351,6 @@ clever_multi = function(
 
     if(!get_dirs){ out$ICA$S <- NULL }
   }
-  # Identify which ICs have high kurtosis.
-  if (any(c("ICA_kurt", "ICA2_kurt") %in% projection)) {
-    out$ICA$highkurt <- high_kurtosis(out$ICA$M, kurt_quantile=kurt_quantile)
-  }
 
   # Remove PCA information if only ICA is being used.
   # Do this after PCA info was given to PCATF
@@ -405,22 +401,30 @@ clever_multi = function(
     # Make projection.
     Comps_ii <- switch(proj_ii,
       PCA = seq(out$PCA$nPCs_PESEL),
-      PCA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCA[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCA_kurt = which(out$PCA$highkurt[seq(out$PCA$nPCs_PESEL)]),
       PCA2 = seq(out$PCA$nPCs_avgvar),
-      PCA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCA[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCA2_kurt = which(out$PCA$highkurt[seq(out$PCA$nPCs_avgvar)]),
       PCATF = seq(out$PCA$nPCs_PESEL),
-      PCATF_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$PCATF[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCATF_kurt = which(out$PCATF$highkurt[seq(out$PCATF$nPCs_PESEL)]),
       PCATF2 = seq(out$PCA$nPCs_avgvar),
-      PCATF2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$PCATF[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)],
+      PCATF2_kurt = which(out$PCATF$highkurt[seq(out$PCATF$nPCs_avgvar)]),
       ICA = seq(out$PCA$nPCs_PESEL),
-      ICA_kurt = seq(out$PCA$nPCs_PESEL)[high_kurtosis(out$ICA[[scores_ii]][,seq(out$PCA$nPCs_PESEL),drop=FALSE], kurt_quantile=kurt_quantile)],
+      ICA_kurt = which(out$ICA$highkurt[seq(out$ICA$nPCs_PESEL)]),
       ICA2 = seq(out$PCA$nPCs_avgvar),
-      ICA2_kurt = seq(out$PCA$nPCs_avgvar)[high_kurtosis(out$ICA[[scores_ii]][,seq(out$PCA$nPCs_avgvar),drop=FALSE], kurt_quantile=kurt_quantile)]
+      ICA2_kurt = which(out$ICA$highkurt[seq(out$ICA$nPCs_avgvar)])
     )
-    Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]
 
-    # Compute leverage.
-    result_ii <- out_measures.leverage(Comps=Comps_ii, median_cutoff=cutoff)
+    if (grepl("kurt", proj_ii) && length(Comps_ii) < 1) {
+      result_ii <- list(
+        meas = data.frame(meas=rep(0, T_)), 
+        cut = NA, 
+        flag = data.frame(flag=rep(FALSE, T_))
+      )
+    } else {
+      Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]
+      # Compute leverage.
+      result_ii <- out_measures.leverage(Comps=Comps_ii, median_cutoff=cutoff)
+    }
     out$measure[[proj_ii]] <- result_ii$meas
     if (get_outliers) {
       out$outlier_cutoff[[proj_ii]] <- result_ii$cut

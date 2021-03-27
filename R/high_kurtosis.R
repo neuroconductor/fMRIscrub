@@ -1,7 +1,7 @@
 #' Identifies the components of sufficient kurtosis.
 #'
-#' The kurtosis cutoff is the 90% quantile of the sampling distribution of 
-#'  kurtosis for Normal data of the same length as the components; it is
+#' The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
+#'  of kurtosis for Normal data of the same length as the components; it is
 #'  estimated by simulation or calculated from the theoretical asymptotic
 #'  distribution if the components are long enough.
 #' 
@@ -15,9 +15,9 @@
 #'  distribution of kurtosis. Only used if a new simulation is performed. (If
 #'  \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
 #'  If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)
-#' @param min1 Require at least one component to be selected? In other words, if
+#' @param min_1 Require at least one component to be selected? In other words, if
 #'  no components meet the quantile cutoff, should the component with the highest
-#'  kurtosis be returned? Default: \code{TRUE}.
+#'  kurtosis be returned? Default: \code{FALSE}.
 #'
 #' @return A logical vector indicating whether each component has high kurtosis.
 #'
@@ -25,17 +25,18 @@
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
 #' @export
-high_kurtosis <- function(Comps, kurt_quantile = 0.9, n_sim = 5000, min1=TRUE){
+high_kurtosis <- function(Comps, kurt_quantile = 0.99, n_sim = 5000, min_1=FALSE){
 
+  Comps <- as.matrix(Comps)
   m <- nrow(Comps); n <- ncol(Comps)
 
   kurt <- apply(Comps, 2, kurtosis, type=1)
 
   # Determine the quantile cutoff.
   if(m < 1000){
-    if(kurt_quantile == .9){
-      # Use precomputed empirical 0.90 quantile.
-      cut <- kurt_90_quant[m]
+    if(kurt_quantile == .99){
+      # Use precomputed empirical 0.99 quantile.
+      cut <- kurt_99_quant[m]
     } else {
       # Simulate and compute the empirical quantile if not 0.90.
       sim <- apply(t(mvrnorm(n_sim, mu=rep(0, m), diag(m))), 2, kurtosis, type=1)
@@ -52,7 +53,7 @@ high_kurtosis <- function(Comps, kurt_quantile = 0.9, n_sim = 5000, min1=TRUE){
   high <- kurt > cut
 
   # Keep at least 1 PC.
-  if (all(!high) && min1) { high[which(kurt==max(kurt))[1]] <- TRUE }
+  if (all(!high) && min_1) { high[which(kurt==max(kurt))[1]] <- TRUE }
 
   high
 }

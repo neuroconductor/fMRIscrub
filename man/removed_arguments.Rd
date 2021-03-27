@@ -83,7 +83,7 @@
  components.  
 
  Note that not all \code{k} components are ultimately used: only components with
- high kurtosis (> 95th percentile of the kurtosis of data of equal length 
+ high kurtosis (> 99th percentile of the kurtosis of data of equal length 
  from a Normal distribution) contribute to the leverage calculation.}
 
 \item{nuisance_too}{A matrix of nuisance signals to regress from the data

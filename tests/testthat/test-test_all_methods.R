@@ -12,7 +12,7 @@ test_that("clever works with some custom parameter settings", {
   clev <- clever:::clever_multi(
     Dat2,
     projection = c("PCATF", "ICA_kurt"),
-    kurt_quantile = .95,
+    kurt_quantile = .90,
     cutoff = 5,
     verbose = TRUE
   )

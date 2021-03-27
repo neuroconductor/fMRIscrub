@@ -274,10 +274,16 @@ plot.clever <- function(x, title=NULL, ...){
   }
   if (mtype == "DVARS") { meas <- meas[,c("DPD", "ZD")] }
 
-  if ("legend.position" %in% names(gg_args)) {
-    plt <- clever_plot(meas, x$outlier_cutoff, flag_intersect= mtype=="DVARS", ylab=mtype, ...)
+  if (all(is.na(x$outlier_cutoff))) {
+    cut <- NULL
   } else {
-    plt <- clever_plot(meas, x$outlier_cutoff, legend.position="none", flag_intersect= mtype=="DVARS", ylab=mtype, ...)
+    cut <- x$outlier_cutoff
+  }
+
+  if ("legend.position" %in% names(gg_args)) {
+    plt <- clever_plot(meas, cut, flag_intersect= mtype=="DVARS", ylab=mtype, ...)
+  } else {
+    plt <- clever_plot(meas, cut, legend.position="none", flag_intersect= mtype=="DVARS", ylab=mtype, ...)
   }
 
   # Add title.

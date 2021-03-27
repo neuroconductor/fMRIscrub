@@ -12,7 +12,7 @@ clever(
   scale = TRUE,
   var_detrend = TRUE,
   PESEL = TRUE,
-  kurt_quantile = 0.95,
+  kurt_quantile = 0.99,
   PCATF_kwargs = NULL,
   get_dirs = FALSE,
   full_PCA = FALSE,
@@ -86,7 +86,7 @@ variance (see the \code{PESEL} argument).}
 \code{TRUE}. Otherwise, use the number of above-average variance PCs.}
 
 \item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
-for kurtosis should be used to select the components? Default: \code{0.95}.}
+for kurtosis should be used to select the components? Default: \code{0.99}.}
 
 \item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
 entries are:

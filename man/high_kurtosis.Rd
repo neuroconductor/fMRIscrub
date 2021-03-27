@@ -4,7 +4,7 @@
 \alias{high_kurtosis}
 \title{Identifies the components of sufficient kurtosis.}
 \usage{
-high_kurtosis(Comps, kurt_quantile = 0.9, n_sim = 5000, min1 = TRUE)
+high_kurtosis(Comps, kurt_quantile = 0.99, n_sim = 5000, min_1 = FALSE)
 }
 \arguments{
 \item{Comps}{A matrix; each column is a component. For PCA, this is the U
@@ -17,16 +17,16 @@ distribution of kurtosis. Only used if a new simulation is performed. (If
 \eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
 If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)}
 
-\item{min1}{Require at least one component to be selected? In other words, if
+\item{min_1}{Require at least one component to be selected? In other words, if
 no components meet the quantile cutoff, should the component with the highest
-kurtosis be returned? Default: \code{TRUE}.}
+kurtosis be returned? Default: \code{FALSE}.}
 }
 \value{
 A logical vector indicating whether each component has high kurtosis.
 }
 \description{
-The kurtosis cutoff is the 90% quantile of the sampling distribution of 
- kurtosis for Normal data of the same length as the components; it is
+The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
+ of kurtosis for Normal data of the same length as the components; it is
  estimated by simulation or calculated from the theoretical asymptotic
  distribution if the components are long enough.
 }

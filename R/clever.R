@@ -69,7 +69,7 @@ clever = function(
   X, projection=c("PCA", "PCATF", "ICA"), 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
   center=TRUE, scale=TRUE, var_detrend=TRUE,
-  PESEL=TRUE, kurt_quantile=.95, PCATF_kwargs=NULL, 
+  PESEL=TRUE, kurt_quantile=.99, PCATF_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4, 
   verbose=FALSE){
@@ -79,7 +79,7 @@ clever = function(
   if (kurt_quantile > 0) { 
     projection <- paste0(projection, "_kurt")
   } else {
-    kurt_quantile <- .95 
+    kurt_quantile <- .99
   }
 
   # Run `clever_multi`.

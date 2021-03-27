@@ -89,7 +89,7 @@ NULL
 #'  components.  
 #' 
 #'  Note that not all \code{k} components are ultimately used: only components with
-#'  high kurtosis (> 95th percentile of the kurtosis of data of equal length 
+#'  high kurtosis (> 99th percentile of the kurtosis of data of equal length 
 #'  from a Normal distribution) contribute to the leverage calculation.
 #' @param nuisance_too A matrix of nuisance signals to regress from the data
 #'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
@@ -142,7 +142,7 @@ NULL
 #'  linear model. Finally, the values are re-centered and scaled to match the original
 #'  mean and variance, yielding the variance stabilized scores. 
 #' @param kurt_quantile Only applies to PCA and ICA leverage. What cutoff quantile
-#'  for kurtosis should be used to select the components? Default: \code{0.95}.
+#'  for kurtosis should be used to select the components? Default: \code{0.99}.
 #' @param PCATF_kwargs Arguments to \code{\link{PCATF}} in list form. Valid
 #'  entries are:
 #'  
