@@ -98,7 +98,7 @@ clever_multi = function(
   # ----------------------------------------------------------------------------
 
   # `X` ------------------------------------------------------------------------
-  if (verbose) { cat("Checking for missing, infinite, and constant data in `X`.\n") }
+  if (verbose) { cat("Checking for missing, infinite, and constant data.\n") }
   X <- as.matrix(X); class(X) <- "numeric"
   X_NA_mask <- apply(X, 2, function(x){any(x %in% c(NA, NaN, -Inf, Inf))})
   if (any(X_NA_mask)) {
@@ -158,6 +158,7 @@ clever_multi = function(
   m_info$projection <- gsub("2", "", gsub("_kurt", "", m_info$name))
   m_info$PESEL <- !grepl("2", m_info$name)
   m_info$kurt <- grepl("kurt", m_info$name)
+  m_info$var_detrend <- var_detrend
   out$measure_info <- m_info
 
   # `nuisance`------------------------------------------------------------------
@@ -397,28 +398,29 @@ clever_multi = function(
       ifelse(grepl("ICA", proj_ii), "M", "U"), 
       ifelse(!isFALSE(var_detrend), "_vdt", "")
     )
+    highkurt_ii <- ifelse(!isFALSE(var_detrend), "highkurt_vdt", "")
 
     # Make projection.
     Comps_ii <- switch(proj_ii,
       PCA = seq(out$PCA$nPCs_PESEL),
-      PCA_kurt = which(out$PCA$highkurt[seq(out$PCA$nPCs_PESEL)]),
+      PCA_kurt = which(out$PCA[[highkurt_ii]][seq(out$PCA$nPCs_PESEL)]),
       PCA2 = seq(out$PCA$nPCs_avgvar),
-      PCA2_kurt = which(out$PCA$highkurt[seq(out$PCA$nPCs_avgvar)]),
+      PCA2_kurt = which(out$PCA[[highkurt_ii]][seq(out$PCA$nPCs_avgvar)]),
       PCATF = seq(out$PCA$nPCs_PESEL),
-      PCATF_kurt = which(out$PCATF$highkurt[seq(out$PCATF$nPCs_PESEL)]),
+      PCATF_kurt = which(out$PCATF[[highkurt_ii]][seq(out$PCA$nPCs_PESEL)]),
       PCATF2 = seq(out$PCA$nPCs_avgvar),
-      PCATF2_kurt = which(out$PCATF$highkurt[seq(out$PCATF$nPCs_avgvar)]),
+      PCATF2_kurt = which(out$PCATF[[highkurt_ii]][seq(out$PCA$nPCs_avgvar)]),
       ICA = seq(out$PCA$nPCs_PESEL),
-      ICA_kurt = which(out$ICA$highkurt[seq(out$ICA$nPCs_PESEL)]),
+      ICA_kurt = which(out$ICA[[highkurt_ii]][seq(out$PCA$nPCs_PESEL)]),
       ICA2 = seq(out$PCA$nPCs_avgvar),
-      ICA2_kurt = which(out$ICA$highkurt[seq(out$ICA$nPCs_avgvar)])
+      ICA2_kurt = which(out$ICA[[highkurt_ii]][seq(out$PCA$nPCs_avgvar)])
     )
 
     if (grepl("kurt", proj_ii) && length(Comps_ii) < 1) {
       result_ii <- list(
-        meas = data.frame(meas=rep(0, T_)), 
+        meas = rep(0, T_), 
         cut = NA, 
-        flag = data.frame(flag=rep(FALSE, T_))
+        flag = rep(FALSE, T_)
       )
     } else {
       Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]

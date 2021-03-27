@@ -24,7 +24,10 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
   }
   mat$y <- x
   
-  robustbase::lmrob(y~., mat, method=lmrob_method)
+  with(
+    set.seed(0),
+    robustbase::lmrob(y~., mat, method=lmrob_method, setting="KS2014")
+  )
 }
 
 #' Variance stabilize a timeseries vector
