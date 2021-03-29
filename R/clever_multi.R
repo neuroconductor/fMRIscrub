@@ -398,7 +398,7 @@ clever_multi = function(
       ifelse(grepl("ICA", proj_ii), "M", "U"), 
       ifelse(!isFALSE(var_detrend), "_vdt", "")
     )
-    highkurt_ii <- ifelse(!isFALSE(var_detrend), "highkurt_vdt", "")
+    highkurt_ii <- paste0("highkurt", ifelse(!isFALSE(var_detrend), "_vdt", ""))
 
     # Make projection.
     Comps_ii <- switch(proj_ii,
