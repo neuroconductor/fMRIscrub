@@ -50,10 +50,11 @@ var_stabilize <- function(x, nDCT=2, lmrob_method="MM", rescale=TRUE) {
   x_mean <- mean(x); x_var <- var(x)
   x <- as.numeric(scale(x))
   s <- as.numeric(rob_trend(log((x^2) + 1), nDCT, lmrob_method)$fitted.values)
-  s <- sqrt(max(0, exp(s) - 1))
+  s <- sqrt(pmax(0, exp(s) - 1))
   x <- x/s
-  if (any(is.infinite(x))) { warning("Infinite values created.") }
-  x[!is.infinite(x)] <- as.numeric(scale(x[!is.infinite(x)]))
-  if (rescale) { x <- (x * sqrt(x_var)) + x_mean }
+  x_inf <- is.infinite(x)
+  if (any(x_inf)) { warning("Infinite values created.") }
+  x[!x_inf] <- as.numeric(scale(x[!x_inf]))
+  if (rescale) { x[!x_inf] <- (x[!x_inf] * sqrt(x_var)) + x_mean }
   x
 }

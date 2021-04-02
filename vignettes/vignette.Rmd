@@ -4,14 +4,14 @@ author: "Amanda Mejia, Preya Shah & Damon Pham"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Clever: Using PCA Leverage for Outlier Detection in High-Dimensional Data}
+  %\VignetteIndexEntry{PCA leverage for outlier detection in high-dimensional data with `clever`}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}
 library(knitr)
-opts_chunk$set(autodep = TRUE, cache = TRUE)
+opts_chunk$set(autodep = TRUE, cache = FALSE)
 ```
 
 # Overview
