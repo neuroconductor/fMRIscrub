@@ -49,12 +49,12 @@ var_stabilize <- function(x, nDCT=2, lmrob_method="MM", rescale=TRUE) {
   if (length(x) < 5) { warning("Timeseries to short to variane stabilize."); return(x) }
   x_mean <- mean(x); x_var <- var(x)
   x <- as.numeric(scale(x))
-  s <- as.numeric(rob_trend(log((x^2) + 1), nDCT, lmrob_method)$fitted.values)
-  s <- sqrt(pmax(0, exp(s) - 1))
-  x <- x/s
-  x_inf <- is.infinite(x)
-  if (any(x_inf)) { warning("Infinite values created.") }
-  x[!x_inf] <- as.numeric(scale(x[!x_inf]))
-  if (rescale) { x[!x_inf] <- (x[!x_inf] * sqrt(x_var)) + x_mean }
+  s <- as.numeric(rob_trend(log(x^2 + 1), nDCT, lmrob_method)$fitted.values)
+  const_mask <- s < 1e-8
+  x2 <- x[!const_mask]; s2 <- s[!const_mask]
+  s2 <- sqrt(exp(s2) - 1)
+  x2 <- x2/s2
+  x[!const_mask] <- x2
+  if (rescale) { x <- (x * sqrt(x_var)) + x_mean }
   x
 }
