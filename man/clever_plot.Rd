@@ -11,6 +11,8 @@ clever_plot(
   colors = NULL,
   log_y = FALSE,
   geom = "point",
+  ylim_min = 0,
+  ylim_max = max(meas$measure),
   ...
 )
 }
@@ -30,6 +32,8 @@ measure (each column in \code{meas})}
 \item{log_y}{Use log scale for y-axis? Default: \code{FALSE}}
 
 \item{geom}{"point" (default) or "line"}
+
+\item{ylim_min, ylim_max}{The range of the y-axis.}
 
 \item{...}{Additional arguments to ggplot: main, sub, xlab, ...}
 }

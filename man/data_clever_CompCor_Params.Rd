@@ -30,7 +30,7 @@
  \code{0}, \code{NA}, or \code{NaN}).
 
  If \code{X} is a \code{"xifti"} this must be the \code{brainstructures}
- argument to \code{\link[ciftiTools]{read_xifti}}. If \code{"infer"} (default),
+ argument to \code{\link[ciftiTools]{read_cifti}}. If \code{"infer"} (default),
  \code{brainstructures} will be set to \code{"all"} (use both left and right
  cortex vertices, and subcortical voxels).
 

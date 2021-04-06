@@ -16,6 +16,7 @@
 #'  measure (each column in \code{meas})
 #' @param geom "point" (default) or "line"
 #' @param log_y Use log scale for y-axis? Default: \code{FALSE}
+#' @param ylim_min,ylim_max The range of the y-axis. 
 #' @param ... Additional arguments to ggplot: main, sub, xlab, ...
 #'
 #' @return A ggplot
@@ -25,7 +26,9 @@
 #' @keywords internal
 clever_plot <- function(
   meas, cut=NULL, flag_intersect=FALSE, 
-  colors=NULL, log_y=FALSE, geom="point", ...){
+  colors=NULL, log_y=FALSE, geom="point", 
+  ylim_min=0, ylim_max= max(meas$measure),
+  ...){
 
   # Load required packages.
   need_cow <- !requireNamespace("cowplot", quietly = TRUE)
@@ -144,8 +147,6 @@ clever_plot <- function(
   # ylim_min <- ifelse(name %in% c("DVARS", "GSR"), min(meas$measure),
   #   ifelse(log_y, min(meas$measure), 0)
   # )
-
-  ylim_min <- 0; ylim_max <- max(meas$measure) #1.05
 
   # Check if any outliers were detected.
   if(id_outs){
