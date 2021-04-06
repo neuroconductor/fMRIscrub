@@ -268,6 +268,8 @@ plot.clever <- function(x, title=NULL, ...){
   gg_args <- list(...)
   mtype <- as.character(x$measure_info["type"])
   stopifnot(mtype %in% c("Leverage", "DVARS", "FD"))
+
+  # Measure(s)
   meas <- x$measure
   if (!is.data.frame(meas)) {
     meas <- setNames(
@@ -277,16 +279,31 @@ plot.clever <- function(x, title=NULL, ...){
   }
   if (mtype == "DVARS") { meas <- meas[,c("DPD", "ZD")] }
 
+  # Cutoff
   if (all(is.na(x$outlier_cutoff))) {
     cut <- NULL
   } else {
     cut <- x$outlier_cutoff
   }
 
-  if ("legend.position" %in% names(gg_args)) {
-    plt <- clever_plot(meas, cut, flag_intersect= mtype=="DVARS", ylab=mtype, ...)
+  # y-limits
+  if (mtype=="Leverage") {
+    ylim_min <- 0; ylim_max <- 1
   } else {
-    plt <- clever_plot(meas, cut, legend.position="none", flag_intersect= mtype=="DVARS", ylab=mtype, ...)
+    ylim_min <- min(0, min(meas)); ylim_max <- max(meas)
+  }
+
+  # Make the plot
+  if ("legend.position" %in% names(gg_args)) {
+    plt <- clever_plot(
+      meas, cut, flag_intersect=(mtype=="DVARS"), 
+      ylab=mtype, ylim_min=ylim_min, ylim_max=ylim_max, ...
+    )
+  } else {
+    plt <- clever_plot(
+      meas, cut, legend.position="none", flag_intersect=(mtype=="DVARS"), 
+      ylab=mtype, ylim_min=ylim_min, ylim_max=ylim_max, ...
+    )
   }
 
   # Add title.
