@@ -249,6 +249,8 @@ clever_plot <- function(
       panel.spacing.y=ggplot2::unit(1.5, "lines")) +
     ggplot2::scale_x_continuous(expand=ggplot2::expansion(mult = c(.01, .01)), breaks=xticks) +
     ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult = c(0, .01)))
+
+  return(plt)
 }
 
 #' Plot \code{"clever"}
