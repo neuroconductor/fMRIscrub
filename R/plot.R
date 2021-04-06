@@ -181,6 +181,7 @@ clever_plot <- function(
   xlab <- ifelse("xlab" %in% names(gg_args), as.character(gg_args$xlab), "Index (Time Point)")
   ylab <- ifelse("ylab" %in% names(gg_args), as.character(gg_args$ylab), paste0("Leverage", ifelse(log_y, " (log", "")))
   legend.position <- ifelse("legend.position" %in% names(gg_args), as.character(gg_args$legend.position), "right")
+  alpha <- ifelse("alpha" %in% names(gg_args), as.numeric(gg_args$alpha), 1)
 
   # Make ggplot.
   xmin <- xmax <- ymin <- ymax <- idx <- measure <- inMCD <- NULL
@@ -193,7 +194,7 @@ clever_plot <- function(
       plt <- plt +
         ggplot2::geom_rect(
           data=drop_line[[ii]],
-          ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5, fill=flag_colors[ii]
+          ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=.5*alpha, fill=flag_colors[ii]
         )
       #Text label if any outlier is detected.
     }
@@ -228,9 +229,9 @@ clever_plot <- function(
   #     ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, group=name, color=name), size=1)
   # } else {
   if (geom == "point") {
-    plt <- plt + ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name))
+    plt <- plt + ggplot2::geom_point(data=meas, ggplot2::aes(x=idx, y=measure, color=name), alpha=alpha)
   } else if (geom == "line") {
-    plt <- plt + ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, color=name))
+    plt <- plt + ggplot2::geom_line(data=meas, ggplot2::aes(x=idx, y=measure, color=name), alpha=alpha)
   } else { stop() }
   plt <- plt + ggplot2::scale_color_manual(values=colors, labels=name)
 
