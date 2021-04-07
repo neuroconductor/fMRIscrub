@@ -12,7 +12,7 @@
 
 <meta name="author" content="Amanda Mejia, Preya Shah &amp; Damon Pham" />
 
-<meta name="date" content="2021-04-06" />
+<meta name="date" content="2021-04-07" />
 
 <title>PCA leverage for outlier detection in high-dimensional data with clever</title>
 
@@ -141,7 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">PCA leverage for outlier detection in high-dimensional data with <code>clever</code></h1>
 <h4 class="author">Amanda Mejia, Preya Shah &amp; Damon Pham</h4>
-<h4 class="date">2021-04-06</h4>
+<h4 class="date">2021-04-07</h4>
 
 
 
@@ -330,73 +330,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## Computing ICA.</code></pre>
 <pre><code>## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
 ## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0</code></pre>
-<pre><code>## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0
-
-## Warning in lmrob.S(x, y, control = control): find_scale() did not converge in
-## &#39;maxit.scale&#39; (= 200) iterations with tol=1e-10, last rel.diff=0</code></pre>
 <pre><code>## Computing leverage.</code></pre>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot(clever.Dat1.all) # Doesn&#39;t work yet!</span></span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot(clever.Dat1.all) # Doesn&#39;t work yet!</span></span></code></pre></div>
 </div>
 
 

@@ -80,7 +80,8 @@ rob_scale <- function(x, center=TRUE, scale=TRUE, lmrob_method="MM", rescale=TRU
     x2 <- ifelse(const_mask, NA, x)
     s <- as.numeric(rob_trend(log(x2^2), nDCT=scale, lmrob_method)$fitted.values)
     s <- sqrt(exp(s))
-    x[!const_mask] <- x[!const_mask] / s[!const_mask]
+    if (any(s < 1e-6)) { stop("Error: near-constant variance detected.") } # TEMPORARY
+    x[!const_mask] <- x[!const_mask] / s
     x <- scale(x)
   }
 
