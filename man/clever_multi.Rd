@@ -10,7 +10,8 @@ clever_multi(
   nuisance = cbind(1, dct_bases(nrow(X), 4)),
   center = TRUE,
   scale = TRUE,
-  var_detrend = TRUE,
+  comps_mean_dt = TRUE,
+  comps_var_dt = TRUE,
   kurt_quantile = 0.99,
   PCATF_kwargs = NULL,
   get_dirs = FALSE,
@@ -85,17 +86,19 @@ vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
  \code{center} is \code{FALSE}, the data will be centered on the means if
  the nuisance regression included an intercept term, as it does by default.}
 
-\item{var_detrend}{Stabilize the variance of the PCA, PCATF, and ICA components
- prior to computing leverage? \code{TRUE} (default), \code{FALSE}, or the number
- of DCT bases to use for variance detrending (\code{TRUE} will use 2). 
- Note that variance stabilization is performed on the projection scores and 
- not the data itself.
+\item{comps_mean_dt}{Stabilize the mean and variance of the PCA, 
+PCATF, and ICA components prior to computing leverage? \code{TRUE} (default), 
+\code{FALSE}, or the number of DCT bases to use for mean and variance detrending 
+(\code{TRUE} will use 2). Note that these refer to the projection scores and 
+not the data itself. Also, if scaling but not centering, the components must
+be expected to already be centered; otherwise, the results will be invalid.}
 
- For each component, a linear model of four DCT bases and an intercept is fit
- on the log squared values after demeaning. The score timeseries of this 
- component is divided by the smooth, estimated variance timeseries from this 
- linear model. Finally, the values are re-centered and scaled to match the original
- mean and variance, yielding the variance stabilized scores.}
+\item{comps_var_dt}{Stabilize the mean and variance of the PCA, 
+PCATF, and ICA components prior to computing leverage? \code{TRUE} (default), 
+\code{FALSE}, or the number of DCT bases to use for mean and variance detrending 
+(\code{TRUE} will use 2). Note that these refer to the projection scores and 
+not the data itself. Also, if scaling but not centering, the components must
+be expected to already be centered; otherwise, the results will be invalid.}
 
 \item{kurt_quantile}{Only applies to PCA and ICA leverage. What cutoff quantile
 for kurtosis should be used to select the components? Default: \code{0.99}.}
