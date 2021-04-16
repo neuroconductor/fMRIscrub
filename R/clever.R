@@ -68,7 +68,7 @@
 clever = function(
   X, projection=c("PCA", "PCATF", "ICA"), 
   nuisance=cbind(1, dct_bases(nrow(X), 4)),
-  center=TRUE, scale=TRUE, comps_mean_dt=TRUE, comps_var_dt=TRUE,
+  center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
   PESEL=TRUE, kurt_quantile=.99, PCATF_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4, 

@@ -131,9 +131,9 @@ NULL
 #'  \code{center} is \code{FALSE}, the data will be centered on the means if
 #'  the nuisance regression included an intercept term, as it does by default.
 #' @param comps_mean_dt,comps_var_dt Stabilize the mean and variance of the PCA, 
-#'  PCATF, and ICA components prior to computing leverage? \code{TRUE} (default), 
-#'  \code{FALSE}, or the number of DCT bases to use for mean and variance detrending 
-#'  (\code{TRUE} will use 2). Note that these refer to the projection scores and 
+#'  PCATF, and ICA components prior to computing leverage? \code{TRUE}, 
+#'  \code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending 
+#'  (\code{TRUE} will use 4). Note that these refer to the projection scores and 
 #'  not the data itself. Also, if scaling but not centering, the components must
 #'  be expected to already be centered; otherwise, the results will be invalid.
 #' @param kurt_quantile Only applies to PCA and ICA leverage. What cutoff quantile
