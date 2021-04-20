@@ -79,7 +79,7 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-We next run `clever` on both datasets. First, we will begin by looking at the standard implementation of PCA leverage:
+We next run `clever` on both datasets. We'll use the default implementation of PCA leverage:
 
 ```{r}
 clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
@@ -102,7 +102,7 @@ cowplot::plot_grid(p1, p2, nrow=1)
 
 ### fMRI image reconstruction
 
-To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `clever::Matrix_to_VolumeTimeSeries` for a helper function to do this.
+To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `clever::unmask_vol` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
@@ -124,12 +124,14 @@ Volume_to_NIfTI <- function(VolumeTimeSeries, time, mask){
 
 ```{r}
 fname = system.file("extdata", "Dat1_mask.nii.gz", package = "clever")
-Mask1 = readNIfTI(fname) #Pitt_0050048 (full of artifacts)
-Img1 = Matrix_to_VolumeTimeSeries(Dat1, Mask1)
+Mask1 = readNIfTI(fname) > 0 #Pitt_0050048 (full of artifacts)
+Mask1 = array(Mask1, dim=c(dim(Mask1), 1)) # 2D --> 3D slice
+Img1 = unmask_vol(t(Dat1), Mask1)
 
 fname = system.file("extdata", "Dat2_mask.nii.gz", package = "clever")
-Mask2 = readNIfTI(fname)
-Img2 = Matrix_to_VolumeTimeSeries(Dat2, Mask2)
+Mask2 = readNIfTI(fname) > 0
+Mask2 = array(Mask2, dim=c(dim(Mask2), 1))
+Img2 = unmask_vol(t(Dat2), Mask2)
 ```
 
 Below, we compare the timepoint of median leverage (first) to the timepoint of maximum leverage (second) in the first dataset. We choose to use the kurtosis PC-selection method and leverage outlyingness measurement.
@@ -148,30 +150,24 @@ The median time point appears normal, whereas the most outlying time point clear
 
 ### Leverage images
 
-`clever` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation.
+`clever` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at timepoint `r t_max` for the first dataset:
 
-```{r}
-clev <- clever(Dat1, get_dirs=TRUE, comps_mean_dt=1, comps_var_dt=1)
-const_mask <- apply(Dat1, 2, sd) < 1e-8
-Lev_Img1 = lev_images(clev, const_mask=const_mask)
-cat('The timepoints meeting the first outlier level threshold:\n')
-cat(paste(row.names(Lev_Img1$mean), collapse=", "))
-```
-
-Here are the leverage images at timepoint `r t_max` for the first dataset:
 
 ```{r, fig.width=7, fig.height=4}
+clev <- clever(Dat1, projection="ICA", get_dirs=TRUE, comps_mean_dt=1, comps_var_dt=1)
+Lev_Img1 = lev_images(clev)
+
 par(mfrow=c(1,2))
 
 # Constant voxels are deleted during the `clever` algorithm, so the leverage images will have
 # missing values where the constant voxels were. The NA_fill option is used here to make
 # these voxels have the same color as the background (out-of-mask voxels).
-Lev_Img1.mean = Matrix_to_VolumeTimeSeries(Lev_Img1$mean, Mask1)
-Lev_Img1.top = Matrix_to_VolumeTimeSeries(Lev_Img1$top, Mask1)
+Lev_Img1.mean = unmask_vol(t(Lev_Img1$mean), Mask1)
+Lev_Img1.top = unmask_vol(t(Lev_Img1$top), Mask1)
 
-idx = which(as.numeric(row.names(Lev_Img1$mean)) == t_max)
-image(Lev_Img1.mean[,,,idx], main=paste0('Lev. img., mean dir. (T=',t_max,')'))
-image(Lev_Img1.top[,,,idx], main=paste0('Lev. img., top dir. (T=',t_max,')'))
+idx = which(which(clev$outlier_flag) == t_max)
+image(Lev_Img1.mean[,,1,idx], main=paste0('Lev. img., mean dir. (T=',t_max,')'))
+image(Lev_Img1.top[,,1,idx], main=paste0('Lev. img., top dir. (T=',t_max,')'))
 ```
 
 The leverage images highlight the banding artifact present at this time point.

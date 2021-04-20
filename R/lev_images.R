@@ -1,112 +1,125 @@
 #' Calculate the leverage images
 #'
-#' @param clev A "clever" object.
-#' @param timepoints The times for which to compute leverage images (rows of U).
-#' @param const_mask Mask that is TRUE where voxels were removed.
+#' @param clev A \code{"clever"} object.
+#' @param timepoints The timepoints or columns for which to compute leverage
+#'  images. If \code{NULL} (default), use the outlying timepoints. 
+#' @param use_dt If detrended components are available (the "U" matrix of PCA 
+#'  or "M" matrix of ICA), should they be used to compute the leverage images?
+#'  Default: \code{TRUE}.
 #'
-#' @return A list of three: the mean leverage image for each outlier meeting
-#'  the thresold, the top leverage image for each outlier, and the indices of
-#'  the top leverage images.
+#' @return A list of three: \code{idx}, the timepoints for which the leverage images
+#'  were computed; \code{mean}, the mean leverage images; and \code{top}, the
+#'  top leverage images. The row names of the \code{top} leverage images
+#'  matrix give the index of the top component ("V" in PCA and "S" in ICA) at
+#'  each timepoint.
 #'
 #' @export
-lev_images <- function(clev, timepoints=NULL, const_mask=NULL){
+lev_images <- function(clev, timepoints=NULL, use_dt=TRUE){
 
+  # Check timepoints.
   if (is.null(timepoints)) {
     timepoints <- which(clev$outlier_flag)
     if (!(length(timepoints) > 0)) {
-      stop("`timepoints=NULL` will get leverage images for outliers, but no outliers detected.")
+      warning(
+        "`timepoints=NULL` will get leverage images for outliers, ",
+        "but no outliers were detected."
+      )
+      return(NULL)
     }
   } else {
     stopifnot(length(timepoints) > 0)
   }
 
+  # Get PCA scores and directions (or ICA mixing and source matrices).
   if ("PCA" %in% names(clev)) {
     U <- clev$PCA$U
     if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run clever again with `get_dirs=TRUE`.") 
+      stop("No directions. Run `clever` again with `get_dirs=TRUE`.") 
     }
     V <- clev$PCA$V
   } else if ("PCATF" %in% names(clev)) {
     U <- clev$PCATF$U
     if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run clever again with `get_dirs=TRUE`.")
+      stop("No directions. Run `clever` again with `get_dirs=TRUE`.")
     }
     V <- clev$PCATF$V
   } else if ("ICA" %in% names(clev)) {
-    U <- clev$ICA$M
+    U <- scale_med(clev$ICA$M)$mat
     V <- clev$ICA$S
   }
 
   stopifnot(all(timepoints %in% seq(nrow(U))))
 
-  if(is.null(const_mask)){ const_mask = rep(FALSE, nrow(V)) }
+  if (is.null(clev$mask)) {
+    const_mask = rep(TRUE, nrow(V))
+  } else {
+    const_mask <- clev$mask > 0
+  }
   N_ <- length(const_mask)
   n_imgs <- length(timepoints)
 
-  lev_imgs <- list(mean=matrix(NA, nrow=n_imgs, ncol=N_))
-  lev_imgs$mean[,!const_mask] <- U[timepoints,] %*% t(V)
+  lev_imgs <- list(
+    idx = timepoints,
+    mean = matrix(NA, n_imgs, N_),
+    top = matrix(NA, n_imgs, N_)
+  )
 
-  lev_imgs$top <- matrix(NA, nrow=n_imgs, ncol=N_)
-  lev_imgs$top_dir <- vector(mode="numeric", length=n_imgs)
-  for(i in 1:n_imgs){
-    idx <- timepoints[i]
-    lev_imgs$top_dir[i] <- which.max(U[idx,])[1]
-    lev_imgs$top[i,!const_mask] <- V[,lev_imgs$top_dir[i]] #Tie: use PC w/ more var.
+  lev_imgs$mean[,const_mask] <- U[timepoints,,drop=FALSE] %*% t(V)
+  dimnames(lev_imgs$mean) <- NULL
+
+  for (ii in seq(length(timepoints))) {
+    tt <- timepoints[ii]
+    tt_top <- which.max(abs(U[tt,]))[1]
+    lev_imgs$top[ii, const_mask] <- V[,tt_top]
   }
-
-  row.names(lev_imgs$mean) <- timepoints
-  row.names(lev_imgs$top) <- timepoints
-  names(lev_imgs$top_dir) <- timepoints
+  rownames(lev_imgs$top) <- paste("t", as.character(timepoints))
+  colnames(lev_imgs$top) <- NULL
 
   lev_imgs
 }
 
-#' Applies a 2D/3D mask to a matrix to get a 3D/4D volume time series.
-#' @param mat A matrix whose rows are observations at different times, and
-#'  columns are pixels/voxels.
-#' @param mask A corresponding binary mask, with 1's representing regions
-#'  within the area of interest and 0's representing regions to mask out.
-#' @param out_of_mask_value Fill value for out-of-mask voxels. Default: \code{NA}.
-#' @param sliced_dim If the mask is 2D, which dimension does it represent?
-#'  Will default to the 3rd dimension (axial).
+#' Undo a volumetric mask
+#' 
+#' Un-applies a mask to vectorized data to yield its volumetric representation.
+#'  The mask and data should have compatible dimensions: the number of rows in
+#'  \code{dat} should equal the number of locations within the \code{mask}.
+#' 
+#' @param dat Data matrix with locations along the rows and measurements along 
+#'  the columns. If only one set of measurements were made, this may be a 
+#'  vector.
+#' @param mask Volumetric binary mask. \code{TRUE} indicates voxels inside the
+#'  mask.
+#' @param fill The value for locations outside the mask. Default: \code{NA}.
 #'
-#' @return A 4D array representing the volume time series. Time is on the 4th
-#'  dimension.
+#' @return The 3D or 4D unflattened volume array
 #'
 #' @export
-Matrix_to_VolumeTimeSeries <- function(mat, mask, out_of_mask_value=NA, sliced_dim = NA){
-  in_mask <- mask > 0
-  T_ <- nrow(mat)
+#' 
+unmask_vol <- function(dat, mask, fill=NA) {
 
-  if(length(dim(mask)) == 3){
-    dims <- c(dim(mask), T_)
-  } else if(length(dim(mask)) == 2) {
-    if(is.na(sliced_dim)){ sliced_dim=3 } #default to 3rd dim (axial)
-    dims <- switch(sliced_dim,
-                   c(1, dim(mask), T_),
-                   c(dim(mask)[1], 1, dim(mask)[2], T_),
-                   c(dim(mask), 1, T_)
-    )
-  } else {
-    stop("Not Implemented: mask must be 2D or 3D.")
+  # Check that dat is a vector or matrix.
+  if (is.vector(dat) || is.factor(dat)) { dat <- matrix(dat, ncol=1) }
+  stopifnot(length(dim(dat)) == 2)
+
+  # Check that mask is numeric {0, 1} or logical, and is 3D.
+  if (is.numeric(mask)) {
+    mask_vals <- unique(as.vector(mask))
+    stopifnot(length(mask_vals) <= 2)
+    stopifnot(all(mask_vals %in% c(0,1)))
+    mask <- array(as.logical(mask), dim=dim(mask))
   }
+  stopifnot(length(dim(mask)) == 3)
 
-  vts <- array(out_of_mask_value, dim=dims)
-  for(i in 1:T_){
-    vts[,,,i][in_mask] <- mat[i,]
+  # Other checks.
+  stopifnot(is.vector(fill) && length(fill)==1)
+  stopifnot(sum(mask) == nrow(dat))
+
+  # Make volume and fill.
+  vol <- array(fill, dim=c(dim(mask), ncol(dat)))
+  for (ii in seq_len(ncol(dat))) {
+    vol[,,,ii][mask] <- dat[,ii]
   }
+  if (ncol(dat)==1) { vol <- vol[,,,1] }
 
-  return(vts)
+  vol
 }
-
-#'  \item{lev_images}{
-#'    \describe{
-#'      \item{mean}{The average of the PC directions, weighted by the unscaled
-#'        PC scores at each outlying time point (U[i,] * V^T). Row names are
-#'        the corresponding time points.}
-#'      \item{top}{The PC direction with the highest PC score at each outlying
-#'        time point. Row names are the corresponding time points.}
-#'      \item{top_dir}{The index of the PC direction with the highest PC score
-#'        at each outlying time point. Named by timepoint.}
-#'    }
-#'  }

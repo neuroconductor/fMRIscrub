@@ -100,6 +100,7 @@ clever_multi = function(
   # `X` ------------------------------------------------------------------------
   if (verbose) { cat("Checking for missing, infinite, and constant data.\n") }
   X <- as.matrix(X); class(X) <- "numeric"
+  V0_ <- ncol(X)
   X_NA_mask <- apply(X, 2, function(x){any(x %in% c(NA, NaN, -Inf, Inf))})
   if (any(X_NA_mask)) {
     if (all(X_NA_mask)) { stop("All data columns have at least one NA, NaN, or infinte value. None of these are allowed.\n") }
@@ -107,7 +108,7 @@ clever_multi = function(
       "Removing ", sum(X_NA_mask),
       " columns with at least one NA, NaN, or infinite value (out of ", ncol(X), ").\n"
     )
-    X <- X[,!X_NA_mask]
+    X <- X[,!X_NA_mask,drop=FALSE]
   }
   X_const_mask <- apply(X, 2, is_constant)
   if (any(X_const_mask)) {
@@ -116,7 +117,7 @@ clever_multi = function(
       "Removing ", sum(X_const_mask), 
       " constant data columns (out of ", ncol(X), ").\n"
     )
-    X <- X[,!X_const_mask]
+    X <- X[,!X_const_mask,drop=FALSE]
   }
   T_ <- nrow(X); V_ <- ncol(X)
   if (T_ > V_) {
@@ -132,14 +133,14 @@ clever_multi = function(
     measure_info = list(),
     outlier_cutoff = list(),
     outlier_flag = list(),
-    mask = rep(1, V_),
+    mask = rep(1, V0_),
     PCA = NULL,
     PCATF = NULL,
     ICA = NULL
   )
 
   out$mask[X_NA_mask] <- -1
-  out$mask[X_const_mask] <- -2
+  out$mask[!X_NA_mask][X_const_mask] <- -2
 
   # `projection`----------------------------------------------------------------
   valid_projection_PESEL <- c("PCA", "PCA_kurt", "PCATF", "PCATF_kurt", "ICA", "ICA_kurt")
