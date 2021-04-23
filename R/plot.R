@@ -53,6 +53,11 @@ clever_plot <- function(
   # Flag outlying timepoints.
   if (id_outs) {
     cut <- as.vector(cut)
+    if (length(cut) != nMeas) {
+      if (length(cut) == 1) { cut <- rep(cut, nMeas) } else { 
+        stop("`cut` should be the same length as the number of columns in `meas`.") 
+      }
+    }
     if (flag_intersect) {
       flag <- apply(t(as.matrix(meas)) > cut, 2, all)
     } else {
