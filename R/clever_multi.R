@@ -287,6 +287,7 @@ clever_multi = function(
   }
   # Keep only the above-average variance/PESEL PCs (whichever is greater).
   maxK_PCA <- 1
+  # [TO DO]: move outside if(PCA) so PCA isn't required for ICA+PESEL
   if (any(valid_projection_PESEL %in% projection)) {
     out$PCA$nPCs_PESEL <- with(set.seed(0), pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs)
     maxK_PCA <- max(maxK_PCA, out$PCA$nPCs_PESEL)

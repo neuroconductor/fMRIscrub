@@ -1,6 +1,6 @@
-citHeader("To cite {clever} in publications use:")
+citHeader("To cite {fMRIscrub} in publications use:")
 
-clever_citations <- c(
+fMRIscrub_citations <- c(
 	bibentry(
 		bibtype      = "Article",
 		title        = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",

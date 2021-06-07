@@ -1,7 +1,7 @@
-Package: clever
+Package: fMRIscrub
 Type: Package
-Title: Calculate Leverage of Component Models
-Version: 0.6.1
+Title: Calculate fMRI quality-control measures for scrubbing
+Version: 0.7
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -15,17 +15,18 @@ Authors@R: c(
     person(given = "Damon",
            family = "Pham",
            email = "damondpham@gmail.com",
-           role = c("ctb"),
+           role = c("aut"),
            comment = c(ORCID = "0000-0001-7563-4727")),
     person(given = "Daniel",
            family = "McDonald",
            email = "daniel@stat.ubc.ca",
            role = c("ctb"))
     )
-Description: Computes principal Components LEVERage (“CLEVER”), a data-driven
-    measure of outlyingness for high-dimensional data such as fMRI scans. Also
-    includes other quality-control measures commonly used for fMRI: framewise 
-    displacement, DVARS, and anatomical CompCor.
+Description: Computes leverage, a data-driven measure of outlyingness for 
+    high-dimensional data such as fMRI scans. Leverage is thresholded to
+    identify artifactual volumes for scrubbing. Also includes routines for other
+    common fMRI pre-processing methods such as detrending, FD, DVARS, and 
+    anatomical CompCor.
 Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
@@ -40,8 +41,8 @@ Imports:
     utils,
     Rcpp
 RoxygenNote: 7.1.1
-URL: https://github.com/mandymejia/clever
-BugReports: https://github.com/mandymejia/clever/issues
+URL: https://github.com/mandymejia/fMRIscrub
+BugReports: https://github.com/mandymejia/fMRIscrub/issues
 Suggests:
     corpcor,
     cowplot,

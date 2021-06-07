@@ -15,18 +15,18 @@ opts_chunk$set(autodep = TRUE, cache = FALSE)
 ```
 
 # Overview
-`clever` implements the _PCA leverage_ outlier detection method for high-dimensional (HD) data, as detailed in this manuscript:
+`fMRIscrub` implements the _PCA leverage_ outlier detection method for high-dimensional (HD) data, as detailed in this manuscript:
 
 ```{r}
-citation("clever")[1]
+citation("fMRIscrub")[1]
 ```
 
 In summary, the manuscript proposes a measure of "outlyingness" for HD data observations by drawing on the traditional statistical ideas of PCA, leverage, and outlier detection. While its primary application is detecting outlying timepoints in an fMRI scan, the method can also be applied to other forms of HD data such as gene expression data.
 
-In addition to PCA leverage, we have also implemented two other measures of outlyingness: _robust distance_, described in the same manuscript as PCA leverage, and _DVARS_, as formulated by this manuscript:
+In addition to PCA leverage, we have also implemented two other measures of outlyingness: _framewise displacement_ (FD), and _DVARS_ as formulated by this manuscript:
 
 ```{r}
-citation("clever")[2]
+citation("fMRIscrub")[2]
 ```
 
 ### Method outline
@@ -43,25 +43,25 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 5. The outlyingness measures are thresholded to obtain the set of identified outliers. 
 
-We also include the DVARS outlier detection method in `clever`. It normalizes the data as explained in step 1 (and not as described in the paper cited above), but otherwise follows the algorithm as described in the paper and implemented in the [MATLAB code](https://github.com/asoroosh/DVARS) provided by the authors.
+We also include the DVARS outlier detection method in `fMRIscrub`. It normalizes the data as explained in step 1 (and not as described in the paper cited above), but otherwise follows the algorithm as described in the paper and implemented in the [MATLAB code](https://github.com/asoroosh/DVARS) provided by the authors.
 
 ### Installation
 
 Install the package from GitHub and load it:
 
 ```{r, warning = FALSE, message = FALSE, eval = FALSE}
-devtools::install_github('mandymejia/clever')
+devtools::install_github('mandymejia/fMRIscrub')
 ```
 
 ```{r}
-library(clever)
+library(fMRIscrub)
 ```
 
 # Tutorial
 
 ### Data
 
-`clever` includes data from the Autism and Brain Imaging Data Exchange (ABIDE), a publicly available resource of neuroimaging and phenotypic information [(Di Martino and others, 2014)](https://doi.org/10.1038/mp.2013.78). Our simulated datasets are based on resting-state fMRI scans from two ABIDE subjects: the first contains artifacts likely due to a couple periods of high subject head motion; the second is relatively artifact-free. Axial slices are used instead of the entire volumes to minimize the download time of `clever`.
+`fMRIscrub` includes data from the Autism and Brain Imaging Data Exchange (ABIDE), a publicly available resource of neuroimaging and phenotypic information [(Di Martino and others, 2014)](https://doi.org/10.1038/mp.2013.78). Our simulated datasets are based on resting-state fMRI scans from two ABIDE subjects: the first contains artifacts likely due to a couple periods of high subject head motion; the second is relatively artifact-free. Axial slices are used instead of the entire volumes to minimize the download time of `clever`.
  
 ### Example results
 
@@ -102,7 +102,7 @@ cowplot::plot_grid(p1, p2, nrow=1)
 
 ### fMRI image reconstruction
 
-To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `clever::unmask_vol` for a helper function to do this.
+To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `fMRIscrub::unmask_vol` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
@@ -150,7 +150,7 @@ The median time point appears normal, whereas the most outlying time point clear
 
 ### Leverage images
 
-`clever` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at timepoint `r t_max` for the first dataset:
+`fMRIscrub` can also display the "leverage images" for each outlying observation. There are two types: the composite of the selected PC directions, weighed by the scores for that observation (without scaling by variance), and the single PC direction with the highest score at that observation. Here are the leverage images at timepoint `r t_max` for the first dataset:
 
 
 ```{r, fig.width=7, fig.height=4}
@@ -177,6 +177,6 @@ The leverage images highlight the banding artifact present at this time point.
 For testing purposes, we can run multiple methods at the same time using the internal function `clever_multi`:
 
 ```{r fig.height=20, fig.width=6}
-clever.Dat1.all <- clever:::clever_multi(Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+clever.Dat1.all <- fMRIscrub:::clever_multi(Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 # plot(clever.Dat1.all) # Doesn't work yet!
 ```

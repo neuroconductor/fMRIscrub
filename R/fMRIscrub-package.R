@@ -4,6 +4,6 @@
 NULL
 
 ## usethis namespace: start
-#' @useDynLib clever, .registration = TRUE
+#' @useDynLib fMRIscrub, .registration = TRUE
 ## usethis namespace: end
 NULL

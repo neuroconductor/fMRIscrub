@@ -1,8 +1,8 @@
 library(testthat)
-library(clever)
+library(fMRIscrub)
 
 library(ggplot2)
 library(cowplot)
 library(ica)
 
-test_check("clever")
+test_check("fMRIscrub")
