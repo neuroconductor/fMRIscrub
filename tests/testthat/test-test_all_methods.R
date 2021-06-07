@@ -1,6 +1,6 @@
 test_that("clever works with all methods and default settings", {
   data(Dat1)
-  clev <- clever:::clever_multi(
+  clev <- fMRIscrub:::clever_multi(
     Dat1,
     projection = "all"
   )
@@ -9,7 +9,7 @@ test_that("clever works with all methods and default settings", {
 
 test_that("clever works with some custom parameter settings", {
   data(Dat2)
-  clev <- clever:::clever_multi(
+  clev <- fMRIscrub:::clever_multi(
     Dat2,
     projection = c("PCATF", "ICA_kurt"),
     kurt_quantile = .90,

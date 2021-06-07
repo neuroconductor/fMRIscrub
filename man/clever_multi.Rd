@@ -192,6 +192,6 @@ n_voxels = 1e4
 n_timepoints = 100
 X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 
-clev = clever:::clever_multi(X)
+clev = fMRIscrub:::clever_multi(X)
 }
 \keyword{internal}
