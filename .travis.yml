@@ -9,3 +9,9 @@ after_success:
 os:
   - linux
   - osx
+
+# https://docs.travis-ci.com/user/customizing-the-build/
+# safelist
+branches:
+  only:
+  - master
