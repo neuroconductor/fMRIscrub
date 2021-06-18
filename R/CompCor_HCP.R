@@ -65,7 +65,7 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 #'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'
 #' @inheritParams get_NIFTI_ROI_masks
-#' @param nii \eqn{I \times J \times \K \times T} 
+#' @param nii \eqn{I \times J \times K \times T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
 #'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
 #'  file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"

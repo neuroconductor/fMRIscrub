@@ -58,7 +58,7 @@ Calculates Framewise Displacement (FD)
 \details{
 The FD formula is taken from (Power, 2012):
 
- \eqn{FD_i = \lvert \Delta x_i \rvert + \lvert \Delta y_i \rvert + \lvert \Delta z_i + \lvert \Delta \alpha_i \rvert + \lvert \Delta \beta_i \rvert + \lvert \Delta \gamma_i \rvert}, 
+ \eqn{FD_i = | \Delta x_i | + | \Delta y_i | + | \Delta z_i + | \Delta \alpha_i | + | \Delta \beta_i | + | \Delta \gamma_i |}, 
  where \eqn{i} is the timepoint; \eqn{x}, \eqn{y} and \eqn{z} are the 
  translational realignment parameters (RPs);
  \eqn{\alpha}, \eqn{\beta} and \eqn{\gamma} are the rotational RPs;

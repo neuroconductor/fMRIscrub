@@ -21,7 +21,7 @@ CompCor_HCP(
 )
 }
 \arguments{
-\item{nii}{\eqn{I \times J \times \K \times T} 
+\item{nii}{\eqn{I \times J \times K \times T} 
 NIFTI object or array (or file path to the NIFTI) which contains
 whole-brain data, including the noise ROIs. In the HCP, the corresponding
 file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
