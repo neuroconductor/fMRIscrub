@@ -35,7 +35,13 @@
 #'  Default: \code{FALSE}. Can be a number of DCT bases to use, or \code{TRUE}
 #'  to use 4.
 #' @param cutoff [TO DO]
-#' @return A length \eqn{N} vector of FD values in \code{trans_units}.
+#' @return A list with components
+#' \describe{
+#'  \item{measure}{A length \eqn{N} vector of FD values in \code{trans_units}.}
+#'  \item{measure_info}{"FD"}
+#'  \item{outlier_cutoff}{\code{cutoff}}
+#'  \item{outlier_flag}{A length-N logical vetor, where \code{TRUE} indicates suspected outlier presence.}
+#' }
 #'
 #' @importFrom utils read.table
 #' @export

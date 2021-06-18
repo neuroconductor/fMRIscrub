@@ -7,7 +7,6 @@
 DVARS(
   X,
   normalize = TRUE,
-  cutoff_DVARS = NULL,
   cutoff_DPD = 5,
   cutoff_ZD = qnorm(1 - 0.05/nrow(as.matrix(X))),
   verbose = FALSE
@@ -31,10 +30,19 @@ not be any missing data (\code{NA} or \code{NaN}).}
  Note that while voxel centering doesn't affect DVARS, it does affect
  DPD and ZD.}
 
-\item{cutoff_DVARS, cutoff_DPD, cutoff_ZD}{Numeric outlier cutoffs. Timepoints
+\item{cutoff_DPD, cutoff_ZD}{Numeric outlier cutoffs. Timepoints
 exceeding these cutoffs will be flagged as outliers.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
+}
+\value{
+A list with components
+\describe{
+ \item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+ \item{measure_info}{"DVARS"}
+ \item{outlier_cutoff}{The outlier cutoff value(s).}
+ \item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
+}
 }
 \description{
 Computes the DSE decomposition and DVARS-related statistics.

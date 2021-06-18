@@ -44,7 +44,13 @@ to use 4.}
 \item{cutoff}{[TO DO]}
 }
 \value{
-A length \eqn{N} vector of FD values in \code{trans_units}.
+A list with components
+\describe{
+ \item{measure}{A length \eqn{N} vector of FD values in \code{trans_units}.}
+ \item{measure_info}{"FD"}
+ \item{outlier_cutoff}{\code{cutoff}}
+ \item{outlier_flag}{A length-N logical vetor, where \code{TRUE} indicates suspected outlier presence.}
+}
 }
 \description{
 Calculates Framewise Displacement (FD)

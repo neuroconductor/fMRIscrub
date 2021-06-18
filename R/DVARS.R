@@ -97,19 +97,28 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' 
 #'  Note that while voxel centering doesn't affect DVARS, it does affect
 #'  DPD and ZD.
-#' @param cutoff_DVARS,cutoff_DPD,cutoff_ZD Numeric outlier cutoffs. Timepoints
+# @param cutoff_DVARS
+#' @param cutoff_DPD,cutoff_ZD Numeric outlier cutoffs. Timepoints
 #'  exceeding these cutoffs will be flagged as outliers.
 #' @param verbose Should occasional updates be printed? Default is \code{FALSE}.
 #'
+#' @return A list with components
+#' \describe{
+#'  \item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+#'  \item{measure_info}{"DVARS"}
+#'  \item{outlier_cutoff}{The outlier cutoff value(s).}
+#'  \item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
+#' }
 #' @export
 #' @importFrom stats median pchisq qnorm
 #' 
 DVARS <- function(
   X, normalize=TRUE, 
-  cutoff_DVARS=NULL, 
   cutoff_DPD=5,
   cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix(X))),
   verbose=FALSE){
+
+  cutoff_DVARS <- NULL
 
   X <- as.matrix(X)
   T_ <- nrow(X); N_ <- ncol(X)

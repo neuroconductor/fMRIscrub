@@ -79,10 +79,11 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-We next run `clever` on both datasets. We'll use the default implementation of PCA leverage:
+We next run `clever` on both datasets. We'll use the default implementation of PCA leverage, but including detrending of the components' first and second moments:
 
 ```{r}
 clever.Dat1.var.lev = clever(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+# same as: scrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 clever.Dat2.var.lev = clever(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 ```
 
@@ -96,6 +97,7 @@ PCA leverage indicates clear outliers in the first dataset around the 60th and 1
 
 ```{r fig.width=8, fig.height=3}
 p1 <- plot(DVARS(Dat1), title="Dat1", show.legend=FALSE)
+# same as: plot(scrub(Dat1, "DVARS"), title="Dat1", show.legend=FALSE)
 p2 <- plot(DVARS(Dat2), title="Dat2", show.legend=FALSE)
 cowplot::plot_grid(p1, p2, nrow=1)
 ```
