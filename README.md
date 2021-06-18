@@ -1,44 +1,38 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# clever
+# fMRIscrub
 
 <!-- badges: start -->
 
 [![Travis build
-status](https://travis-ci.org/mandymejia/clever.svg?branch=master)](https://travis-ci.org/github/mandymejia/clever)
+status](https://travis-ci.org/mandymejia/fMRIscrub.svg?branch=master)](https://travis-ci.org/github/mandymejia/fMRIscrub)
 [![AppVeyor build
-status](https://ci.appveyor.com/api/projects/status/github/mandymejia/clever?branch=master&svg=true)](https://ci.appveyor.com/project/mandymejia/clever)
+status](https://ci.appveyor.com/api/projects/status/github/mandymejia/fMRIscrub?branch=master&svg=true)](https://ci.appveyor.com/project/mandymejia/fMRIscrub)
 [![Coveralls test
-coverage](https://coveralls.io/repos/github/mandymejia/clever/badge.svg)](https://coveralls.io/r/mandymejia/clever?branch=master)
+coverage](https://coveralls.io/repos/github/mandymejia/fMRIscrub/badge.svg)](https://coveralls.io/r/mandymejia/fMRIscrub?branch=master)
 <!-- badges: end -->
 
-`clever` computes principal Components LEVERage (“CLEVER”) and other
-measures of outlyingness for high-dimensional data such as fMRI data.
+`fMRIscrub` computes quality-control measures for fMRI data, including
+principal Components LEVERage (“CLEVER”), a general measure of
+outlyingness for high-dimensional data.
 
 ## Installation
 
-<!-- You can install the released version of clever from [CRAN](https://CRAN.R-project.org) with: -->
-
+<!-- You can install the released version of fMRIscrub from [CRAN](https://CRAN.R-project.org) with: -->
 <!-- ``` r -->
-
-<!-- install.packages("clever") -->
-
+<!-- install.packages("fMRIscrub") -->
 <!-- ``` -->
 
-You can install the development version of clever from
+You can install the development version of fMRIscrub from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("mandymejia/clever")
+devtools::install_github("mandymejia/fMRIscrub")
 ```
-
-`clever` requires the `glmgen` package for PCA Trend Filtering (PCATF).
-Please see <https://github.com/glmgen/glmgen> for installation
-instructions.
 
 ## Vignette
 
 You can view the vignette using this link:
-<https://htmlpreview.github.io/?https://github.com/mandymejia/clever/blob/master/vignettes/vignette.html>
+<https://htmlpreview.github.io/?https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/vignette.html>

@@ -1,3 +1,40 @@
+#' Is a numeric vector constant?
+#' 
+#' @param x The numeric vector
+#' @param TOL minimum range of \code{x} to be considered non-constant.
+#'  Default: \code{1e-8}
+#' 
+#' @return Is \code{x} constant? 
+#' 
+#' @keywords internal
+is_constant <- function(x, TOL=1e-8) {
+  abs(max(x) - min(x)) < TOL
+}
+
+#' Check design matrix
+#' 
+#' @param design The design matrix
+#' 
+#' @return The (modified) design matrix
+#' 
+#' @keywords internal
+check_design_matrix <- function(design, T_) {
+  class(design) <- "numeric"
+  if (identical(design, 1)) { design <- matrix(1, nrow=T_) }
+  design <- as.matrix(design)
+  stopifnot(nrow(design) == T_)
+  # Set constant columns (intercept regressor) to 1, and scale the other columns.
+  design_const_mask <- apply(design, 2, is_constant)
+  if (any(design_const_mask)) {
+    if (any(design_const_mask & abs(design[1,]) < 1e-8)) {
+      stop("Constant zero design regressor detected in `design`.")
+    }
+  }
+  design[,design_const_mask] <- 1
+  design[,!design_const_mask] <- scale(design[,!design_const_mask])
+  design
+}
+
 #' Scale data columns robustly
 #' 
 #' Centers and scales the columns of a matrix robustly for the purpose of 
@@ -55,6 +92,7 @@ scale_med <- function(mat){
 #'  scale.
 #'
 #' @return A list containing the estimated F distribution's c, m, and df.
+#' @importFrom stats pchisq qchisq
 #' @export
 fit.F <- function(Q, n, h){
   # Estimate c.
@@ -83,41 +121,32 @@ fit.F <- function(Q, n, h){
   return(result)
 }
 
-
-#' Estimates the trend of \code{ts} using a robust discrete cosine transform.
-#'
-#' @param ts A numeric vector to detrend.
-#' @param robust Should a robust linear model be used? Default FALSE.
-#'
-#' @return The estimated trend.
-#'
-#' @importFrom stats mad
-#' @importFrom robustbase lmrob
-#' @importFrom robustbase lmrob.control
+#' Get the cosine bases for DCT
+#' 
+#' @param T_ Length of timeseries
+#' @param n Number of cosine bases
+#' 
+#' @return Matrix with cosine bases along columns
+#' 
 #' @export
-est_trend <- function(ts, robust=TRUE){
-  TOL <- 1e-8
-  if(mad(ts) < TOL){ return(ts) }
+dct_bases <- function(T_, n){
+  b <- matrix(NA, T_, n)
+  idx <- (seq(T_)-1)/(T_-1)
+  for (ii in seq(n)) { b[,ii] <- cos(idx*pi*ii) }
+  b
+}
 
-  df <- data.frame(
-    index=1:length(ts),
-    ts=ts
-  )
-
-  i_scaled <- 2*(df$index-1)/(length(df$index)-1) - 1 #range on [-1, 1]
-
-  df['p1'] <- cos(2*pi*(i_scaled/4 - .25)) #cosine on [-1/2, 0]*2*pi
-  df['p2'] <- cos(2*pi*(i_scaled/2 - .5)) #cosine on [-1, 0]*2*pi
-  df['p3'] <- cos(2*pi*(i_scaled*3/4  -.75)) # [-1.5, 0]*2*pi
-  df['p4'] <- cos(2*pi*(i_scaled - 1)) # [2, 0]*2*pi
-
-  if(robust){
-    control <- lmrob.control(scale.tol=1e-3, refine.tol=1e-2) # increased tol.
-    # later: warn.limit.reject=NULL
-    trend <- lmrob(ts~p1+p2+p3+p4, df, control=control)$fitted.values
+#' Wrapper to common functions for reading NIFTIs
+#' 
+#' @param nifti_fname The file name of the NIFTI.
+#' @return The NIFTI.
+#' @keywords internal
+read_nifti <- function(nifti_fname){
+  if (requireNamespace("RNifti", quietly = TRUE)) {
+    return(RNifti::readNifti(nifti_fname))
+  } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
+    return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
   } else {
-    trend <- lm(ts~p1+p2+p3+p4, df)$fitted.values
+    stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
   }
-
-  trend
 }

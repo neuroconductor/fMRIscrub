@@ -2,14 +2,14 @@
 % Please edit documentation in R/PCATF.R
 \name{PCATF}
 \alias{PCATF}
-\title{PCA Trend Filtering. From: https://github.com/Lei-D/PCATF}
+\title{PCA Trend Filtering (C++ core)}
 \usage{
 PCATF(
   X,
   X.svd = NULL,
   solve_directions = TRUE,
   K = NULL,
-  lambda = 0.5,
+  lambda = 5,
   niter_max = 1000,
   TOL = 1e-08,
   verbose = FALSE
@@ -24,12 +24,12 @@ this argument if the svd has already been computed. Default NULL.}
 \item{solve_directions}{Should the principal directions be solved for? These
 will be needed to display the leverage images for outlying observations.}
 
-\item{K}{(Optional) The number of trend-filtered PCs to solve for. If not 
+\item{K}{(Optional) The number of trend-filtered PCs to solve for. If not
  provided, it will be set to the number of regular PCs with variance above
 the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
-Default is 0.5 . Can be NULL (lets algorithm decide).}
+Default is 5.}
 
 \item{niter_max}{The number of iterations to use for approximating the PC.}
 
@@ -41,25 +41,10 @@ Default is 0.5 . Can be NULL (lets algorithm decide).}
 SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 }
 \description{
-PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
+From: https://github.com/Lei-D/PCATF and 
+ https://github.com/glmgen/glmgen/blob/master/c_lib/glmgen/src/tf/tf_dp.c .
 }
-\examples{
-set.seed(12345)
-U = matrix(rnorm(100*3),ncol=3)
-U[20:23,1] = U[20:23,1] + 3
-U[40:43,2] = U[40:43,2] - 2
-U = svd(U)$u
-D = diag(c(10,5,1))
-V = svd(matrix(rnorm(3*20),nrow=20))$u
-X = U \%*\% D \%*\% t(V)
-out3 = PCATF(X, K=3, lambda=.75)
-matplot(out3$u, ty='l')
-out3$d
-plot(rowSums(out3$u^2), ty='l')
-
-# Orthonormalized
-out3_svd = svd(out3$u)
-matplot(out3_svd$u, ty='l')
-out3_svd$d
-plot(rowSums(out3_svd$u^2), ty='l')
+\details{
+Inheriting from \code{glmgen}, this code is under the GNU Lesser General 
+ Public License: http://www.gnu.org/licenses/ .
 }

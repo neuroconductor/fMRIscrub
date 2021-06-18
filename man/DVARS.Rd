@@ -2,28 +2,53 @@
 % Please edit documentation in R/DVARS.R
 \name{DVARS}
 \alias{DVARS}
-\title{Computes the DSE decomposition and DVARS-related statistics.
-Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)}
+\title{DVARS}
 \usage{
-DVARS(X, normalize = FALSE, norm_I = 100, verbose = FALSE)
+DVARS(
+  X,
+  normalize = TRUE,
+  cutoff_DPD = 5,
+  cutoff_ZD = qnorm(1 - 0.05/nrow(as.matrix(X))),
+  verbose = FALSE
+)
 }
 \arguments{
-\item{X}{a T x N numeric matrix representing an fMRI run.}
+\item{X}{a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+not be any missing data (\code{NA} or \code{NaN}).}
 
-\item{normalize}{Normalize the data as proposed in the original paper? Default is 
-\code{FALSE}.}
+\item{normalize}{Normalize the data as proposed in the original paper? Default:
+ \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
+ median of the mean image, and then centers each voxel on its mean.
 
-\item{norm_I}{The value to scale to. Default is \code{100}, as in the original
-paper.}
+ To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
+ HCP scans are already normalized to 10,000, just divide the data by 100 and
+ center the voxels on their means:
+
+ \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
+ \eqn{V \times T} data matrix.
+
+ Note that while voxel centering doesn't affect DVARS, it does affect
+ DPD and ZD.}
+
+\item{cutoff_DPD, cutoff_ZD}{Numeric outlier cutoffs. Timepoints
+exceeding these cutoffs will be flagged as outliers.}
 
 \item{verbose}{Should occasional updates be printed? Default is \code{FALSE}.}
 }
-\description{
-Differences from implementation at github.com/asoroosh/DVARS:
-\itemize{
- \item The matrix is transposed.
- \item We center and scale the matrix differently (see \code{\link{scale_med}})
- \item We set all zero-variance voxels to zero during centering & scaling. This means that when we remove constant 0 or NA voxels, constant non-zero voxels are also removed.
- \item We use a tolerance of \eqn{1e-8} to detect non-zero voxels.
+\value{
+A list with components
+\describe{
+ \item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+ \item{measure_info}{"DVARS"}
+ \item{outlier_cutoff}{The outlier cutoff value(s).}
+ \item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
 }
+}
+\description{
+Computes the DSE decomposition and DVARS-related statistics.
+}
+\details{
+Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
+
+github.com/asoroosh/DVARS
 }

@@ -5,3 +5,13 @@ cache: packages
 warnings_are_errors: true
 after_success:
   - R script -e 'covr::coveralls(type = "all")'
+
+os:
+  - linux
+  - osx
+
+# https://docs.travis-ci.com/user/customizing-the-build/
+# safelist
+branches:
+  only:
+  - master

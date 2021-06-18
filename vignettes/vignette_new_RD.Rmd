@@ -100,9 +100,9 @@ PCA leverage indicates clear outliers in the first dataset around the 60th and 1
 Next, we can run all methods included in `clever` and compare the results:
 
 ```{r}
-clever.Dat1 = clever(Dat1, projection="all", out_meas="all", 
+clever.Dat1 = fMRIscrub:::clever_multi(Dat1, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
-clever.Dat2 = clever(Dat2, projection="all", out_meas="all", 
+clever.Dat2 = fMRIscrub:::clever_multi(Dat2, projection="all", out_meas="all", 
                      lev_images=TRUE, verbose=TRUE)
 ```
 
@@ -122,7 +122,7 @@ For the first dataset, most methods identify outliers around timepoints 60 and 1
 
 ### fMRI image reconstruction
 
-To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `clever::Matrix_to_VolumeTimeSeries` for a helper function to do this.
+To validate our results, we can reconstruct the original fMRI images using the mask which was applied to vectorize the data. See `fMRIscrub::Matrix_to_VolumeTimeSeries` for a helper function to do this.
 
 ```{r warning=FALSE}
 library(oro.nifti)
