@@ -150,3 +150,20 @@ read_nifti <- function(nifti_fname){
     stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
   }
 }
+
+#' \code{as.matrix} and transpose \code{"xifti"}s
+#' 
+#' A \code{"xifti"} is VxT, whereas \code{clever} and \code{DVARS} accept a
+#'  TxV matrix. This function calls \code{as.matrix} and transposes the data
+#'  if it is a \code{"xifti"}.
+#' 
+#' @param x The object to coerce to a matrix
+#' @return x as a matrix.
+#' @keywords internal
+as.matrix2 <- function(x) {
+  if (inherits(x, "xifti")) {
+    return( t(as.matrix(x)) )
+  } else {
+    return( as.matrix(x) )
+  }
+}
