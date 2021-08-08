@@ -13,16 +13,14 @@ status](https://ci.appveyor.com/api/projects/status/github/mandymejia/fMRIscrub?
 coverage](https://coveralls.io/repos/github/mandymejia/fMRIscrub/badge.svg)](https://coveralls.io/r/mandymejia/fMRIscrub?branch=master)
 <!-- badges: end -->
 
-`fMRIscrub` computes quality-control measures for fMRI data, including
-principal Components LEVERage (“CLEVER”), a general measure of
-outlyingness for high-dimensional data.
+`fMRIscrub` is a collection of routines for data-driven scrubbing
+(projection scrubbing and DVARS), motion scrubbing, and other fMRI
+denoising strategies such as anatomical CompCor, detrending, and
+nuisance regression. The data-driven scrubbing methods are also
+applicable to other outlier detection tasks involving high-dimensional
+data.
 
 ## Installation
-
-<!-- You can install the released version of fMRIscrub from [CRAN](https://CRAN.R-project.org) with: -->
-<!-- ``` r -->
-<!-- install.packages("fMRIscrub") -->
-<!-- ``` -->
 
 You can install the development version of fMRIscrub from
 [GitHub](https://github.com/) with:
@@ -32,7 +30,21 @@ You can install the development version of fMRIscrub from
 devtools::install_github("mandymejia/fMRIscrub")
 ```
 
+## Quick start guide
+
+``` r
+pscrub <- clever(Dat1)
+plot(pscrub)
+Dat1_cleaned <- Dat1[!pscrub$outlier_flag,]
+```
+
 ## Vignette
 
-You can view the vignette using this link:
-<https://htmlpreview.github.io/?https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/vignette.html>
+See [this
+link](https://htmlpreview.github.io/?https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/fMRIscrub_vignette.html)
+to view the tutorial vignette.
+
+## Citation
+
+If using projection scrubbing, you can cite our pre-print at
+<https://arxiv.org/abs/2108.00319>.

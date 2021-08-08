@@ -1,7 +1,7 @@
 Package: fMRIscrub
 Type: Package
 Title: Calculate fMRI quality-control measures for scrubbing
-Version: 0.7
+Version: 0.7.0
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -22,15 +22,15 @@ Authors@R: c(
            email = "daniel@stat.ubc.ca",
            role = c("ctb"))
     )
-Description: Computes leverage, a data-driven measure of outlyingness for 
-    high-dimensional data such as fMRI scans. Leverage is thresholded to
-    identify artifactual volumes for scrubbing. Also includes routines for other
-    common fMRI pre-processing methods such as detrending, FD, DVARS, and 
-    anatomical CompCor.
+Maintainer: Amanda Mejia <mandy.mejia@gmail.com>
+Description: Collection of routines for data-driven scrubbing (projection 
+    scrubbing and DVARS), motion scrubbing, and other fMRI denoising strategies
+    such as anatomical CompCor, detrending, and nuisance regression. The
+    data-driven scrubbing methods are also applicable to other outlier detection
+    tasks involving high-dimensional data.
 Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 Imports:
     expm,
     MASS,
@@ -40,9 +40,6 @@ Imports:
     stats,
     utils,
     Rcpp
-RoxygenNote: 7.1.1
-URL: https://github.com/mandymejia/fMRIscrub
-BugReports: https://github.com/mandymejia/fMRIscrub/issues
 Suggests:
     corpcor,
     cowplot,
@@ -61,3 +58,8 @@ Suggests:
 LinkingTo: 
     Rcpp,
     RcppArmadillo
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+URL: https://github.com/mandymejia/fMRIscrub
+BugReports: https://github.com/mandymejia/fMRIscrub/issues
+LazyData: true
