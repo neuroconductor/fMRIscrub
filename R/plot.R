@@ -52,7 +52,7 @@ clever_plot <- function(
 
   # Flag outlying timepoints.
   if (id_outs) {
-    cut <- as.vector(cut)
+    cut <- as.numeric(cut)
     if (length(cut) != nMeas) {
       if (length(cut) == 1) { cut <- rep(cut, nMeas) } else { 
         stop("`cut` should be the same length as the number of columns in `meas`.") 
@@ -327,38 +327,36 @@ plot.clever <- function(x, title=NULL, ...){
   return(plt)
 }
 
-# #' Plot \code{"clever_multi"}
-# #'
-# #' @param x The \code{"clever_multi"} object.
-# #' @param title (Optional) If provided, will add a title to the plot.
-# #' @param ... Additional arguments to ggplot: main, sub, xlab, ylab, legend.position
-# #'
-# #' @return A ggplot
-# #'
-# #' @method plot clever
-# #' @export
-# plot.clever <- function(x, title=NULL, ...){
-#   gg_args <- list(...)
+#' Plot \code{"clever_multi"}
+#'
+#' @param x The \code{"clever_multi"} object.
+#' @param title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to ggplot: main, sub, xlab, ylab, legend.position
+#'
+#' @return A ggplot
+#'
+# @method plot clever_multi
+#' @keywords internal
+plot.clever_multi <- function(x, title=NULL, ...){
+  gg_args <- list(...)
   
+  if ("legend.position" %in% names(gg_args)) {
+    plt <- clever_plot(x$measure, x$outlier_cutoff, ...)
+  } else {
+    plt <- clever_plot(x$measure, x$outlier_cutoff, legend.position="none", ...)
+  }
 
-
-#   if ("legend.position" %in% names(gg_args)) {
-#     plt <- clever_plot(meas, x$outlier_cutoff, ...)
-#   } else {
-#     plt <- clever_plot(meas, x$outlier_cutoff, legend.position="none", ...)
-#   }
-
-#   # Add title.
-#   if(!is.null(title)){
-#     plt <- cowplot::plot_grid(
-#       cowplot::ggdraw() +
-#         cowplot::draw_label(title, fontface='bold', x=0, hjust=0) +
-#         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 7)),
-#       plt,
-#       ncol=1,
-#       rel_heights=c(.15, 1)
-#     )
-#   }
-
-#   return(plt)
-# }
+  # Add title.
+  if(!is.null(title)){
+    return(cowplot::plot_grid(
+      cowplot::ggdraw() +
+        cowplot::draw_label(title, fontface='bold', x=0, hjust=0) +
+        ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 7)),
+      plt,
+      ncol=1,
+      rel_heights=c(.15, 1)
+    ))
+  } else {
+    return(plt)
+  }
+}

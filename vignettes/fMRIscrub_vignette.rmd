@@ -151,9 +151,15 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 For testing purposes, we can run multiple methods at the same time using the internal function `clever_multi`:
 
-```{r fig.height=20, fig.width=6}
-Dat1.levAll <- fMRIscrub:::clever_multi(
-  Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
+```{r fig.height=3, fig.width=6}
+# Try all projections: this is excessive to plot
+# Dat1.levAll <- fMRIscrub:::clever_multi(
+#   Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
+# )
+
+#  the default (ICA + kurtosis), PCATF + kurtosis, and ICA
+Dat1.lev3 <- fMRIscrub:::clever_multi(
+  Dat1, projection=c("ICA_kurt", "PCATF_kurt", "ICA"), verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 )
-# plot(Dat1.levAll) # Doesn't work yet!
+fMRIscrub:::plot.clever_multi(Dat1.lev3, legend.position="bottom") # Doesn't work yet!
 ```
