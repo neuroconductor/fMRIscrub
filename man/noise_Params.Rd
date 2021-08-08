@@ -5,21 +5,21 @@
 \title{noise parameters for CompCor}
 \arguments{
 \item{noise_nPC}{The number of principal components to compute for each noise
- ROI. Alternatively, values between 0 and 1, in which case they will 
- represent the minimum proportion of variance explained by the PCs used for
- each noise ROI. The smallest number of PCs will be used to achieve this 
- proportion of variance explained. 
+ROI. Alternatively, values between 0 and 1, in which case they will
+represent the minimum proportion of variance explained by the PCs used for
+each noise ROI. The smallest number of PCs will be used to achieve this
+proportion of variance explained.
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its
- elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
- each noise ROI).}
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
+elements will be recycled. Default: \code{5} (compute the top 5 PCs for
+each noise ROI).}
 
-\item{noise_erosion}{The number of voxel layers to erode the noise ROIs by. 
-Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-It will be matched to each ROI based on the name of each entry, or if the 
-names are missing, the order of entries. If it is an unnamed vector, its 
+\item{noise_erosion}{The number of voxel layers to erode the noise ROIs by.
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 }

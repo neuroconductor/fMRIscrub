@@ -18,11 +18,10 @@ knitr::opts_chunk$set(autodep = TRUE, cache = FALSE)
 
 In this vignette we will highlight the use of projection scrubbing for identifying and removing contaminated volumes from fMRI scans. Projection scrubbing works by identifying component directions in the data likely to represent artifactual patterns, and then computing a composite measure for the amount of these signals at each volume. The projection can be PCA, ICA, or "fused PCA," and the composite measure is based on the linear model concept of leverage. (An earlier version of projection scrubbing was named "PCA leverage"). Like other scrubbing methods, it is designed to detect "burst noise" which occurs due to transient artifact sources such as subject head motion. Projection scrubbing can be cited with the following papers: 
 
-```{r}
-citation("fMRIscrub")[seq(2)]
-```
+* Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521–536 (2017).
+* Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021+).
 
-Citations for the other routines included in `fMRIscrub` are listed at the end of this document.
+Citations for the other routines included in `fMRIscrub` can be found on their respective documentation pages, e.g. `help(fMRIscrub::DVARS)`.
 
 ### Installation
 
@@ -66,7 +65,7 @@ cowplot::plot_grid(p1, p2, nrow=1)
 
 ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, A few timepoints are still flagged including around the 40th and 110th timepoints. 
 
-DVARS, another data-driven scrubbing technique, yields similar results:
+DVARS, another data-driven scrubbing technique [(Afyouni and Nichols, 2018)](https://doi.org/10.1016/j.neuroimage.2017.12.098), yields similar results:
 
 ```{r fig.width=8, fig.height=3}
 p1 <- plot(DVARS(Dat1), title="Dat1", show.legend=FALSE)
@@ -140,7 +139,7 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 1. Normalize $Y$ by centering and scaling its columns robustly.
 
-2. Decompose the data into $Q \times V$ projection directions and their $T \times Q$ signal timecourses using PCA, ICA, or fused PCA. The projection directions are the $V$ matrix in PCA and fused PCA ($Y = UDV^T$), and the $M$ matrix in ICA ($Y = MS$). The signal timecourses are the $U$ matrix in PCA and fused PCA, and the $S$ matrix in ICA. By default, ICA projection is  used, and $Q$ is determined by the "PESEL" algorithm.
+2. Decompose the data into $Q \times V$ projection directions and their $T \times Q$ signal timecourses using PCA, ICA, or fused PCA. The projection directions are the $V$ matrix in PCA and fused PCA ($Y = UDV^T$), and the $M$ matrix in ICA ($Y = MS$). The signal timecourses are the $U$ matrix in PCA and fused PCA, and the $S$ matrix in ICA. By default, ICA projection is  used, and $Q$ is determined by the "PESEL" algorithm [(Sobczyk and others, 2017)](doi:10.1080/10618600.2017.1340302)
 
 3. Select $K < Q$ of the $Q$ components which are likely to contain artifact information. By default, we select high-variance and high-kurtosis components, since burst noise tends to manifest as deviations of much greater magnitude than would be expected of neuronal signals.
 
@@ -157,10 +156,4 @@ Dat1.levAll <- fMRIscrub:::clever_multi(
   Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 )
 # plot(Dat1.levAll) # Doesn't work yet!
-```
-
-### Citations for other routines included in `fMRIscrub`
-
-```{r}
-#citation("fMRIscrub")[seq(3, length(citation("fMRIscrub")))]
 ```

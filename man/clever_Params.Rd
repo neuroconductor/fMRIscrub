@@ -4,42 +4,42 @@
 \alias{clever_Params}
 \title{clever}
 \arguments{
-\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, 
-\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
-number of timepoints and \eqn{V} should be the number of brainordinate 
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables},
+\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the
+number of timepoints and \eqn{V} should be the number of brainordinate
 vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
 
 \item{nuisance}{Nuisance signals to regress from each column of \code{X}.
- Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
- number of nuisance signals. Default: a matrix with a constant column
- (this is the intercept term in the design matrix) and four DCT bases. 
- This default nuisance regression will have the effect of detrending the
- data by removing low-frequency components. To not perform any nuisance
- regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
+number of nuisance signals. Default: a matrix with a constant column
+(this is the intercept term in the design matrix) and four DCT bases.
+This default nuisance regression will have the effect of detrending the
+data by removing low-frequency components. To not perform any nuisance
+regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- if kurtosis is being used to select the projection directions, trends can 
- induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. Detrending should not be used with 
- non-time-series data because the observations are not temporally related.
+Detrending is highly recommended for time-series data, especially if there
+are many time points or evolving circumstances affecting the data. Additionally,
+if kurtosis is being used to select the projection directions, trends can
+induce positive or negative kurtosis, contaminating the connection between
+high kurtosis and outlier presence. Detrending should not be used with
+non-time-series data because the observations are not temporally related.
 
- To perform nuisance regression with an intercept, DCT bases, and additional
- signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
+To perform nuisance regression with an intercept, DCT bases, and additional
+signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
 
 \item{center, scale}{Center the columns of the data by their medians, and scale the
- columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
- Centering is necessary for computing the projections, so if \code{center} is
- \code{FALSE}, the data must already be centered.
+columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}.
+Centering is necessary for computing the projections, so if \code{center} is
+\code{FALSE}, the data must already be centered.
 
- Note that centering and scaling occur after nuisance regression, so even if
- \code{center} is \code{FALSE}, the data will be centered on the means if
- the nuisance regression included an intercept term, as it does by default.}
+Note that centering and scaling occur after nuisance regression, so even if
+\code{center} is \code{FALSE}, the data will be centered on the means if
+the nuisance regression included an intercept term, as it does by default.}
 
-\item{comps_mean_dt, comps_var_dt}{Stabilize the mean and variance of the PCA, 
-PCATF, and ICA components prior to computing leverage? \code{TRUE}, 
-\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending 
-(\code{TRUE} will use 4). Note that these refer to the projection scores and 
+\item{comps_mean_dt, comps_var_dt}{Stabilize the mean and variance of the PCA,
+PCATF, and ICA components prior to computing leverage? \code{TRUE},
+\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending
+(\code{TRUE} will use 4). Note that these refer to the projection scores and
 not the data itself. Also, if scaling but not centering, the components must
 be expected to already be centered; otherwise, the results will be invalid.}
 
@@ -50,17 +50,17 @@ for kurtosis should be used to select the components? Default: \code{0.99}.}
 entries are:
 
 \describe{
-  \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
-  \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
-  \item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
-  \item{verbose}{Print updates? Default: \code{FALSE}.}
+\item{lambda}{Trend-filtering parameter. Default: \code{5}.}
+\item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+\item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
+\item{verbose}{Print updates? Default: \code{FALSE}.}
 }}
 
-\item{get_dirs}{Do the projection directions need to be returned? This is the 
+\item{get_dirs}{Do the projection directions need to be returned? This is the
 \eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
 to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
 
-\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD?
 Default: \code{FALSE} (return only the components used to compute the measures).}
 
 \item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}

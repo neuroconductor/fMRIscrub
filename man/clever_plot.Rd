@@ -42,6 +42,6 @@ A ggplot
 }
 \description{
 Plot outlyingness measure(s) with the corresponding threshold(s). Requires
- the \code{cowplot} and \code{ggplot2} packages
+the \code{cowplot} and \code{ggplot2} packages
 }
 \keyword{internal}

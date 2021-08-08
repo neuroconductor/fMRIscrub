@@ -1,11 +1,17 @@
-#' Leverage scrubbing with \code{clever}
+#' Projection scrubbing
 #' 
-#' Calculates leverage to identify outliers in high-dimensional data.
+#' Projects the data onto directions of outlyingness and then calculates 
+#'  leverage to identify outliers in high-dimensional data.
+#' 
+#' @section References:
+#'  \itemize{
+#'    \item{Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521-536 (2017).}
+#'    \item{Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021).}
+#'  }
 #' 
 #' @inheritSection clever_order_of_operations Order of operations
 #' @inheritParams clever_Params
-#' @param projection Leverage works by projecting the data onto directions likely to 
-#'  contain outlier information. Choose one of the following: \code{"PCA"}, 
+#' @param projection Choose one of the following: \code{"PCA"}, 
 #'  \code{"PCATF"}, or \code{"ICA"}. The directions of outlyingness will be 
 #'  selected from the high-kurtosis components among the top \eqn{k}, where
 #'  \eqn{k} is the number of PCs selected by PESEL or that are above-average
@@ -14,7 +20,7 @@
 #  robust distance measure.
 #' @param PESEL Use \code{\link[pesel]{pesel}} to select the components? Default:
 #'  \code{TRUE}. Otherwise, use the number of above-average variance PCs. 
-#' @return A \code{"clever_multi"} object, i.e. a list with components
+#' @return A \code{"clever"} object, i.e. a list with components
 #' \describe{
 #'  \item{measure}{A numeric vector of leverage values.}
 #'  \item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}

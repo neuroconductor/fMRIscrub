@@ -25,7 +25,7 @@ this argument if the svd has already been computed. Default NULL.}
 will be needed to display the leverage images for outlying observations.}
 
 \item{K}{(Optional) The number of trend-filtered PCs to solve for. If not
- provided, it will be set to the number of regular PCs with variance above
+provided, it will be set to the number of regular PCs with variance above
 the mean, up to 100 PCs.}
 
 \item{lambda}{The trend filtering parameter; roughly, the filtering intensity.
@@ -41,10 +41,19 @@ Default is 5.}
 SVD The trend-filtered SVD decomposition of X (list with u, d, v).
 }
 \description{
-From: https://github.com/Lei-D/PCATF and 
- https://github.com/glmgen/glmgen/blob/master/c_lib/glmgen/src/tf/tf_dp.c .
+From: https://github.com/Lei-D/PCATF and
+https://github.com/glmgen/glmgen/blob/master/c_lib/glmgen/src/tf/tf_dp.c .
 }
 \details{
-Inheriting from \code{glmgen}, this code is under the GNU Lesser General 
- Public License: http://www.gnu.org/licenses/ .
+Inheriting from \code{glmgen}, this code is under the GNU Lesser General
+Public License: http://www.gnu.org/licenses/ .
 }
+\section{References}{
+
+\itemize{
+\item{Kim, S.-J., Koh, K., Boyd, S. & Gorinevsky, D. \$\\ell_1\$ Trend Filtering. SIAM Rev. 51, 339–360 (2009).}
+\item{Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021).}
+\item{Tibshirani, R. J. Adaptive piecewise polynomial estimation via trend filtering. The Annals of Statistics 42, 285–323 (2014).}
+}
+}
+

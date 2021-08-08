@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompCor_HCP.R
 \name{CompCor_HCP}
 \alias{CompCor_HCP}
-\title{Run CompCor on the HCP data}
+\title{Run anatomical CompCor on the HCP CIFTI data}
 \usage{
 CompCor_HCP(
   nii,
@@ -21,7 +21,7 @@ CompCor_HCP(
 )
 }
 \arguments{
-\item{nii}{\eqn{I \times J \times K \times T} 
+\item{nii}{\eqn{I \times J \times K \times T}
 NIFTI object or array (or file path to the NIFTI) which contains
 whole-brain data, including the noise ROIs. In the HCP, the corresponding
 file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
@@ -29,50 +29,50 @@ file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
 \item{nii_labels}{\eqn{I \times J \times K}
 NIFTI object or array (or file path to the NIFTI) which
 contains the corresponding labels to each voxel in \code{nii}. Values should
-be according to this table: 
+be according to this table:
 https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT .
 In the HCP, the corresponding file is "ROIs/Atlas_wmparc.2.nii.gz".}
 
 \item{ROI_noise}{A list of numeric vectors. Each entry should represent labels
- in \code{nii_labels} belonging to a single noise ROI, named by that entry's 
- name. Or, this can be a character vector of at least one of the following: 
- \code{"wm_cort"} (cortical white matter), \code{"wm_cblm"} (cerebellar white
- matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
- will be used:
+in \code{nii_labels} belonging to a single noise ROI, named by that entry's
+name. Or, this can be a character vector of at least one of the following:
+\code{"wm_cort"} (cortical white matter), \code{"wm_cblm"} (cerebellar white
+matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
+will be used:
 
- \describe{
-   \item{wm_cort}{c(3000:4035, 5001, 5002)}
-   \item{wm_cblm}{c(7, 46)}
-   \item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
- }
+\describe{
+\item{wm_cort}{c(3000:4035, 5001, 5002)}
+\item{wm_cblm}{c(7, 46)}
+\item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
+}
 
- These default ROIs are based on this forum post: 
- https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
+These default ROIs are based on this forum post:
+https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
 
- Default: \code{c("wm_cort", "csf")}}
+Default: \code{c("wm_cort", "csf")}}
 
 \item{noise_nPC}{The number of principal components to compute for each noise
- ROI. Alternatively, values between 0 and 1, in which case they will 
- represent the minimum proportion of variance explained by the PCs used for
- each noise ROI. The smallest number of PCs will be used to achieve this 
- proportion of variance explained. 
+ROI. Alternatively, values between 0 and 1, in which case they will
+represent the minimum proportion of variance explained by the PCs used for
+each noise ROI. The smallest number of PCs will be used to achieve this
+proportion of variance explained.
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its
- elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
- each noise ROI).}
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
+elements will be recycled. Default: \code{5} (compute the top 5 PCs for
+each noise ROI).}
 
-\item{noise_erosion}{The number of voxel layers to erode the noise ROIs by. 
-Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-It will be matched to each ROI based on the name of each entry, or if the 
-names are missing, the order of entries. If it is an unnamed vector, its 
+\item{noise_erosion}{The number of voxel layers to erode the noise ROIs by.
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{frames}{A numeric vector indicating the timepoints to use, or 
-\code{NULL} (default) to use all frames. (Indexing begins with 1, so the 
-first timepoint has index 1 and the last has the same index as the length of 
+\item{frames}{A numeric vector indicating the timepoints to use, or
+\code{NULL} (default) to use all frames. (Indexing begins with 1, so the
+first timepoint has index 1 and the last has the same index as the length of
 the scan.)}
 
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
@@ -87,19 +87,27 @@ columns of the data by MAD? Default: \code{TRUE} for both. Affects both
 \code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
 so if it is \code{FALSE}, \code{nuisance_too} must already be centered.}
 
-\item{DCT}{Add DCT bases to the nuisance regression? Use an integer to 
- indicate the number of cosine bases. Use \code{0} (default) to forgo detrending. 
+\item{DCT}{Add DCT bases to the nuisance regression? Use an integer to
+indicate the number of cosine bases. Use \code{0} (default) to forgo detrending.
 
- The data must be centered, either before input or with \code{center}.}
+The data must be centered, either before input or with \code{center}.}
 
 \item{nuisance_too}{A matrix of nuisance signals to add to the nuisance
-regression. Should have \eqn{T} rows. \code{NULL} to not add additional 
+regression. Should have \eqn{T} rows. \code{NULL} to not add additional
 nuisance regressors (default).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \description{
 Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
- measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
- ROIs, which are regressed from the greyordinate data in the CIFTI.
+measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
+ROIs, which are regressed from the greyordinate data in the CIFTI.
 }
+\section{References}{
+
+\itemize{
+\item{Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90-101 (2007).}
+\item{Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22–35 (2014).}
+}
+}
+

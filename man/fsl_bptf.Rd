@@ -12,7 +12,17 @@ fsl_bptf(orig_data, HP_sigma = 2000)
 \item{HP_sigma}{The frequency parameter for the highpass filter}
 }
 \description{
-Copy of highpass filter as implemented by bptf in FSL. References:
- https://cpb-us-w2.wpmucdn.com/sites.udel.edu/dist/7/4542/files/2016/09/fsl_temporal_filt-15sywxn.m
- https://github.com/rordenlab/niimath/blob/master/src/core32.c
+Copy of highpass filter as implemented by bptf in FSL.
 }
+\details{
+Sources:
+https://cpb-us-w2.wpmucdn.com/sites.udel.edu/dist/7/4542/files/2016/09/fsl_temporal_filt-15sywxn.m
+https://github.com/rordenlab/niimath/blob/master/src/core32.c
+}
+\section{References}{
+
+\itemize{
+\item{Jenkinson, M., Beckmann, C. F., Behrens, T. E. J., Woolrich, M. W. & Smith, S. M. FSL. NeuroImage 62, 782–790 (2012).}
+}
+}
+

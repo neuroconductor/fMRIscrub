@@ -14,7 +14,7 @@ x as a matrix.
 }
 \description{
 A \code{"xifti"} is VxT, whereas \code{clever} and \code{DVARS} accept a
- TxV matrix. This function calls \code{as.matrix} and transposes the data
- if it is a \code{"xifti"}.
+TxV matrix. This function calls \code{as.matrix} and transposes the data
+if it is a \code{"xifti"}.
 }
 \keyword{internal}

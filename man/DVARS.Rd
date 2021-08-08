@@ -17,18 +17,18 @@ DVARS(
 not be any missing data (\code{NA} or \code{NaN}).}
 
 \item{normalize}{Normalize the data as proposed in the original paper? Default:
- \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
- median of the mean image, and then centers each voxel on its mean.
+\code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
+median of the mean image, and then centers each voxel on its mean.
 
- To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
- HCP scans are already normalized to 10,000, just divide the data by 100 and
- center the voxels on their means:
+To replicate Afyouni and Nichols' procedure for the HCP MPP data, since the
+HCP scans are already normalized to 10,000, just divide the data by 100 and
+center the voxels on their means:
 
- \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
- \eqn{V \times T} data matrix.
+\code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the
+\eqn{V \times T} data matrix.
 
- Note that while voxel centering doesn't affect DVARS, it does affect
- DPD and ZD.}
+Note that while voxel centering doesn't affect DVARS, it does affect
+DPD and ZD.}
 
 \item{cutoff_DPD, cutoff_ZD}{Numeric outlier cutoffs. Timepoints
 exceeding these cutoffs will be flagged as outliers.}
@@ -38,17 +38,22 @@ exceeding these cutoffs will be flagged as outliers.}
 \value{
 A list with components
 \describe{
- \item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
- \item{measure_info}{"DVARS"}
- \item{outlier_cutoff}{The outlier cutoff value(s).}
- \item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
+\item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+\item{measure_info}{"DVARS"}
+\item{outlier_cutoff}{The outlier cutoff value(s).}
+\item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
 Computes the DSE decomposition and DVARS-related statistics.
 }
 \details{
-Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
-
 github.com/asoroosh/DVARS
 }
+\section{References}{
+
+\itemize{
+\item{Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291–312 (2018).}
+}
+}
+

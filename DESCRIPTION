@@ -1,6 +1,6 @@
 Package: fMRIscrub
 Type: Package
-Title: Calculate fMRI quality-control measures for scrubbing
+Title: fMRI scrubbing and other data cleaning routines
 Version: 0.7.0
 Authors@R: c(
     person(given = "Amanda",

@@ -14,7 +14,7 @@ matrix. For ICA, this is the M matrix.}
 
 \item{n_sim}{The number of simulation data to use for estimating the sampling
 distribution of kurtosis. Only used if a new simulation is performed. (If
-\eqn{n<1000} and the quantile is 90%, a pre-computed value is used instead.
+\eqn{n<1000} and the quantile is 90\%, a pre-computed value is used instead.
 If \eqn{n>1000}, the theoretical asymptotic distribution is used instead.)}
 
 \item{min_1}{Require at least one component to be selected? In other words, if
@@ -26,11 +26,11 @@ A logical vector indicating whether each component has high kurtosis.
 }
 \description{
 The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
- of kurtosis for Normal data of the same length as the components; it is
- estimated by simulation or calculated from the theoretical asymptotic
- distribution if the components are long enough.
+of kurtosis for Normal data of the same length as the components; it is
+estimated by simulation or calculated from the theoretical asymptotic
+distribution if the components are long enough.
 }
 \details{
 The components should not have any strong low-frequency trends, because trends
- can affect kurtosis in unpredictable ways unrelated to outlier presence.
+can affect kurtosis in unpredictable ways unrelated to outlier presence.
 }

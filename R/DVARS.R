@@ -78,8 +78,6 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' 
 #' Computes the DSE decomposition and DVARS-related statistics.
 #' 
-#' Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
-#' 
 #' github.com/asoroosh/DVARS
 #'
 #' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
@@ -111,6 +109,11 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' }
 #' @export
 #' @importFrom stats median pchisq qnorm
+#' 
+#' @section References:
+#'  \itemize{
+#'    \item{Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291–312 (2018).}
+#' }
 #' 
 DVARS <- function(
   X, normalize=TRUE, 

@@ -16,25 +16,25 @@ scrub_xifti(
 
 \item{method}{\code{"leverage"} or \code{"DVARS"}}
 
-\item{brainstructures}{Character vector indicating which brain structure(s) 
-to use: \code{"left"} (left cortical surface), \code{"right"} (right 
+\item{brainstructures}{Character vector indicating which brain structure(s)
+to use: \code{"left"} (left cortical surface), \code{"right"} (right
 cortical surface) and/or \code{"subcortical"} (subcortical and cerebellar
-gray matter). Can also be \code{"all"} (obtain all three brain structures). 
+gray matter). Can also be \code{"all"} (obtain all three brain structures).
 Default: \code{c("left", "right")} (excludes the subcortex).}
 
-\item{...}{Additional arguments to each specific scrubbing function: 
+\item{...}{Additional arguments to each specific scrubbing function:
 \code{\link{clever}} or \code{\link{DVARS}}.}
 }
 \value{
 A list with components
 \describe{
- \item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
- \item{measure_info}{Describes the outlyingness measure(s)}
- \item{outlier_cutoff}{The outlier cutoff value(s).}
- \item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+\item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
+\item{measure_info}{Describes the outlyingness measure(s)}
+\item{outlier_cutoff}{The outlier cutoff value(s).}
+\item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
 Computes leverage, DVARS, or FD, and optionally flags the measure to identify
- artifactual time points. Requires the Connectime Workbench.
+artifactual time points. Requires the Connectime Workbench.
 }

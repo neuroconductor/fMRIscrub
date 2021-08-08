@@ -2,7 +2,7 @@
 % Please edit documentation in R/clever.R
 \name{clever}
 \alias{clever}
-\title{Leverage scrubbing with \code{clever}}
+\title{Projection scrubbing}
 \usage{
 clever(
   X,
@@ -23,65 +23,64 @@ clever(
 )
 }
 \arguments{
-\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, 
-\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
-number of timepoints and \eqn{V} should be the number of brainordinate 
+\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables},
+\eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the
+number of timepoints and \eqn{V} should be the number of brainordinate
 vertices/voxels. The outlyingness of the rows in \code{X} will be measured.}
 
-\item{projection}{Leverage works by projecting the data onto directions likely to 
-contain outlier information. Choose one of the following: \code{"PCA"}, 
-\code{"PCATF"}, or \code{"ICA"}. The directions of outlyingness will be 
+\item{projection}{Choose one of the following: \code{"PCA"},
+\code{"PCATF"}, or \code{"ICA"}. The directions of outlyingness will be
 selected from the high-kurtosis components among the top \eqn{k}, where
 \eqn{k} is the number of PCs selected by PESEL or that are above-average
 variance (see the \code{PESEL} argument).}
 
 \item{nuisance}{Nuisance signals to regress from each column of \code{X}.
- Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
- number of nuisance signals. Default: a matrix with a constant column
- (this is the intercept term in the design matrix) and four DCT bases. 
- This default nuisance regression will have the effect of detrending the
- data by removing low-frequency components. To not perform any nuisance
- regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
+number of nuisance signals. Default: a matrix with a constant column
+(this is the intercept term in the design matrix) and four DCT bases.
+This default nuisance regression will have the effect of detrending the
+data by removing low-frequency components. To not perform any nuisance
+regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- if kurtosis is being used to select the projection directions, trends can 
- induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. Detrending should not be used with 
- non-time-series data because the observations are not temporally related.
+Detrending is highly recommended for time-series data, especially if there
+are many time points or evolving circumstances affecting the data. Additionally,
+if kurtosis is being used to select the projection directions, trends can
+induce positive or negative kurtosis, contaminating the connection between
+high kurtosis and outlier presence. Detrending should not be used with
+non-time-series data because the observations are not temporally related.
 
- To perform nuisance regression with an intercept, DCT bases, and additional
- signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
+To perform nuisance regression with an intercept, DCT bases, and additional
+signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.}
 
 \item{center}{Center the columns of the data by their medians, and scale the
- columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
- Centering is necessary for computing the projections, so if \code{center} is
- \code{FALSE}, the data must already be centered.
+columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}.
+Centering is necessary for computing the projections, so if \code{center} is
+\code{FALSE}, the data must already be centered.
 
- Note that centering and scaling occur after nuisance regression, so even if
- \code{center} is \code{FALSE}, the data will be centered on the means if
- the nuisance regression included an intercept term, as it does by default.}
+Note that centering and scaling occur after nuisance regression, so even if
+\code{center} is \code{FALSE}, the data will be centered on the means if
+the nuisance regression included an intercept term, as it does by default.}
 
 \item{scale}{Center the columns of the data by their medians, and scale the
- columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
- Centering is necessary for computing the projections, so if \code{center} is
- \code{FALSE}, the data must already be centered.
+columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}.
+Centering is necessary for computing the projections, so if \code{center} is
+\code{FALSE}, the data must already be centered.
 
- Note that centering and scaling occur after nuisance regression, so even if
- \code{center} is \code{FALSE}, the data will be centered on the means if
- the nuisance regression included an intercept term, as it does by default.}
+Note that centering and scaling occur after nuisance regression, so even if
+\code{center} is \code{FALSE}, the data will be centered on the means if
+the nuisance regression included an intercept term, as it does by default.}
 
-\item{comps_mean_dt}{Stabilize the mean and variance of the PCA, 
-PCATF, and ICA components prior to computing leverage? \code{TRUE}, 
-\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending 
-(\code{TRUE} will use 4). Note that these refer to the projection scores and 
+\item{comps_mean_dt}{Stabilize the mean and variance of the PCA,
+PCATF, and ICA components prior to computing leverage? \code{TRUE},
+\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending
+(\code{TRUE} will use 4). Note that these refer to the projection scores and
 not the data itself. Also, if scaling but not centering, the components must
 be expected to already be centered; otherwise, the results will be invalid.}
 
-\item{comps_var_dt}{Stabilize the mean and variance of the PCA, 
-PCATF, and ICA components prior to computing leverage? \code{TRUE}, 
-\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending 
-(\code{TRUE} will use 4). Note that these refer to the projection scores and 
+\item{comps_var_dt}{Stabilize the mean and variance of the PCA,
+PCATF, and ICA components prior to computing leverage? \code{TRUE},
+\code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending
+(\code{TRUE} will use 4). Note that these refer to the projection scores and
 not the data itself. Also, if scaling but not centering, the components must
 be expected to already be centered; otherwise, the results will be invalid.}
 
@@ -95,17 +94,17 @@ for kurtosis should be used to select the components? Default: \code{0.99}.}
 entries are:
 
 \describe{
-  \item{lambda}{Trend-filtering parameter. Default: \code{5}.}
-  \item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
-  \item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
-  \item{verbose}{Print updates? Default: \code{FALSE}.}
+\item{lambda}{Trend-filtering parameter. Default: \code{5}.}
+\item{niter_max}{Maximum number of iterations. Default: \code{1000}.}
+\item{TOL}{Convergence tolerance parameter. Default: \code{1e-8}.}
+\item{verbose}{Print updates? Default: \code{FALSE}.}
 }}
 
-\item{get_dirs}{Do the projection directions need to be returned? This is the 
+\item{get_dirs}{Do the projection directions need to be returned? This is the
 \eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
 to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
 
-\item{full_PCA}{Only applies to the PCA projection. Return the full SVD? 
+\item{full_PCA}{Only applies to the PCA projection. Return the full SVD?
 Default: \code{FALSE} (return only the components used to compute the measures).}
 
 \item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}
@@ -115,61 +114,70 @@ Default: \code{FALSE} (return only the components used to compute the measures).
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \value{
-A \code{"clever_multi"} object, i.e. a list with components
+A \code{"clever"} object, i.e. a list with components
 \describe{
- \item{measure}{A numeric vector of leverage values.}
- \item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}
- \item{outlier_flag}{A logical vector where \code{TRUE} indicates suspected outlier presence.}
- \item{mask}{
-   A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
-   \describe{
-     \item{0}{The data location was not masked out.}
-     \item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
-     \item{-2}{The data location was masked out, because it was constant.}
-   }
- }
- \item{PCA}{
-   If PCA was used, this will be a list with components:
-   \describe{
-     \item{U}{The \eqn{T \times Q} PC score matrix.}
-     \item{D}{The standard deviation of each PC.}
-     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}.}
-     \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
-     \item{nPCs_PESEL}{The number of PCs selected by PESEL.}
-     \item{nPCs_avgvar}{The number of above-average variance PCs.}
-   }
-   where \code{Q} is the number of PCs selected by PESEL or of above-average variance (or the greater of the two if both were used).
- }
- \item{PCATF}{
-   If PCATF was used, this will be a list with components:
-   \describe{
-     \item{U}{The \eqn{T \times Q} PC score matrix.}
-     \item{D}{The standard deviation of each PC.}
-     \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}}
-   }
- }
- \item{ICA}{
-   If ICA was used, this will be a list with components:
-   \describe{
-     \item{S}{The \eqn{P \times Q} source signals matrix. Included only if \code{get_dirs}} 
-     \item{M}{The \eqn{T \times Q} mixing matrix.}
-     \item{highkurt}{The length \code{Q} logical vector indicating mixing scores of high kurtosis.}
-   }
- }
+\item{measure}{A numeric vector of leverage values.}
+\item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}
+\item{outlier_flag}{A logical vector where \code{TRUE} indicates suspected outlier presence.}
+\item{mask}{
+A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
+\describe{
+\item{0}{The data location was not masked out.}
+\item{-1}{The data location was masked out, because it had at least one \code{NA} or \code{NaN} value.}
+\item{-2}{The data location was masked out, because it was constant.}
+}
+}
+\item{PCA}{
+If PCA was used, this will be a list with components:
+\describe{
+\item{U}{The \eqn{T \times Q} PC score matrix.}
+\item{D}{The standard deviation of each PC.}
+\item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}.}
+\item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+\item{nPCs_PESEL}{The number of PCs selected by PESEL.}
+\item{nPCs_avgvar}{The number of above-average variance PCs.}
+}
+where \code{Q} is the number of PCs selected by PESEL or of above-average variance (or the greater of the two if both were used).
+}
+\item{PCATF}{
+If PCATF was used, this will be a list with components:
+\describe{
+\item{U}{The \eqn{T \times Q} PC score matrix.}
+\item{D}{The standard deviation of each PC.}
+\item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}}
+}
+}
+\item{ICA}{
+If ICA was used, this will be a list with components:
+\describe{
+\item{S}{The \eqn{P \times Q} source signals matrix. Included only if \code{get_dirs}}
+\item{M}{The \eqn{T \times Q} mixing matrix.}
+\item{highkurt}{The length \code{Q} logical vector indicating mixing scores of high kurtosis.}
+}
+}
 }
 }
 \description{
-Calculates leverage to identify outliers in high-dimensional data.
+Projects the data onto directions of outlyingness and then calculates
+leverage to identify outliers in high-dimensional data.
 }
+\section{References}{
+
+\itemize{
+\item{Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521-536 (2017).}
+\item{Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021).}
+}
+}
+
 \section{Order of operations}{
 
- The input data undergo a nuisance regression to remove low frequency trends
- (see the \code{DCT} argument to control or disable this behavior) and any
- other nuisance signals (see the \code{nuisance_too} argument to specify them).
- (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
- is performed.) Then the data are centered and scaled (see the \code{center}
- and \code{scale} arguments to control or disable this behavior). Leverage
- is computed afterward.
+The input data undergo a nuisance regression to remove low frequency trends
+(see the \code{DCT} argument to control or disable this behavior) and any
+other nuisance signals (see the \code{nuisance_too} argument to specify them).
+(If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression
+is performed.) Then the data are centered and scaled (see the \code{center}
+and \code{scale} arguments to control or disable this behavior). Leverage
+is computed afterward.
 }
 
 \examples{

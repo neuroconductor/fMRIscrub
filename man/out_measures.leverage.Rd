@@ -16,12 +16,12 @@ and have a 2-norm of 1? Speeds up the computation.}
 Default: \code{NULL} (do not compute outliers).}
 }
 \value{
-A list with entries \code{"meas"} (the leverage values), 
- \code{"cut"} (the leverage cutoff value) and 
- \code{"flag"} (logical vector indicating the outliers). If 
- \code{!is.null(median_cutoff)}, all entries except \code{"meas"} are omitted.
+A list with entries \code{"meas"} (the leverage values),
+\code{"cut"} (the leverage cutoff value) and
+\code{"flag"} (logical vector indicating the outliers). If
+\code{!is.null(median_cutoff)}, all entries except \code{"meas"} are omitted.
 }
 \description{
 Computes the leverage of each observation, in the PC score / IC mixing matrix (U/M).
- Optionally can identify the outliers.
+Optionally can identify the outliers.
 }

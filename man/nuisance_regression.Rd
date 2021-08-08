@@ -16,5 +16,5 @@ The data after nuisance regression.
 }
 \description{
 Performs nuisance regression. The data and design matrix must both be
- centered, or an intercept must be included in the design matrix!
+centered, or an intercept must be included in the design matrix!
 }

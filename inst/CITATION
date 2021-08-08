@@ -1,6 +1,6 @@
-citHeader("To cite {fMRIscrub} in publications use:")
+citHeader("To cite projection scrubbing in publications use the following references. (To cite other methods included in this package, refer to the documentation for their individual functions.)")
 
-fMRIscrub_citations <- c(
+projection_scrubbing <- c(
 	bibentry(
 		bibtype      = "Article",
 		title        = "PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data",
@@ -22,19 +22,17 @@ fMRIscrub_citations <- c(
 	),
 
 	bibentry(
-		bibtype      = "Article",
-		note         = "This citation is for the DVARS measure of outlyingness.",
-		title        = "Insight and inference for DVARS",
-		author       = personList(
-			as.person("Soroosh Afyouni"),
-			as.person("Thomas E Nichols")
+		bibtype			 = "Article",
+		title 			 = "Projection scrubbing: a more effective, data-driven fMRI denoising method", 
+		author 			 = personList(
+			as.person("Damon D Pham"),
+			as.person("Daniel McDonald"),
+			as.person("Lei Ding"),
+			as.person("Mary Beth Nebel"),
+			as.person("Amanda Mejia")
 		),
-		journal      = "Neuroimage",
-		year         = "2018",
-		volume       = "172",
-		pages        = "291--312",
-		publisher    = "Elsevier",
-		doi          = "10.1016/j.neuroimage.2017.12.098",
-		key          = "afyouniInsightInferenceDVARS2018a"
+		journal			 = "Arxiv",
+		year 				 = "2021",
+		key					 = "phamProjectionScrubbingMore2021a"
 	)
 )

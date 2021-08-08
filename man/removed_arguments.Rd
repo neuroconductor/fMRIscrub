@@ -4,91 +4,91 @@
 \alias{removed_arguments}
 \title{Removed arguments}
 \arguments{
-\item{measures}{Character vector indicating the measures to compute. Choose 
- at least one of the following: 
+\item{measures}{Character vector indicating the measures to compute. Choose
+at least one of the following:
 
- \describe{
-   \item{\code{"leverage"}}{Leverage scrubbing, which is based on
-     projecting the data onto directions thought to express outlier 
-     information.}
-   \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-   \item{\code{"DVARS"}}{Traditional DVARS}
-   \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
-     Nichols, 2018)}
-   \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
-   \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-     Requires \code{motion}.}
-   \item{\code{"GSR"}}{Global Signal of the data.}
- }
+\describe{
+\item{\code{"leverage"}}{Leverage scrubbing, which is based on
+projecting the data onto directions thought to express outlier
+information.}
+\item{\code{"robdist"}}{Robust Mahalanobis-based distance}
+\item{\code{"DVARS"}}{Traditional DVARS}
+\item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and
+Nichols, 2018)}
+\item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
+\item{\code{"motion"}}{Translation and rotation realignment parameters.
+Requires \code{motion}.}
+\item{\code{"GSR"}}{Global Signal of the data.}
+}
 
- Use \code{"all"} to select all available measures. (FD and motion will only 
- be computed if the motion realignment parameters are provided.) Default: 
- \code{"leverage", "DVARS2"}.
+Use \code{"all"} to select all available measures. (FD and motion will only
+be computed if the motion realignment parameters are provided.) Default:
+\code{"leverage", "DVARS2"}.
 
- Note that motion and GSR are not direct measures of outlyingness,
- so they do not have corresponding \code{outlier_cutoffs}.}
+Note that motion and GSR are not direct measures of outlyingness,
+so they do not have corresponding \code{outlier_cutoffs}.}
 
-\item{motion}{Only used if the \code{"FD"} measure is requested. An 
- \eqn{N \times 6} matrix in which the first three columns represent the
- translational realignment parameters (mm), and the second three columns represent
- the rotational realignment parameters in (radians). To convert radians to mm,
- the displacement on a sphere of radius 50 mm will be computed.
+\item{motion}{Only used if the \code{"FD"} measure is requested. An
+\eqn{N \times 6} matrix in which the first three columns represent the
+translational realignment parameters (mm), and the second three columns represent
+the rotational realignment parameters in (radians). To convert radians to mm,
+the displacement on a sphere of radius 50 mm will be computed.
 
- Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
- read with \code{\link{read.table}} (fields separated by white-space; no
- header).}
+Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
+read with \code{\link{read.table}} (fields separated by white-space; no
+header).}
 
 \item{noise_nPC}{Only applies to CompCor.
- The number of principal components to compute for each noise
- ROI. Alternatively, values between 0 and 1, in which case they will 
- represent the minimum proportion of variance explained by the PCs used for
- each noise ROI. The smallest number of PCs will be used to achieve this 
- proportion of variance explained. 
+The number of principal components to compute for each noise
+ROI. Alternatively, values between 0 and 1, in which case they will
+represent the minimum proportion of variance explained by the PCs used for
+each noise ROI. The smallest number of PCs will be used to achieve this
+proportion of variance explained.
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its
- elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
- each noise ROI).}
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
+elements will be recycled. Default: \code{5} (compute the top 5 PCs for
+each noise ROI).}
 
 \item{noise_erosion}{Only applies to CompCor.
- The number of voxel layers to erode the noise ROIs by. 
+The number of voxel layers to erode the noise ROIs by.
 
- Should be a list or numeric vector with the same length as \code{ROI_noise}. 
- It will be matched to each ROI based on the name of each entry, or if the 
- names are missing, the order of entries. If it is an unnamed vector, its 
- elements will be recycled. Default: \code{NULL}, which will use a value of
- 0 (do not erode the noise ROIs).}
+Should be a list or numeric vector with the same length as \code{ROI_noise}.
+It will be matched to each ROI based on the name of each entry, or if the
+names are missing, the order of entries. If it is an unnamed vector, its
+elements will be recycled. Default: \code{NULL}, which will use a value of
+0 (do not erode the noise ROIs).}
 
 \item{DCT}{Detrend the columns of the data using the discrete cosine
- transform (DCT)? Use an integer to indicate the number of cosine bases to 
- use for detrending. Use \code{0} (default) to forgo detrending. 
+transform (DCT)? Use an integer to indicate the number of cosine bases to
+use for detrending. Use \code{0} (default) to forgo detrending.
 
- The data must be centered, either before input or with \code{center}.
+The data must be centered, either before input or with \code{center}.
 
- Detrending is highly recommended for time-series data, especially if there 
- are many time points or evolving circumstances affecting the data. Additionally,
- if kurtosis is being used to select the projection directions, trends can 
- induce positive or negative kurtosis, contaminating the connection between 
- high kurtosis and outlier presence. 
- 
- Detrending should not be used with non-time-series data because the 
- observations are not temporally related.}
+Detrending is highly recommended for time-series data, especially if there
+are many time points or evolving circumstances affecting the data. Additionally,
+if kurtosis is being used to select the projection directions, trends can
+induce positive or negative kurtosis, contaminating the connection between
+high kurtosis and outlier presence.
 
-\item{PESEL}{Leverage is based on the largest \eqn{k} PCA, ICA, or PCATF 
- components. \code{k} can be determined by PESEL with \code{\link[pesel]{pesel}}
- (default, \code{PESEL==TRUE}). Otherwise, \eqn{k} will be the number of 
- above-average-variance PCs (\code{PESEL==FALSE}). In either case, \code{k}
- is calculated based on PCA, even to select the number of ICA and PCATF
- components.  
+Detrending should not be used with non-time-series data because the
+observations are not temporally related.}
 
- Note that not all \code{k} components are ultimately used: only components with
- high kurtosis (> 99th percentile of the kurtosis of data of equal length 
- from a Normal distribution) contribute to the leverage calculation.}
+\item{PESEL}{Leverage is based on the largest \eqn{k} PCA, ICA, or PCATF
+components. \code{k} can be determined by PESEL with \code{\link[pesel]{pesel}}
+(default, \code{PESEL==TRUE}). Otherwise, \eqn{k} will be the number of
+above-average-variance PCs (\code{PESEL==FALSE}). In either case, \code{k}
+is calculated based on PCA, even to select the number of ICA and PCATF
+components.
+
+Note that not all \code{k} components are ultimately used: only components with
+high kurtosis (> 99th percentile of the kurtosis of data of equal length
+from a Normal distribution) contribute to the leverage calculation.}
 
 \item{nuisance_too}{A matrix of nuisance signals to regress from the data
 before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-regression will be performed simultaneously with DCT detrending if 
+regression will be performed simultaneously with DCT detrending if
 applicable. \code{NULL} (default) to not add additional nuisance regressors.}
 }
 \description{

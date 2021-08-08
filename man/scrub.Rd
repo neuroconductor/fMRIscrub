@@ -15,19 +15,19 @@ realignment parameters (3 translation and 3 rotation).}
 
 \item{method}{\code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}}
 
-\item{...}{Additional arguments to each specific scrubbing function: 
+\item{...}{Additional arguments to each specific scrubbing function:
 \code{\link{clever}}, \code{\link{DVARS}} or \code{\link{FD}}.}
 }
 \value{
 A list with components
 \describe{
- \item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
- \item{measure_info}{Describes the outlyingness measure(s)}
- \item{outlier_cutoff}{The outlier cutoff value(s).}
- \item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+\item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
+\item{measure_info}{Describes the outlyingness measure(s)}
+\item{outlier_cutoff}{The outlier cutoff value(s).}
+\item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
 Computes leverage, DVARS, or FD, and optionally flags the measure to identify
- artifactual time points.
+artifactual time points.
 }

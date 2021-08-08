@@ -71,9 +71,9 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
   list(noise_comps=noise_comps, noise_var=noise_var, noise_vartotal=noise_vartotal)
 }
 
-#' CompCor
+#' Anatomical CompCor
 #'
-#' The aCompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+#' The aCompCor algorithm for denoising fMRI data
 #' 
 #' First, the principal components (PCs) of each noise ROI are calculated. For each ROI,
 #'  voxels are centered and scaled (can be disabled with the arguments 
@@ -109,6 +109,12 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #'  scores, one for each \code{ROI_noise}.
 #'
 #' @importFrom robustbase rowMedians
+#' 
+#' @section References:
+#'  \itemize{
+#'    \item{Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90-101 (2007).}
+#'    \item{Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22–35 (2014).}
+#' }
 #'
 #' @export
 CompCor <- function(

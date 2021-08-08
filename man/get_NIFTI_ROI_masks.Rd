@@ -10,27 +10,27 @@ get_NIFTI_ROI_masks(nii_labels, ROI_noise = c("wm_cort", "csf"))
 \item{nii_labels}{\eqn{I \times J \times K}
 NIFTI object or array (or file path to the NIFTI) which
 contains the corresponding labels to each voxel in \code{nii}. Values should
-be according to this table: 
+be according to this table:
 https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT .
 In the HCP, the corresponding file is "ROIs/Atlas_wmparc.2.nii.gz".}
 
 \item{ROI_noise}{A list of numeric vectors. Each entry should represent labels
- in \code{nii_labels} belonging to a single noise ROI, named by that entry's 
- name. Or, this can be a character vector of at least one of the following: 
- \code{"wm_cort"} (cortical white matter), \code{"wm_cblm"} (cerebellar white
- matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
- will be used:
+in \code{nii_labels} belonging to a single noise ROI, named by that entry's
+name. Or, this can be a character vector of at least one of the following:
+\code{"wm_cort"} (cortical white matter), \code{"wm_cblm"} (cerebellar white
+matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
+will be used:
 
- \describe{
-   \item{wm_cort}{c(3000:4035, 5001, 5002)}
-   \item{wm_cblm}{c(7, 46)}
-   \item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
- }
+\describe{
+\item{wm_cort}{c(3000:4035, 5001, 5002)}
+\item{wm_cblm}{c(7, 46)}
+\item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
+}
 
- These default ROIs are based on this forum post: 
- https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
+These default ROIs are based on this forum post:
+https://www.mail-archive.com/hcp-users@humanconnectome.org/msg00931.html
 
- Default: \code{c("wm_cort", "csf")}}
+Default: \code{c("wm_cort", "csf")}}
 }
 \value{
 The ROIs

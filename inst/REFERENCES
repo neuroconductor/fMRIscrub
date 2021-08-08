@@ -1,0 +1,13 @@
+Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291–312 (2018).
+Ahmed, N., Natarajan, T. & Rao, K. R. Discrete Cosine Transform. IEEE Transactions on Computers C–23, 90–93 (1974).
+Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90–101 (2007).
+Grabner, G. et al. Symmetric Atlasing and Model Based Segmentation: An Application to the Hippocampus in Older Adults. in Medical Image Computing and Computer-Assisted Intervention – MICCAI 2006 (eds. Larsen, R., Nielsen, M. & Sporring, J.) 58–66 (Springer, 2006). doi:10.1007/11866763_8.
+Jenkinson, M., Beckmann, C. F., Behrens, T. E. J., Woolrich, M. W. & Smith, S. M. FSL. NeuroImage 62, 782–790 (2012).
+Kim, S.-J., Koh, K., Boyd, S. & Gorinevsky, D. $\ell_1$ Trend Filtering. SIAM Rev. 51, 339–360 (2009).
+Lindquist, M. A., Geuter, S., Wager, T. D. & Caffo, B. S. Modular preprocessing pipelines can reintroduce artifacts into fMRI data. Human Brain Mapping 40, 2358–2376 (2019).
+Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521–536 (2017).
+Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22–35 (2014).
+Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021).
+Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L. & Petersen, S. E. Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. Neuroimage 59, 2142–2154 (2012).
+Sobczyk, P., Bogdan, M. & Josse, J. Bayesian Dimensionality Reduction With PCA Using Penalized Semi-Integrated Likelihood. Journal of Computational and Graphical Statistics 26, 826–839 (2017).
+Tibshirani, R. J. Adaptive piecewise polynomial estimation via trend filtering. The Annals of Statistics 42, 285–323 (2014).

@@ -2,15 +2,13 @@
 #'
 #' Calculates Framewise Displacement (FD) 
 #' 
-#' The FD formula is taken from (Power, 2012):
+#' The FD formula is taken from Power et. al. (2012):
 #'
 #'  \eqn{FD_i = | \Delta x_i | + | \Delta y_i | + | \Delta z_i + | \Delta \alpha_i | + | \Delta \beta_i | + | \Delta \gamma_i |}, 
 #'  where \eqn{i} is the timepoint; \eqn{x}, \eqn{y} and \eqn{z} are the 
 #'  translational realignment parameters (RPs);
 #'  \eqn{\alpha}, \eqn{\beta} and \eqn{\gamma} are the rotational RPs;
 #'  and \eqn{\Delta x_i = x_{i-1} - x_i} (and similarly for the other RPs).
-#'
-#'  Citation: 10.1016/j.neuroimage.2011.10.018
 #' 
 #' @param X An \eqn{N \times 6} matrix in which the first three columns represent the
 #'  translational RPs (\code{trans_units}), and the second three columns represent
@@ -34,7 +32,7 @@
 #' @param detrend Detrend each RP with the DCT before computing FD?
 #'  Default: \code{FALSE}. Can be a number of DCT bases to use, or \code{TRUE}
 #'  to use 4.
-#' @param cutoff [TO DO]
+#' @param cutoff FD values higher than this will be flagged. Default: \code{.3}.
 #' @return A list with components
 #' \describe{
 #'  \item{measure}{A length \eqn{N} vector of FD values in \code{trans_units}.}
@@ -45,6 +43,12 @@
 #'
 #' @importFrom utils read.table
 #' @export
+#' 
+#' @section References:
+#'  \itemize{
+#'    \item{Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L. & Petersen, S. E. Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. Neuroimage 59, 2142–2154 (2012).}
+#' }
+#' 
 FD <- function(
   X, trans_units = c("mm", "cm", "in"), rot_units = c("deg", "rad", "mm", "cm", "in"), 
   brain_radius=NULL, detrend=FALSE, cutoff=.3) {

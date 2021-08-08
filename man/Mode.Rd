@@ -13,7 +13,7 @@ Mode(x)
 The mode
 }
 \description{
-Get mode of a data vector. But use the median instead of the mode if all 
- data values are unique.
+Get mode of a data vector. But use the median instead of the mode if all
+data values are unique.
 }
 \keyword{internal}

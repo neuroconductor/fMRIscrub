@@ -19,6 +19,6 @@ A list containing the estimated F distribution's c, m, and df.
 }
 \description{
 This estimates the parameters c and m required to determine the distribution
- of robust MCD distances as derived by Hardin and Rocke (2005), The
- Distribution of Robust Distances.
+of robust MCD distances as derived by Hardin and Rocke (2005), The
+Distribution of Robust Distances.
 }

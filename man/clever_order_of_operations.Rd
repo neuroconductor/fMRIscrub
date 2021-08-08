@@ -8,13 +8,13 @@ Order of operations in \code{clever}
 }
 \section{Order of operations}{
 
- The input data undergo a nuisance regression to remove low frequency trends
- (see the \code{DCT} argument to control or disable this behavior) and any
- other nuisance signals (see the \code{nuisance_too} argument to specify them).
- (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
- is performed.) Then the data are centered and scaled (see the \code{center}
- and \code{scale} arguments to control or disable this behavior). Leverage
- is computed afterward.
+The input data undergo a nuisance regression to remove low frequency trends
+(see the \code{DCT} argument to control or disable this behavior) and any
+other nuisance signals (see the \code{nuisance_too} argument to specify them).
+(If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression
+is performed.) Then the data are centered and scaled (see the \code{center}
+and \code{scale} arguments to control or disable this behavior). Leverage
+is computed afterward.
 }
 
 \keyword{internal}
