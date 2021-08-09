@@ -7,11 +7,12 @@
 #'  row in \code{X}.
 #' @param nuisance Nuisance signals to regress from each column of \code{X}. 
 #'  Should be specified as a design matrix: a \eqn{T} by \eqn{N} numeric matrix
-#'  where \eqn{N} represents the number of nuisance signals. 
-#'  Default: a matrix with a constant column (the intercept term) and four DCT bases. 
-#'  This default nuisance regression will have the effect of demeaning and detrending the
-#'  data by removing low-frequency components. To not perform any nuisance
-#'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+#'  where \eqn{N} represents the number of nuisance signals. Or can be "DCT4"
+#'  (default), which will create a matrix with a constant column (the intercept 
+#'  term) and four DCT bases. This default nuisance regression will have the 
+#'  effect of demeaning and detrending the data by removing low-frequency 
+#'  components. To not perform any nuisance regression set this argument to 
+#'  \code{NULL}, \code{0}, or \code{FALSE}.
 #' 
 #'  Detrending is highly recommended for time-series data, especially if there 
 #'  are many time points or evolving circumstances affecting the data. Additionally,

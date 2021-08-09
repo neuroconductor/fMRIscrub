@@ -6,8 +6,8 @@
 \usage{
 clever_multi(
   X,
-  projection = "PCA_kurt",
-  nuisance = cbind(1, dct_bases(nrow(X), 4)),
+  projection = "ICA_kurt",
+  nuisance = "DCT4",
   center = TRUE,
   scale = TRUE,
   comps_mean_dt = FALSE,
@@ -49,15 +49,16 @@ contain outlier information. Choose at least one of the following:
 where \eqn{k} is the number of components determined by PESEL, and \eqn{k2}
 is the number of principal components with above-average variance.
 
-Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.}
+Use \code{"all"} to use all projection methods. Default: \code{"ICA_kurt"}.}
 
 \item{nuisance}{Nuisance signals to regress from each column of \code{X}.
 Should be specified as a design matrix: a \eqn{T} by \eqn{N} numeric matrix
-where \eqn{N} represents the number of nuisance signals.
-Default: a matrix with a constant column (the intercept term) and four DCT bases.
-This default nuisance regression will have the effect of demeaning and detrending the
-data by removing low-frequency components. To not perform any nuisance
-regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
+where \eqn{N} represents the number of nuisance signals. Or can be "DCT4"
+(default), which will create a matrix with a constant column (the intercept
+term) and four DCT bases. This default nuisance regression will have the
+effect of demeaning and detrending the data by removing low-frequency
+components. To not perform any nuisance regression set this argument to
+\code{NULL}, \code{0}, or \code{FALSE}.
 
 Detrending is highly recommended for time-series data, especially if there
 are many time points or evolving circumstances affecting the data. Additionally,
@@ -176,6 +177,7 @@ Default: \code{FALSE} (return only the high-variance components).}
 A \code{"clever_multi"} object, i.e. a list with components
 \describe{
 \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
+\item{measure_info}{A data.frame with \eqn{P} rows listing information about each projection used.}
 \item{outlier_cutoff}{A \eqn{1} by \eqn{P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
 \item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
 \item{mask}{

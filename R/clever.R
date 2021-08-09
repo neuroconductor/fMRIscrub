@@ -87,15 +87,15 @@
 #'
 #' clev = clever(X)
 clever = function(
-  X, projection=c("PCA", "PCATF", "ICA"), 
-  nuisance=cbind(1, dct_bases(nrow(X), 4)),
+  X, projection=c("ICA", "PCATF", "PCA"), 
+  nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
   PESEL=TRUE, kurt_quantile=.99, PCATF_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4, 
   verbose=FALSE){
   
-  projection <- match.arg(projection, c("PCA", "PCATF", "ICA"))
+  projection <- match.arg(projection, c("ICA", "PCATF", "PCA"))
   if (!PESEL) { projection <- paste0(projection, "2") }
   if (kurt_quantile > 0) { 
     projection <- paste0(projection, "_kurt")

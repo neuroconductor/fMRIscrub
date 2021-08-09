@@ -17,11 +17,12 @@ clever_from_multi <- function(clev) {
   if ("outlier_flag" %in% names(clev)) { clev$outlier_flag <- as.logical(clev$outlier_flag[,1]) }
 
   # For all projections
-  nComps <- ifelse(
-    grepl("PCA2|ICA2", clev$measure_info["name"]), 
-    clev$PCA$nPCs_avgvar, clev$PCA$nPCs_PESEL
-  )
-
+  if (grepl("PCA2|ICA2", clev$measure_info["name"])) {
+    nComps <- clev$PCA$nPCs_avgvar
+  } else {
+    nComps <- clev$PCA$nPCs_PESEL
+  }
+  
   # For PCA
   if (!is.null(clev$PCA$U)) {
     if (nrow(clev$PCA$U) != ncol(clev$PCA$U)) {

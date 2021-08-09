@@ -25,10 +25,11 @@
 #'  where \eqn{k} is the number of components determined by PESEL, and \eqn{k2}
 #'  is the number of principal components with above-average variance.
 #'  
-#'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
+#'  Use \code{"all"} to use all projection methods. Default: \code{"ICA_kurt"}.
 #' @return A \code{"clever_multi"} object, i.e. a list with components
 #' \describe{
 #'  \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
+#'  \item{measure_info}{A data.frame with \eqn{P} rows listing information about each projection used.}
 #'  \item{outlier_cutoff}{A \eqn{1} by \eqn{P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
 #'  \item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
 #'  \item{mask}{
@@ -91,8 +92,8 @@
 #'
 #' clev = fMRIscrub:::clever_multi(X)
 clever_multi = function(
-  X, projection = "PCA_kurt", 
-  nuisance=cbind(1, dct_bases(nrow(X), 4)),
+  X, projection = "ICA_kurt", 
+  nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
   kurt_quantile=.99, PCATF_kwargs=NULL,
   get_dirs=FALSE, full_PCA=FALSE,
@@ -170,6 +171,11 @@ clever_multi = function(
   out$measure_info <- m_info
 
   # `nuisance`------------------------------------------------------------------
+  if (identical(nuisance, "DCT4")) { 
+    nuisance <- cbind(1, dct_bases(nrow(X), 4))
+  } else {
+    if (is.character(nuisance)) { stop("`nuisance` must be 'DCT4' or a numeric matrix.") }
+  }
   do_nuisance <- !(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))
   if (do_nuisance) { 
     nuisance <- check_design_matrix(nuisance, T_)
@@ -296,6 +302,10 @@ clever_multi = function(
   # [TO DO]: move outside if(PCA) so PCA isn't required for ICA+PESEL
   if (any(valid_projection_PESEL %in% projection)) {
     out$PCA$nPCs_PESEL <- with(set.seed(0), pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs)
+    if (out$PCA$nPCs_PESEL == 1) {
+      warning("PESEL estimates that there is only one component. Using two.")
+      out$PCA$nPCs_PESEL <- 2
+    }
     maxK_PCA <- max(maxK_PCA, out$PCA$nPCs_PESEL)
   }
   if (any(valid_projection_avgvar %in% projection)) {
@@ -335,7 +345,7 @@ clever_multi = function(
     if(any(tf_const_mask)){
       warning(
         "Warning: ", sum(tf_const_mask), " out of ", length(tf_const_mask),
-        "trend-filtered PC scores are zero-variance.\n"
+        " trend-filtered PC scores are zero-variance.\n"
       )
     }
     names(out$PCATF)[names(out$PCATF) %in% c("u", "d", "v")] <- toupper(names(out$PCATF)[names(out$PCATF) %in% c("u", "d", "v")])
@@ -359,7 +369,7 @@ clever_multi = function(
     }
     out$ICA <- with(set.seed(0), ica::icaimax(t(X), maxK_ICA, center=FALSE))[c("S", "M")]
     # Issue due to rank.
-    if (ncol(out$ICA$M) != maxK_ICA) {
+    if (ncol(out$ICA$M) < maxK_ICA) {
       cat("Rank issue with ICA: adding constant zero columns.\n")
       K_missing <- maxK_ICA - ncol(out$ICA$M)
       out$ICA$M <- cbind(out$ICA$M, matrix(0, nrow=nrow(out$ICA$M), ncol=K_missing))

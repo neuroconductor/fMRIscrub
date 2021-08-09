@@ -47,12 +47,13 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-We will now run projection scrubbing on both datasets. We'll use the default implementation (ICA leverage), except additionally we will stabilize each component's mean and variance prior to kurtosis and leverage computation.[^1:]
+We will now run projection scrubbing on both datasets. We'll use the default implementation (ICA leverage), except additionally we will stabilize each component's mean and variance prior to kurtosis and leverage computation.[^1]
 
 [^1]: Although the data will be mean-detrended during the nuisance regression with DCT bases, some trends may persist in the components because that nuisance regression is estimated non-robustly. A robust nuisance regression would take too much time to estimate at every data location. But since $Q << V$, we can implement a robust nuisance regression for component detrending. Still, component detrending is disabled by default because more rigorous detrending of the original data, such as with anatomical CompCor, seem to reduce long-term trends in the components, even if estimated non-robustly. Since the CSF and white matter data are unavailable for these scans, we use component detrending instead of anatomical CompCor.
 
 ```{r}
 Dat1.lev = clever(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+# same as: scrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 Dat2.lev = clever(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 ```
 
@@ -64,7 +65,7 @@ p2 <- plot(Dat2.lev, title="Dat2", show.legend=FALSE)
 cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. While the second dataset is relatively artifact-free, A few timepoints are still flagged including around the 40th and 110th timepoints. 
+ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. while the second dataset is relatively artifact-free, a few timepoints are still flagged including around the 40th and 110th timepoints. 
 
 DVARS, another data-driven scrubbing technique [(Afyouni and Nichols, 2018)](https://doi.org/10.1016/j.neuroimage.2017.12.098), yields similar results:
 
@@ -108,7 +109,7 @@ The median time point appears normal, whereas the most outlying time point clear
 
 ### Leverage images
 
-`fMRIscrub` can also display the "leverage images" for each outlying observation. These are based on the projection directions for the selected components. There are two types of leverage images: the composite of the selected directions, weighed by the variance-normalized scores for that timepoint, and the single direction with the strongest signal at that timepoint. Here are the leverage images at `r t_max` for the first dataset:
+`fMRIscrub` can also display the "leverage images" for each outlying observation. These are based on the projection directions for the selected components. There are two types of leverage images: the composite of the selected directions, weighed by the variance-normalized scores for that timepoint, and the single direction with the strongest signal at that timepoint. Here are the leverage images at \eqn{T = } `r t_max` for the first dataset:
 
 
 ```{r, fig.width=7, fig.height=4}

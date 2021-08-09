@@ -117,7 +117,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 DVARS <- function(
   X, normalize=TRUE, 
   cutoff_DPD=5,
-  cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix(X))),
+  cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix2(X))),
   verbose=FALSE){
 
   cutoff_DVARS <- NULL
