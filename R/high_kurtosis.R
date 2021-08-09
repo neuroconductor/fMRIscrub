@@ -1,7 +1,7 @@
 #' Identifies the components of sufficient kurtosis.
 #'
 #' The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
-#'  of kurtosis for Normal data of the same length as the components; it is
+#'  of kurtosis for Normal iid data of the same length as the components; it is
 #'  estimated by simulation or calculated from the theoretical asymptotic
 #'  distribution if the components are long enough.
 #' 
@@ -24,6 +24,7 @@
 #' @importFrom stats quantile qnorm
 #' @importFrom e1071 kurtosis
 #' @importFrom MASS mvrnorm
+#' 
 #' @export
 high_kurtosis <- function(Comps, kurt_quantile = 0.99, n_sim = 5000, min_1=FALSE){
 
@@ -52,7 +53,7 @@ high_kurtosis <- function(Comps, kurt_quantile = 0.99, n_sim = 5000, min_1=FALSE
 
   high <- kurt > cut
 
-  # Keep at least 1 PC.
+  # Keep at least one component if `min_1`.
   if (all(!high) && min_1) { high[which(kurt==max(kurt))[1]] <- TRUE }
 
   high

@@ -18,7 +18,7 @@ knitr::opts_chunk$set(autodep = TRUE, cache = FALSE)
 
 In this vignette we will highlight the use of projection scrubbing for identifying and removing contaminated volumes from fMRI scans. Projection scrubbing works by identifying component directions in the data likely to represent artifactual patterns, and then computing a composite measure for the amount of these signals at each volume. The projection can be PCA, ICA, or "fused PCA," and the composite measure is based on the linear model concept of leverage. (An earlier version of projection scrubbing was named "PCA leverage"). Like other scrubbing methods, it is designed to detect "burst noise" which occurs due to transient artifact sources such as subject head motion. Projection scrubbing can be cited with the following papers: 
 
-* Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521–536 (2017).
+* Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521-536 (2017).
 * Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021+).
 
 Citations for the other routines included in `fMRIscrub` can be found on their respective documentation pages, e.g. `help(fMRIscrub::DVARS)`.
@@ -144,7 +144,7 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 3. Select $K < Q$ of the $Q$ components which are likely to contain artifact information. By default, we select high-kurtosis components, since burst noise tends to manifest as transient deviations of much greater magnitude than would be expected of neuronal signals. (Use `kurt_quantile` to change or disable the kurtosis cutoff.)
 
-3. Measure leverage across the $K$ components. If $C$ is the matrix of selected components, then leverage is the diagonal of the hat matrix $C(C'C)^{-1}C'$. The $T$ leverage values are interpreted as a measure of outlyingness at each timepoint. Note that if the components are orthogonal as in PCA, then leverage simplifies to the sum of squared component values at each timepoint.
+3. Measure leverage across the $K$ components. If $C$ is the matrix of selected components, then leverage is the diagonal of the hat matrix $C(C'C)^{-1}C'$. The $T$ leverage values are interpreted as a measure of outlyingness at each timepoint. Note that if the components are orthogonal and have a 2-norm of 1 as in PCA, then leverage simplifies to the sum of squared component values at each timepoint.
 
 4. Leverage is thresholded to obtain the set of identified outliers. By default, timepoints with leverage greater than three times the median are flagged as outliers. (Use `cutoff` to change the threshold.)
 

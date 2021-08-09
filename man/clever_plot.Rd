@@ -17,7 +17,7 @@ clever_plot(
 )
 }
 \arguments{
-\item{meas}{A \eqn{T_ x m} numeric data.frame with each column being the timecourse for an
+\item{meas}{A \eqn{T} by \code{m} numeric data.frame with each column being the timecourse for an
 outlyingness measure. The names of the columns will be used to label the plot.}
 
 \item{cut}{A length \eqn{m} numeric vector with each value being the cutoff for an

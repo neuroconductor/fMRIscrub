@@ -16,7 +16,7 @@ DVARS(
 \item{X}{a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
 not be any missing data (\code{NA} or \code{NaN}).}
 
-\item{normalize}{Normalize the data as proposed in the original paper? Default:
+\item{normalize}{Normalize the data as proposed in the paper? Default:
 \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
 median of the mean image, and then centers each voxel on its mean.
 
@@ -38,22 +38,20 @@ exceeding these cutoffs will be flagged as outliers.}
 \value{
 A list with components
 \describe{
-\item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+\item{measure}{A data.frame with \eqn{T} rows, each column being a different variant of DVARS.}
 \item{measure_info}{"DVARS"}
 \item{outlier_cutoff}{The outlier cutoff value(s).}
-\item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
+\item{outlier_flag}{A logical data.frame with \eqn{T} rows, where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
-Computes the DSE decomposition and DVARS-related statistics.
-}
-\details{
-github.com/asoroosh/DVARS
+Computes the DSE decomposition and DVARS-related statistics. Based on code
+from github.com/asoroosh/DVARS .
 }
 \section{References}{
 
 \itemize{
-\item{Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291–312 (2018).}
+\item{Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291-312 (2018).}
 }
 }
 

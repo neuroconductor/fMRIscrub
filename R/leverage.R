@@ -1,9 +1,10 @@
-#' Computes PCA leverage.
+#' Leverage
+#' 
+#' Computes the leverage of each observation in the PC score / IC mixing matrix (U/M)
+#'  For projection scrubbing. Optionally can threshold the leverage values to 
+#'  flag potential outliers.
 #'
-#' Computes the leverage of each observation, in the PC score / IC mixing matrix (U/M).
-#'  Optionally can identify the outliers.
-#'
-#' @param Comps The n x Q PC score matrix/IC mixing matrix.
+#' @param Comps The \eqn{n} by \eqn{Q} PC score matrix/IC mixing matrix.
 #' @param are_orthogonal Can the columns of \code{Comps} be assumed to be orthogonal
 #'  and have a 2-norm of 1? Speeds up the computation.
 #' @param median_cutoff The outlier cutoff, in multiples of the median leverage.
@@ -12,7 +13,7 @@
 #' @return A list with entries \code{"meas"} (the leverage values), 
 #'  \code{"cut"} (the leverage cutoff value) and 
 #'  \code{"flag"} (logical vector indicating the outliers). If 
-#'  \code{!is.null(median_cutoff)}, all entries except \code{"meas"} are omitted.
+#'  \code{!is.null(median_cutoff)}, \code{"cut"} and \code{"flag"} are omitted.
 #'  
 #' @importFrom stats median
 #' 

@@ -10,7 +10,7 @@ read_nifti(nifti_fname)
 \item{nifti_fname}{The file name of the NIFTI.}
 }
 \value{
-The NIFTI.
+The NIFTI
 }
 \description{
 Wrapper to common functions for reading NIFTIs

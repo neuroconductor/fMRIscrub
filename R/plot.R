@@ -3,7 +3,7 @@
 #' Plot outlyingness measure(s) with the corresponding threshold(s). Requires
 #'  the \code{cowplot} and \code{ggplot2} packages
 #'
-#' @param meas A \eqn{T_ x m} numeric data.frame with each column being the timecourse for an
+#' @param meas A \eqn{T} by \code{m} numeric data.frame with each column being the timecourse for an
 #'  outlyingness measure. The names of the columns will be used to label the plot.
 #' @param cut A length \eqn{m} numeric vector with each value being the cutoff for an
 #'  outlyingness measure (each column in \code{meas}).
@@ -261,10 +261,14 @@ clever_plot <- function(
 }
 
 #' Plot \code{"clever"}
+#' 
+#' Plot a leverage, DVARS, or FD timeseries. Highlight volumes flagged for
+#'  outlier presence.
 #'
 #' @param x The \code{"clever"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
-#' @param ... Additional arguments to ggplot: main, sub, xlab, ylab, legend.position
+#' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
+#'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'
@@ -331,7 +335,8 @@ plot.clever <- function(x, title=NULL, ...){
 #'
 #' @param x The \code{"clever_multi"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
-#' @param ... Additional arguments to ggplot: main, sub, xlab, ylab, legend.position
+#' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
+#'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'

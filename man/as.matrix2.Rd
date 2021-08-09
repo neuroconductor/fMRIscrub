@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{as.matrix2}
 \alias{as.matrix2}
-\title{\code{as.matrix} and transpose \code{"xifti"}s}
+\title{Convert to \eqn{T} by \eqn{V} matrix}
 \usage{
 as.matrix2(x)
 }

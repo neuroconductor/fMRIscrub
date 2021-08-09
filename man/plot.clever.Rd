@@ -11,11 +11,13 @@
 
 \item{title}{(Optional) If provided, will add a title to the plot.}
 
-\item{...}{Additional arguments to ggplot: main, sub, xlab, ylab, legend.position}
+\item{...}{Additional arguments to ggplot, e.g. \code{main}, \code{sub},
+\code{xlab}, \code{ylab}, \code{legend.position}}
 }
 \value{
 A ggplot
 }
 \description{
-Plot \code{"clever"}
+Plot a leverage, DVARS, or FD timeseries. Highlight volumes flagged for
+outlier presence.
 }

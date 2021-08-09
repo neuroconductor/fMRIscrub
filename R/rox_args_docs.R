@@ -141,7 +141,7 @@ NULL
 #' 
 #'  (If \code{X} is a \code{"xifti"}, entries must be data matrices, since no 
 #'  greyordinate locations in \code{X} are appropriate noise ROIs).
-#' @name data_clever_CompCor_Params
+#' @name data_CompCor_params
 NULL
 
 #' noise parameters for CompCor

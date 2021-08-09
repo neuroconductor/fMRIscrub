@@ -1,4 +1,4 @@
-#' Is a numeric vector constant?
+#' Is this numeric vector constant?
 #' 
 #' @param x The numeric vector
 #' @param TOL minimum range of \code{x} to be considered non-constant.
@@ -121,7 +121,7 @@ fit.F <- function(Q, n, h){
   return(result)
 }
 
-#' Get the cosine bases for DCT
+#' Cosine bases for the DCT
 #' 
 #' @param T_ Length of timeseries
 #' @param n Number of cosine bases
@@ -139,7 +139,7 @@ dct_bases <- function(T_, n){
 #' Wrapper to common functions for reading NIFTIs
 #' 
 #' @param nifti_fname The file name of the NIFTI.
-#' @return The NIFTI.
+#' @return The NIFTI
 #' @keywords internal
 read_nifti <- function(nifti_fname){
   if (requireNamespace("RNifti", quietly = TRUE)) {
@@ -147,11 +147,14 @@ read_nifti <- function(nifti_fname){
   } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
     return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
   } else {
-    stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
+    stop(
+      "Package \"RNifti\" or \"oro.nifti\" needed to read", nifti_fname, 
+      ". Please install at least one", call. = FALSE
+    )
   }
 }
 
-#' \code{as.matrix} and transpose \code{"xifti"}s
+#' Convert to \eqn{T} by \eqn{V} matrix
 #' 
 #' A \code{"xifti"} is VxT, whereas \code{clever} and \code{DVARS} accept a
 #'  TxV matrix. This function calls \code{as.matrix} and transposes the data

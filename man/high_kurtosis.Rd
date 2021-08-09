@@ -26,7 +26,7 @@ A logical vector indicating whether each component has high kurtosis.
 }
 \description{
 The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
-of kurtosis for Normal data of the same length as the components; it is
+of kurtosis for Normal iid data of the same length as the components; it is
 estimated by simulation or calculated from the theoretical asymptotic
 distribution if the components are long enough.
 }

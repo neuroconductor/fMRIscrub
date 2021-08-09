@@ -59,7 +59,7 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 
 #' Format data for clever and CompCor
 #'
-#' @inheritParams data_clever_CompCor_Params
+#' @inheritParams data_CompCor_params
 #' @param noise_nPC The number of principal components to compute for each noise
 #'  ROI. Alternatively, values between 0 and 1, in which case they will 
 #'  represent the minimum proportion of variance explained by the PCs used for

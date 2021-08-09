@@ -1,6 +1,7 @@
 #' bptf function from FSL
 #' 
-#' Copy of highpass filter as implemented by bptf in FSL. 
+#' Copy of highpass filter as implemented by bptf in FSL. The results are very
+#'  similar but not identical.
 #' 
 #' Sources:
 #'  https://cpb-us-w2.wpmucdn.com/sites.udel.edu/dist/7/4542/files/2016/09/fsl_temporal_filt-15sywxn.m
@@ -13,7 +14,7 @@
 #' 
 #' @section References:
 #'  \itemize{
-#'    \item{Jenkinson, M., Beckmann, C. F., Behrens, T. E. J., Woolrich, M. W. & Smith, S. M. FSL. NeuroImage 62, 782–790 (2012).}
+#'    \item{Jenkinson, M., Beckmann, C. F., Behrens, T. E. J., Woolrich, M. W. & Smith, S. M. FSL. NeuroImage 62, 782-790 (2012).}
 #' }
 #' 
 fsl_bptf <- function(orig_data, HP_sigma=2000) {

@@ -87,7 +87,7 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #'  in the same regression, \code{nuisance} can be set to DCT bases obtained with
 #'  the function \code{\link{dct_bases}}.)
 #'
-#' @inheritParams data_clever_CompCor_Params
+#' @inheritParams data_CompCor_params
 #' @inheritParams noise_Params
 #' @param center,scale Center the columns of the noise ROI data by their medians, 
 #'  and scale by their MADs? Default: \code{TRUE} for both. Note that this argument
@@ -113,7 +113,7 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #' @section References:
 #'  \itemize{
 #'    \item{Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90-101 (2007).}
-#'    \item{Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22–35 (2014).}
+#'    \item{Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22-35 (2014).}
 #' }
 #'
 #' @export

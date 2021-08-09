@@ -1,11 +1,16 @@
-#' Calculate the leverage images
+#' Leverage images
+#' 
+#' Visualize artifact patterns with leverage images
+#' 
+#' Leverage images can be computed from a call to \code{"clever"} with
+#'  \code{get_dirs==TRUE} 
 #'
 #' @param clev A \code{"clever"} object.
-#' @param timepoints The timepoints or columns for which to compute leverage
+#' @param idx The timepoints or column indexes for which to compute leverage
 #'  images. If \code{NULL} (default), use the outlying timepoints. 
 #' @param use_dt If detrended components are available (the "U" matrix of PCA 
 #'  or "M" matrix of ICA), should they be used to compute the leverage images?
-#'  Default: \code{TRUE}.
+#'  Otherwise, use the non-detrended components. Default: \code{TRUE}.
 #'
 #' @return A list of three: \code{idx}, the timepoints for which the leverage images
 #'  were computed; \code{mean}, the mean leverage images; and \code{top}, the
@@ -14,20 +19,20 @@
 #'  each timepoint.
 #'
 #' @export
-lev_images <- function(clev, timepoints=NULL, use_dt=TRUE){
+lev_images <- function(clev, idx=NULL, use_dt=TRUE){
 
-  # Check timepoints.
-  if (is.null(timepoints)) {
-    timepoints <- which(clev$outlier_flag)
-    if (!(length(timepoints) > 0)) {
+  # Check idx.
+  if (is.null(idx)) {
+    idx <- which(clev$outlier_flag)
+    if (!(length(idx) > 0)) {
       warning(
-        "`timepoints=NULL` will get leverage images for outliers, ",
+        "`idx=NULL` will get leverage images for outliers, ",
         "but no outliers were detected."
       )
       return(NULL)
     }
   } else {
-    stopifnot(length(timepoints) > 0)
+    stopifnot(length(idx) > 0)
   }
 
   # Get PCA scores and directions (or ICA mixing and source matrices).
@@ -48,7 +53,7 @@ lev_images <- function(clev, timepoints=NULL, use_dt=TRUE){
     V <- clev$ICA$S
   }
 
-  stopifnot(all(timepoints %in% seq(nrow(U))))
+  stopifnot(all(idx %in% seq(nrow(U))))
 
   if (is.null(clev$mask)) {
     const_mask = rep(TRUE, nrow(V))
@@ -56,23 +61,23 @@ lev_images <- function(clev, timepoints=NULL, use_dt=TRUE){
     const_mask <- clev$mask > 0
   }
   N_ <- length(const_mask)
-  n_imgs <- length(timepoints)
+  n_imgs <- length(idx)
 
   lev_imgs <- list(
-    idx = timepoints,
+    idx = idx,
     mean = matrix(NA, n_imgs, N_),
     top = matrix(NA, n_imgs, N_)
   )
 
-  lev_imgs$mean[,const_mask] <- U[timepoints,,drop=FALSE] %*% t(V)
+  lev_imgs$mean[,const_mask] <- U[idx,,drop=FALSE] %*% t(V)
   dimnames(lev_imgs$mean) <- NULL
 
-  for (ii in seq(length(timepoints))) {
-    tt <- timepoints[ii]
+  for (ii in seq(length(idx))) {
+    tt <- idx[ii]
     tt_top <- which.max(abs(U[tt,]))[1]
     lev_imgs$top[ii, const_mask] <- V[,tt_top]
   }
-  rownames(lev_imgs$top) <- paste("t", as.character(timepoints))
+  rownames(lev_imgs$top) <- paste("t", as.character(idx))
   colnames(lev_imgs$top) <- NULL
 
   lev_imgs

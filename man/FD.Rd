@@ -53,12 +53,13 @@ A list with components
 }
 }
 \description{
-Calculates Framewise Displacement (FD)
+Calculate Framewise Displacement (FD)
 }
 \details{
 The FD formula is taken from Power et. al. (2012):
 
-\eqn{FD_i = | \Delta x_i | + | \Delta y_i | + | \Delta z_i + | \Delta \alpha_i | + | \Delta \beta_i | + | \Delta \gamma_i |},
+\deqn{FD_i = | \Delta x_i | + | \Delta y_i | + | \Delta z_i | + | \Delta \alpha_i | + | \Delta \beta_i | + | \Delta \gamma_i |}
+
 where \eqn{i} is the timepoint; \eqn{x}, \eqn{y} and \eqn{z} are the
 translational realignment parameters (RPs);
 \eqn{\alpha}, \eqn{\beta} and \eqn{\gamma} are the rotational RPs;
@@ -67,7 +68,7 @@ and \eqn{\Delta x_i = x_{i-1} - x_i} (and similarly for the other RPs).
 \section{References}{
 
 \itemize{
-\item{Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L. & Petersen, S. E. Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. Neuroimage 59, 2142–2154 (2012).}
+\item{Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L. & Petersen, S. E. Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. Neuroimage 59, 2142-2154 (2012).}
 }
 }
 
