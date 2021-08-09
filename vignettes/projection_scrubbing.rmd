@@ -47,11 +47,12 @@ dim(Dat1)
 dim(Dat2)
 ```
 
-We will now run projection scrubbing on both datasets. We'll use the default implementation (ICA leverage), except that we will detrend the components' first and second moments. (Although the data is mean-detrended prior to component estimation, mean and variance trends may still manifest in the component timeseries. These trends are removed because they interfere with the use of kurtosis and leverage in subsequent steps. Mean and variance detrending is turned off by default because more rigorous detrending of the original data, for example with anatomical CompCor, can sufficiently reduce the long-term trends in the components. Since the CSF and white matter data are unavailable for these scans, we use component detrending instead of anatomical CompCor.)
+We will now run projection scrubbing on both datasets. We'll use the default implementation (ICA leverage), except additionally we will stabilize each component's mean and variance prior to kurtosis and leverage computation.[^1:]
+
+[^1]: Although the data will be mean-detrended during the nuisance regression with DCT bases, some trends may persist in the components because that nuisance regression is estimated non-robustly. A robust nuisance regression would take too much time to estimate at every data location. But since $Q << V$, we can implement a robust nuisance regression for component detrending. Still, component detrending is disabled by default because more rigorous detrending of the original data, such as with anatomical CompCor, seem to reduce long-term trends in the components, even if estimated non-robustly. Since the CSF and white matter data are unavailable for these scans, we use component detrending instead of anatomical CompCor.
 
 ```{r}
 Dat1.lev = clever(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
-# same as: scrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 Dat2.lev = clever(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 ```
 
@@ -135,17 +136,17 @@ The leverage images highlight the banding artifact present at this time point.
 
 As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an fMRI run: each row is a vectorized volume, and each column represents the timeseries of a single data location. Next, the algorithm performs the following steps: 
 
-1. Perform a nuisance regression with four discrete cosine transform (DCT) bases to remove low-frequency trends in the data. This helps the data projection method better identify the artifactual components. 
+1. Perform a nuisance regression with four discrete cosine transform (DCT) bases to remove low-frequency trends in the data. This helps the data projection method better identify artifactual components. (More or less nuisance regressors can be specified with the `nuisance` argument.)
 
-1. Normalize $Y$ by centering and scaling its columns robustly.
+1. Normalize $Y$ by centering and scaling its columns robustly. (This can be disabled with the `center` and `scale` arguments.)
 
-2. Decompose the data into $Q \times V$ projection directions and their $T \times Q$ signal timecourses using PCA, ICA, or fused PCA. The projection directions are the $V$ matrix in PCA and fused PCA ($Y = UDV^T$), and the $M$ matrix in ICA ($Y = MS$). The signal timecourses are the $U$ matrix in PCA and fused PCA, and the $S$ matrix in ICA. By default, ICA projection is  used, and $Q$ is determined by the "PESEL" algorithm [(Sobczyk and others, 2017)](doi:10.1080/10618600.2017.1340302)
+2. Decompose the data into $Q$ components, each consisting of a length $V$ projection direction and a length $T$ signal timecourse, using PCA, ICA, or fused PCA. The projection directions are the $V$ matrix in PCA and fused PCA ($Y = UDV'$), and the $M$ matrix in ICA ($Y = MS$). The signal timecourses are the $U$ matrix in PCA and fused PCA, and the $S$ matrix in ICA. By default, ICA projection is used, and $Q$ is determined by the "PESEL" algorithm [(Sobczyk and others, 2017)](doi:10.1080/10618600.2017.1340302). (This can be changed with the `projection` and `PESEL` arguments. Also, `comps_mean_dt` and `comps_var_dt` can be used to detrend the means and variances of the component timecourses after estimation, which is disabled by default.)
 
-3. Select $K < Q$ of the $Q$ components which are likely to contain artifact information. By default, we select high-variance and high-kurtosis components, since burst noise tends to manifest as deviations of much greater magnitude than would be expected of neuronal signals.
+3. Select $K < Q$ of the $Q$ components which are likely to contain artifact information. By default, we select high-kurtosis components, since burst noise tends to manifest as transient deviations of much greater magnitude than would be expected of neuronal signals. (Use `kurt_quantile` to change or disable the kurtosis cutoff.)
 
-3. Measure leverage across the $K$ components. If $C$ is the matrix of selected components, then leverage is the diagonal of the hat matrix $C(C^TC)^{-1}C^T$. The $T$ leverage values are interpreted as a measure of outlyingness at each timepoint.
+3. Measure leverage across the $K$ components. If $C$ is the matrix of selected components, then leverage is the diagonal of the hat matrix $C(C'C)^{-1}C'$. The $T$ leverage values are interpreted as a measure of outlyingness at each timepoint. Note that if the components are orthogonal as in PCA, then leverage simplifies to the sum of squared component values at each timepoint.
 
-4. Leverage is thresholded to obtain the set of identified outliers. By default, timepoints with leverage greater than three times the median across all timepoints are flagged as outliers.
+4. Leverage is thresholded to obtain the set of identified outliers. By default, timepoints with leverage greater than three times the median are flagged as outliers. (Use `cutoff` to change the threshold.)
 
 ### Running multiple versions of projection scrubbing at a time
 

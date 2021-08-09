@@ -1,115 +1,15 @@
-#' Order of operations in \code{clever}
-#' 
-#' @section Order of operations:
-#'  The input data undergo a nuisance regression to remove low frequency trends
-#'  (see the \code{DCT} argument to control or disable this behavior) and any
-#'  other nuisance signals (see the \code{nuisance_too} argument to specify them).
-#'  (If \code{DCT==0} and \code{is.null(nuisance_too)}, no nuisance regression 
-#'  is performed.) Then the data are centered and scaled (see the \code{center}
-#'  and \code{scale} arguments to control or disable this behavior). Leverage
-#'  is computed afterward.
-#'  
-#' @name clever_order_of_operations
-#' @keywords internal
-NULL
-
-#' Removed arguments
-#' 
-#' @param measures Character vector indicating the measures to compute. Choose 
-#'  at least one of the following: 
-#' 
-#'  \describe{
-#'    \item{\code{"leverage"}}{Leverage scrubbing, which is based on
-#'      projecting the data onto directions thought to express outlier 
-#'      information.}
-#'    \item{\code{"robdist"}}{Robust Mahalanobis-based distance}
-#'    \item{\code{"DVARS"}}{Traditional DVARS}
-#'    \item{\code{"DVARS2"}}{Delta-percent-DVARS and z-score-DVARS (Afyouni and 
-#'      Nichols, 2018)}
-#'    \item{\code{"FD"}}{Framewise Displacement. Requires \code{motion}.}
-#'    \item{\code{"motion"}}{Translation and rotation realignment parameters. 
-#'      Requires \code{motion}.}
-#'    \item{\code{"GSR"}}{Global Signal of the data.}
-#'  }
-#' 
-#'  Use \code{"all"} to select all available measures. (FD and motion will only 
-#'  be computed if the motion realignment parameters are provided.) Default: 
-#'  \code{"leverage", "DVARS2"}.
-#'
-#'  Note that motion and GSR are not direct measures of outlyingness,
-#'  so they do not have corresponding \code{outlier_cutoffs}.
-#' @param motion Only used if the \code{"FD"} measure is requested. An 
-#'  \eqn{N \times 6} matrix in which the first three columns represent the
-#'  translational realignment parameters (mm), and the second three columns represent
-#'  the rotational realignment parameters in (radians). To convert radians to mm,
-#'  the displacement on a sphere of radius 50 mm will be computed.
-#'
-#'  Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
-#'  read with \code{\link{read.table}} (fields separated by white-space; no
-#'  header).
-#' @param noise_nPC Only applies to CompCor.
-#'  The number of principal components to compute for each noise
-#'  ROI. Alternatively, values between 0 and 1, in which case they will 
-#'  represent the minimum proportion of variance explained by the PCs used for
-#'  each noise ROI. The smallest number of PCs will be used to achieve this 
-#'  proportion of variance explained. 
-#' 
-#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-#'  It will be matched to each ROI based on the name of each entry, or if the 
-#'  names are missing, the order of entries. If it is an unnamed vector, its
-#'  elements will be recycled. Default: \code{5} (compute the top 5 PCs for 
-#'  each noise ROI).
-#' @param noise_erosion Only applies to CompCor.
-#'  The number of voxel layers to erode the noise ROIs by. 
-#' 
-#'  Should be a list or numeric vector with the same length as \code{ROI_noise}. 
-#'  It will be matched to each ROI based on the name of each entry, or if the 
-#'  names are missing, the order of entries. If it is an unnamed vector, its 
-#'  elements will be recycled. Default: \code{NULL}, which will use a value of
-#'  0 (do not erode the noise ROIs).
-#' @param DCT Detrend the columns of the data using the discrete cosine
-#'  transform (DCT)? Use an integer to indicate the number of cosine bases to 
-#'  use for detrending. Use \code{0} (default) to forgo detrending. 
-#' 
-#'  The data must be centered, either before input or with \code{center}.
-#' 
-#'  Detrending is highly recommended for time-series data, especially if there 
-#'  are many time points or evolving circumstances affecting the data. Additionally,
-#'  if kurtosis is being used to select the projection directions, trends can 
-#'  induce positive or negative kurtosis, contaminating the connection between 
-#'  high kurtosis and outlier presence. 
-#'  
-#'  Detrending should not be used with non-time-series data because the 
-#'  observations are not temporally related.
-#' @param PESEL Leverage is based on the largest \eqn{k} PCA, ICA, or PCATF 
-#'  components. \code{k} can be determined by PESEL with \code{\link[pesel]{pesel}}
-#'  (default, \code{PESEL==TRUE}). Otherwise, \eqn{k} will be the number of 
-#'  above-average-variance PCs (\code{PESEL==FALSE}). In either case, \code{k}
-#'  is calculated based on PCA, even to select the number of ICA and PCATF
-#'  components.  
-#' 
-#'  Note that not all \code{k} components are ultimately used: only components with
-#'  high kurtosis (> 99th percentile of the kurtosis of data of equal length 
-#'  from a Normal distribution) contribute to the leverage calculation.
-#' @param nuisance_too A matrix of nuisance signals to regress from the data
-#'  before, i.e. a "design matrix." Should have \eqn{T} rows. Nuisance
-#'  regression will be performed simultaneously with DCT detrending if 
-#'  applicable. \code{NULL} (default) to not add additional nuisance regressors.
-#' @name removed_arguments
-#' @keywords internal
-NULL
-
 #' clever
 #' 
-#' @param X Wide numeric data matrix (\eqn{T observations \times V variables}, 
+#' @param X Wide numeric data matrix (\eqn{T} observations by \eqn{V} variables, 
 #'  \eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
 #'  number of timepoints and \eqn{V} should be the number of brainordinate 
-#'  vertices/voxels. The outlyingness of the rows in \code{X} will be measured.
-#' @param nuisance Nuisance signals to regress from each column of \code{X}.
-#'  Should be a \eqn{T \times N} numeric matrix where \eqn{N} represents the
-#'  number of nuisance signals. Default: a matrix with a constant column
-#'  (this is the intercept term in the design matrix) and four DCT bases. 
-#'  This default nuisance regression will have the effect of detrending the
+#'  vertices/voxels. Projection scrubbing will measure the outlyingness of each
+#'  row in \code{X}.
+#' @param nuisance Nuisance signals to regress from each column of \code{X}. 
+#'  Should be specified as a design matrix: a \eqn{T} by \eqn{N} numeric matrix
+#'  where \eqn{N} represents the number of nuisance signals. 
+#'  Default: a matrix with a constant column (the intercept term) and four DCT bases. 
+#'  This default nuisance regression will have the effect of demeaning and detrending the
 #'  data by removing low-frequency components. To not perform any nuisance
 #'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 #' 
@@ -120,24 +20,49 @@ NULL
 #'  high kurtosis and outlier presence. Detrending should not be used with 
 #'  non-time-series data because the observations are not temporally related.
 #' 
-#'  To perform nuisance regression with an intercept, DCT bases, and additional
-#'  signals, specify something like \code{cbind(1, dct_bases(nrow(X), 4), more_nuisance)}.
+#'  Additional nuisance regressors can be speficied like so:
+#'  \code{cbind(1, dct_bases(nrow(x), 4), more_nuisance)}.
 #' @param center,scale Center the columns of the data by their medians, and scale the
-#'  columns of the data by their median absolute distances (MADs)? Default: \code{TRUE}. 
+#'  columns of the data by their median absolute deviations (MADs)? Default: \code{TRUE}. 
 #'  Centering is necessary for computing the projections, so if \code{center} is
 #'  \code{FALSE}, the data must already be centered.
 #' 
 #'  Note that centering and scaling occur after nuisance regression, so even if
 #'  \code{center} is \code{FALSE}, the data will be centered on the means if
 #'  the nuisance regression included an intercept term, as it does by default.
-#' @param comps_mean_dt,comps_var_dt Stabilize the mean and variance of the PCA, 
-#'  PCATF, and ICA components prior to computing leverage? \code{TRUE}, 
-#'  \code{FALSE} (default), or the number of DCT bases to use for mean and variance detrending 
-#'  (\code{TRUE} will use 4). Note that these refer to the projection scores and 
-#'  not the data itself. Also, if scaling but not centering, the components must
-#'  be expected to already be centered; otherwise, the results will be invalid.
-#' @param kurt_quantile Only applies to PCA and ICA leverage. What cutoff quantile
-#'  for kurtosis should be used to select the components? Default: \code{0.99}.
+#' @param comps_mean_dt,comps_var_dt Stabilize the mean and variance of each
+#'  projection component's timecourse prior to computing kurtosis and leverage?
+#'  These arguments should be \code{TRUE}, \code{FALSE} (default), or the number
+#'  of DCT bases to use for detrending (\code{TRUE} will use 4). 
+#'  Note that these arguments affect the projection components and not the data
+#'  itself. Also, if variance-stabilizing but not mean-stabilizing, 
+#'  the components must already be expected to be mean-stabilized, for example 
+#'  if the data was rigorously detrended; otherwise, the results will be invalid.
+#' 
+#'  Slow-moving mean and variance patterns in the components will interfere with
+#'  the roles of kurtosis and leverage in identifying outliers. While 
+#'  \code{nuisance} can be used to detrend the data, this nuisance regression is
+#'  estimated \emph{non-robustly}, since a robust model takes too long to estimate  
+#'  at each data location. On the other hand, \code{comps_mean_dt} and
+#'  \code{comps_var_dt} can be used to apply a \emph{robust} nuisance regression at each
+#'  component, since there are much fewer components than original data locations.
+#'  Thus, even if the data has been detrended with \code{nuisance} it may be
+#'  helpful to detrend the components with \code{comps_mean_dt}; furthermore,
+#'  the data nuisance regression does not address the potential existence of variance
+#'  patterns in the components. 
+#' 
+#'  Overall, we recommend enabling \code{comps_mean_dt} and \code{comps_var_dt}
+#'  unless the data has been cleaned not only with a low-pass filter like 
+#'  DCT nuisance regression, but also with anatomical CompCor, ICA-FIX, or
+#'  a similar data-driven strategy that takes into account common sources of
+#'  artifactual trends such as respiration and heartbeat.
+#' @param kurt_quantile What quantile cutoff should be used to select the
+#'  components? Default: \code{0.99}. Use \code{0} to select all high-variance
+#'  components regardless of kurtosis value.
+#' 
+#'  We model each component as a length $T$ vector of Normal iid random variables, 
+#'  for which the distribution of kurtosis values can be approximated. The
+#'  quantile is estimated based on this distribution. 
 #' @param PCATF_kwargs Arguments to \code{\link{PCATF}} in list form. Valid
 #'  entries are:
 #'  
@@ -151,7 +76,7 @@ NULL
 #'  \eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
 #'  to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.
 #' @param full_PCA Only applies to the PCA projection. Return the full SVD? 
-#'  Default: \code{FALSE} (return only the components used to compute the measures).
+#'  Default: \code{FALSE} (return only the high-variance components).
 #' @param get_outliers Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.
 #' @param cutoff Median leverage cutoff value. Default: \code{4}.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
@@ -162,16 +87,16 @@ NULL
 
 #' fMRI data for clever and CompCor
 #' 
-#' @param X Wide numeric data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
+#' @param X Wide numeric data matrix (\eqn{T observations} by \eqn{V variables}, \eqn{T << V}).
 #'  For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
 #'  of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
 #' 
-#'  Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I \times J \times K \times T} 
+#'  Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I} by \eqn{J} by \eqn{K} by \eqn{T} 
 #'  observations), in which case \code{ROI_data} must be provided. 
-#'  (The vectorized data will be \eqn{T timepoints \times V_{in-mask} voxels})
+#'  (The vectorized data will be \eqn{T timepoints} by \eqn{V_{in-mask} voxels})
 #' 
 #'  Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
-#'  (The vectorized data will be \eqn{T timepoints \times V_{left+right+sub} greyordinates}).
+#'  (The vectorized data will be \eqn{T timepoints} by \eqn{V_{left+right+sub} greyordinates}).
 #' @param ROI_data Indicates the data ROI. Allowed arguments depend on \code{X}:
 #' 
 #'  If \code{X} is a matrix, this must be a length \eqn{V} logical vector, where

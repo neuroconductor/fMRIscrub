@@ -57,7 +57,7 @@ rob_scale <- function(x, center=TRUE, scale=TRUE, lmrob_method="MM", rescale=TRU
     center <- 0
   } else {
     center <- as.numeric(center)
-    stopifnot(center >= 0)
+    stopifnot(length(center)==1 && center >= 0)
   }
 
   if (isTRUE(scale)) {
@@ -66,7 +66,7 @@ rob_scale <- function(x, center=TRUE, scale=TRUE, lmrob_method="MM", rescale=TRU
     scale <- 0
   } else {
     scale <- as.numeric(scale)
-    stopifnot(scale >= 0)
+    stopifnot(length(scale)==1 && scale >= 0)
   }
 
   if (center > 0) {

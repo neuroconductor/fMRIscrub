@@ -10,13 +10,13 @@
 #'  \eqn{\alpha}, \eqn{\beta} and \eqn{\gamma} are the rotational RPs;
 #'  and \eqn{\Delta x_i = x_{i-1} - x_i} (and similarly for the other RPs).
 #' 
-#' @param X An \eqn{N \times 6} matrix in which the first three columns represent the
+#' @param X An \eqn{N} by \eqn{6} matrix in which the first three columns represent the
 #'  translational RPs (\code{trans_units}), and the second three columns represent
 #'  the rotational RPs (\code{rot_units}). If \code{rot_units} measures an angle,
 #'  it will be converted to \code{trans_units} by measuring displacement on a 
 #'  sphere of radius \code{brain_radius} \code{trans_units}.
 #'
-#'  Alternatively, this can be the file path to an \eqn{N \times 6} matrix which can be
+#'  Alternatively, this can be the file path to an \eqn{N} by \eqn{6} matrix which can be
 #'  read with \code{\link[utils]{read.table}} (fields separated by white-space; no
 #'  header).
 #' @param trans_units \code{"mm"} for millimeters (default), \code{"cm"} 

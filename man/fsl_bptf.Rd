@@ -7,7 +7,7 @@
 fsl_bptf(orig_data, HP_sigma = 2000)
 }
 \arguments{
-\item{orig_data}{\eqn{T \times V} data matrix whose columns will be detrended}
+\item{orig_data}{\eqn{T} by \eqn{V} data matrix whose columns will be detrended}
 
 \item{HP_sigma}{The frequency parameter for the highpass filter}
 }

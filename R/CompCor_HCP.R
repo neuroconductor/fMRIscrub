@@ -2,7 +2,7 @@
 #'
 #' Get NIFTI ROI masks
 #'
-#' @param nii_labels \eqn{I \times J \times K}
+#' @param nii_labels \eqn{I} by \eqn{J} by \eqn{K}
 #'  NIFTI object or array (or file path to the NIFTI) which
 #'  contains the corresponding labels to each voxel in \code{nii}. Values should
 #'  be according to this table: 
@@ -65,7 +65,7 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 #'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'
 #' @inheritParams get_NIFTI_ROI_masks
-#' @param nii \eqn{I \times J \times K \times T} 
+#' @param nii \eqn{I} by \eqn{J} by \eqn{K} by \eqn{T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
 #'  whole-brain data, including the noise ROIs. In the HCP, the corresponding
 #'  file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"

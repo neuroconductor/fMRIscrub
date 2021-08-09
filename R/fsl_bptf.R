@@ -6,7 +6,7 @@
 #'  https://cpb-us-w2.wpmucdn.com/sites.udel.edu/dist/7/4542/files/2016/09/fsl_temporal_filt-15sywxn.m
 #'  https://github.com/rordenlab/niimath/blob/master/src/core32.c
 #' 
-#' @param orig_data \eqn{T \times V} data matrix whose columns will be detrended
+#' @param orig_data \eqn{T} by \eqn{V} data matrix whose columns will be detrended
 #' @param HP_sigma The frequency parameter for the highpass filter
 #' 
 #' @export

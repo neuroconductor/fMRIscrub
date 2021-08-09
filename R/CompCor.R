@@ -94,7 +94,7 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #'  affects the noise ROI data and not the data that is being cleaned with aCompCor.
 #'  Centering and scaling of the data being cleaned can be done after this function call.
 #' @param nuisance Nuisance signals to regress from each data column in addition
-#'  to the noise ROI PCs. Should be a \eqn{T \times N} numeric matrix where 
+#'  to the noise ROI PCs. Should be a \eqn{T} by \eqn{N} numeric matrix where 
 #'  \eqn{N} represents the number of nuisance signals. To not perform any nuisance
 #'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 #'  Default: \code{NULL}.

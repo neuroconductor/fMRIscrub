@@ -7,7 +7,7 @@
 pct_sig(X, center = median, by = c("column", "all"))
 }
 \arguments{
-\item{X}{a \eqn{T \times N} numeric matrix. The columns will be normalized to
+\item{X}{a \eqn{T} by \eqn{N} numeric matrix. The columns will be normalized to
 percent signal.}
 
 \item{center}{A function that computes the center of a numeric vector.

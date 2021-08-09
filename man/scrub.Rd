@@ -8,9 +8,9 @@ scrub(X, method = c("leverage", "DVARS", "FD"), ...)
 }
 \arguments{
 \item{X}{If \code{method} is \code{"leverage"} or \code{"DVARS"}, this should
-be a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+be a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
 not be any missing data (\code{NA} or \code{NaN}). Otherwise, if \code{method}
-is \code{"FD"}, this should be a \eqn{T \times 6} numeric matrix of the
+is \code{"FD"}, this should be a \eqn{T} by \eqn{6} numeric matrix of the
 realignment parameters (3 translation and 3 rotation).}
 
 \item{method}{\code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}}

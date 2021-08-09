@@ -44,7 +44,7 @@ Mode <- function(x) {
 #' 
 #' Convert data values to percent signal.
 #' 
-#' @param X a \eqn{T \times N} numeric matrix. The columns will be normalized to
+#' @param X a \eqn{T} by \eqn{N} numeric matrix. The columns will be normalized to
 #'  percent signal.
 #' @param center A function that computes the center of a numeric vector.
 #'  Default: \code{median}. Other common options include \code{mean} and 
@@ -80,7 +80,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #' 
 #' github.com/asoroosh/DVARS
 #'
-#' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+#' @param X a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
 #'  not be any missing data (\code{NA} or \code{NaN}).
 #' @param normalize Normalize the data as proposed in the original paper? Default:
 #'  \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
@@ -91,7 +91,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #'  center the voxels on their means:
 #'
 #'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
-#'  \eqn{V \times T} data matrix.
+#'  \eqn{V} by \eqn{T} data matrix.
 #' 
 #'  Note that while voxel centering doesn't affect DVARS, it does affect
 #'  DPD and ZD.

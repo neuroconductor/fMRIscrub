@@ -21,12 +21,12 @@ CompCor_HCP(
 )
 }
 \arguments{
-\item{nii}{\eqn{I \times J \times K \times T}
+\item{nii}{\eqn{I} by \eqn{J} by \eqn{K} by \eqn{T}
 NIFTI object or array (or file path to the NIFTI) which contains
 whole-brain data, including the noise ROIs. In the HCP, the corresponding
 file is e.g. "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz"}
 
-\item{nii_labels}{\eqn{I \times J \times K}
+\item{nii_labels}{\eqn{I} by \eqn{J} by \eqn{K}
 NIFTI object or array (or file path to the NIFTI) which
 contains the corresponding labels to each voxel in \code{nii}. Values should
 be according to this table:

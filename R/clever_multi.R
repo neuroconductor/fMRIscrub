@@ -3,7 +3,6 @@
 #' Calculates leverage to identify outliers in high-dimensional data. 
 #'  Can compute multiple kinds of leverage at once. 
 #' 
-#' @inheritSection clever_order_of_operations Order of operations
 #' @inheritParams clever_Params
 #' @param projection Leverage works by projecting the data onto directions likely to 
 #'  contain outlier information. Choose at least one of the following:
@@ -23,15 +22,15 @@
 #'    \item{\code{"ICA2_kurt"}}{ICA using the high-kurtosis ICs among the top \eqn{k2}.}
 #'  }
 #' 
-#'  where \eqn{k} is the number of PCs selected by PESEL, and \eqn{k2} is the number
-#'  of PCs with above-average variance.
+#'  where \eqn{k} is the number of components determined by PESEL, and \eqn{k2}
+#'  is the number of principal components with above-average variance.
 #'  
 #'  Use \code{"all"} to use all projection methods. Default: \code{"PCA_kurt"}.
 #' @return A \code{"clever_multi"} object, i.e. a list with components
 #' \describe{
-#'  \item{measure}{A \eqn{T \times P} data.frame of numeric leverage values for each of the P projections in \code{projection}.}
-#'  \item{outlier_cutoff}{A \eqn{1 \times P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
-#'  \item{outlier_flag}{A \eqn{T \times P} data.frame of logical values where \code{TRUE} indicates suspected outlier presence.}
+#'  \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
+#'  \item{outlier_cutoff}{A \eqn{1} by \eqn{P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
+#'  \item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
 #'  \item{mask}{
 #'    A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
 #'    \describe{
@@ -43,10 +42,12 @@
 #'  \item{PCA}{
 #'    This will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{T \times Q} PC score matrix.}
+#'      \item{U}{The \eqn{T} by \eqn{Q} PC score matrix.}
 #'      \item{D}{The standard deviation of each PC.}
-#'      \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}.}
+#'      \item{V}{The \eqn{P} by \eqn{Q} PC directions matrix. Included only if \code{get_dirs}.}
 #'      \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+#'      \item{U_dt}{Detrended components of \code{U}. Included only if components were mean- or variance-detrended.}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating detrended scores of high kurtosis.}
 #'      \item{nPCs_PESEL}{The number of PCs selected by PESEL.}
 #'      \item{nPCs_avgvar}{The number of above-average variance PCs.}
 #'    }
@@ -57,17 +58,22 @@
 #'  \item{PCATF}{
 #'    If PCATF was used, this will be a list with components:
 #'    \describe{
-#'      \item{U}{The \eqn{T \times Q} PC score matrix.}
+#'      \item{U}{The \eqn{T} by \eqn{Q} PC score matrix.}
 #'      \item{D}{The standard deviation of each PC.}
-#'      \item{V}{The \eqn{P \times Q} PC directions matrix. Included only if \code{get_dirs}}
+#'      \item{V}{The \eqn{P} by \eqn{Q} PC directions matrix. Included only if \code{get_dirs}}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating scores of high kurtosis.}
+#'      \item{U_dt}{Detrended components of \code{U}. Included only if components were mean- or variance-detrended.}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating detrended scores of high kurtosis. Included only if components were mean- or variance-detrended.}
 #'    }
 #'  }
 #'  \item{ICA}{
 #'    If ICA was used, this will be a list with components:
 #'    \describe{
-#'      \item{S}{The \eqn{P \times Q} source signals matrix. Included only if \code{get_dirs}} 
-#'      \item{M}{The \eqn{T \times Q} mixing matrix.}
+#'      \item{S}{The \eqn{P} by \eqn{Q} source signals matrix. Included only if \code{get_dirs}} 
+#'      \item{M}{The \eqn{T} by \eqn{Q} mixing matrix.}
 #'      \item{highkurt}{The length \code{Q} logical vector indicating mixing scores of high kurtosis.}
+#'      \item{M_dt}{Detrended components of \code{M}. Included only if components were mean- or variance-detrended.}
+#'      \item{highkurt}{The length \code{Q} logical vector indicating detrended mixing scores of high kurtosis. Included only if components were mean- or variance-detrended.}
 #'    }
 #'  }
 #' }
@@ -439,7 +445,7 @@ clever_multi = function(
     } else {
       Comps_ii <- out[[base_ii]][[scores_ii]][, Comps_ii, drop=FALSE]
       # Compute leverage.
-      result_ii <- out_measures.leverage(Comps=Comps_ii, median_cutoff=cutoff)
+      result_ii <- leverage(Comps=Comps_ii, median_cutoff=cutoff)
     }
     out$measure[[proj_ii]] <- result_ii$meas
     if (get_outliers) {

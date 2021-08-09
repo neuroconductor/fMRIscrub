@@ -13,7 +13,7 @@ DVARS(
 )
 }
 \arguments{
-\item{X}{a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+\item{X}{a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
 not be any missing data (\code{NA} or \code{NaN}).}
 
 \item{normalize}{Normalize the data as proposed in the original paper? Default:
@@ -25,7 +25,7 @@ HCP scans are already normalized to 10,000, just divide the data by 100 and
 center the voxels on their means:
 
 \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the
-\eqn{V \times T} data matrix.
+\eqn{V} by \eqn{T} data matrix.
 
 Note that while voxel centering doesn't affect DVARS, it does affect
 DPD and ZD.}

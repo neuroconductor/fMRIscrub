@@ -2,9 +2,9 @@
 #'
 #' Get the hat matrix from a design matrix
 #'
-#' @param design The \eqn{T \times Q} design matrix
+#' @param design The \eqn{T} by \eqn{Q} design matrix
 #'
-#' @return The \eqn{T \times T} hat matrix
+#' @return The \eqn{T} by \eqn{T} hat matrix
 #' 
 #' @keywords internal
 hat_matrix <- function(design){
@@ -23,8 +23,8 @@ hat_matrix <- function(design){
 #' Performs nuisance regression. The data and design matrix must both be
 #'  centered, or an intercept must be included in the design matrix!
 #'
-#' @param Y The \eqn{T \times V} or \eqn{V \times T} data.
-#' @param design The \eqn{T \times Q} matrix of nuisance regressors.
+#' @param Y The \eqn{T} by \eqn{V} or \eqn{V} by \eqn{T} data.
+#' @param design The \eqn{T} by \eqn{Q} matrix of nuisance regressors.
 #'
 #' @return The data after nuisance regression.
 #' 

@@ -16,16 +16,16 @@ CompCor(
 )
 }
 \arguments{
-\item{X}{Wide numeric data matrix (\eqn{T observations \times V variables}, \eqn{T << V}).
+\item{X}{Wide numeric data matrix (\eqn{T observations} by \eqn{V variables}, \eqn{T << V}).
 For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
 of timepoints and \eqn{V} should be the number of brainordinate vertices/voxels.
 
-Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I \times J \times K \times T}
+Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I} by \eqn{J} by \eqn{K} by \eqn{T}
 observations), in which case \code{ROI_data} must be provided.
-(The vectorized data will be \eqn{T timepoints \times V_{in-mask} voxels})
+(The vectorized data will be \eqn{T timepoints} by \eqn{V_{in-mask} voxels})
 
 Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
-(The vectorized data will be \eqn{T timepoints \times V_{left+right+sub} greyordinates}).}
+(The vectorized data will be \eqn{T timepoints} by \eqn{V_{left+right+sub} greyordinates}).}
 
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
 
@@ -98,7 +98,7 @@ affects the noise ROI data and not the data that is being cleaned with aCompCor.
 Centering and scaling of the data being cleaned can be done after this function call.}
 
 \item{nuisance}{Nuisance signals to regress from each data column in addition
-to the noise ROI PCs. Should be a \eqn{T \times N} numeric matrix where
+to the noise ROI PCs. Should be a \eqn{T} by \eqn{N} numeric matrix where
 \eqn{N} represents the number of nuisance signals. To not perform any nuisance
 regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 Default: \code{NULL}.}
