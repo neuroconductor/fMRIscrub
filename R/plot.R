@@ -260,21 +260,21 @@ scrub_plot <- function(
   return(plt)
 }
 
-#' Plot \code{"scrub"}
+#' Plot scrubbing results
 #' 
-#' Plot a leverage, DVARS, or FD timeseries. Highlight volumes flagged for
-#'  outlier presence.
+#' Plot a leverage, DVARS, or FD timeseries from a \code{"scrub_projection"},
+#'  \code{"scrub_DVARS"}, or \code{"scrub_FD"} object, respectively. Highlight 
+#'  volumes flagged for outlier presence.
 #'
-#' @param x The \code{"scrub"} object.
+#' @param x The \code{"scrub_*"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
 #' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
 #'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'
-#' @method plot scrub
-#' @export
-plot.scrub <- function(x, title=NULL, ...){
+#' @keywords internal
+plot_scrub_wrapper <- function(x, title=NULL, ...){
   gg_args <- list(...)
   mtype <- as.character(x$measure_info["type"])
   stopifnot(mtype %in% c("Leverage", "DVARS", "FD"))
@@ -331,18 +331,63 @@ plot.scrub <- function(x, title=NULL, ...){
   return(plt)
 }
 
-#' Plot \code{"pscrub_multi"}
+#' Plot a \code{"scrub_projection"} object
+#' 
+#' @param x The \code{"scrub_projection"} object
+#' @param title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
+#'  \code{xlab}, \code{ylab}, \code{legend.position}
+#' 
+#' @return A ggplot
+#' 
+#' @method plot scrub_projection
+#' @export
+plot.scrub_projection <- function(x, title=NULL, ...) {
+  plot_scrub_wrapper(x, title=title, ...)
+}
+
+#' Plot a \code{"scrub_DVARS"} object
+#' 
+#' @param x The \code{"scrub_DVARS"} object
+#' @param title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
+#'  \code{xlab}, \code{ylab}, \code{legend.position}
+#' 
+#' @return A ggplot
+#' 
+#' @method plot scrub_DVARS
+#' @export
+plot.scrub_DVARS <- function(x, title=NULL, ...) {
+  plot_scrub_wrapper(x, title=title, ...)
+}
+
+#' Plot a \code{"scrub_FD"} object
+#' 
+#' @param x The \code{"scrub_FD"} object
+#' @param title (Optional) If provided, will add a title to the plot.
+#' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
+#'  \code{xlab}, \code{ylab}, \code{legend.position}
+#' 
+#' @return A ggplot
+#' 
+#' @method plot scrub_FD
+#' @export
+plot.scrub_FD <- function(x, title=NULL, ...) {
+  plot_scrub_wrapper(x, title=title, ...)
+}
+
+#' Plot a \code{"scrub_projection_multi"} object
 #'
-#' @param x The \code{"pscrub_multi"} object.
+#' @param x The \code{"scrub_projection_multi"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
 #' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
 #'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'
-# @method plot pscrub_multi
+# @method plot scrub_projection_multi
 #' @keywords internal
-plot.pscrub_multi <- function(x, title=NULL, ...){
+plot.scrub_projection_multi <- function(x, title=NULL, ...){
   gg_args <- list(...)
   
   if ("legend.position" %in% names(gg_args)) {

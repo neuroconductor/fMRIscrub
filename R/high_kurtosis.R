@@ -1,4 +1,4 @@
-#' Identifies the components of sufficient kurtosis.
+#' Which components have high kurtosis?
 #'
 #' The kurtosis cutoff is a high quantile (default 0.99) of the sampling distribution
 #'  of kurtosis for Normal iid data of the same length as the components; it is

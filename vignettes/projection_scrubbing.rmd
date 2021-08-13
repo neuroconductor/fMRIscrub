@@ -16,7 +16,7 @@ knitr::opts_chunk$set(autodep = TRUE, cache = FALSE)
 
 `fMRIscrub` is an R package that implements routines for cleaning fMRI data, namely data-driven scrubbing (projection scrubbing and DVARS), motion scrubbing (framewise displacement), anatomical CompCor, detrending, and nuisance regression. Several of these methods are also applicable to other high-dimensional data analysis tasks. For example, projection scrubbing can be used as a general outlier detection method.
 
-In this vignette we will highlight the use of projection scrubbing for identifying and removing contaminated volumes from fMRI scans. Projection scrubbing works by identifying component directions in the data likely to represent artifactual patterns, and then computing a composite measure for the amount of these signals at each volume. The projection can be PCA, ICA, or "fused PCA," and the composite measure is based on the linear model concept of leverage. (An earlier version of projection scrubbing was named "PCA leverage"). Like other scrubbing methods, it is designed to detect "burst noise" which occurs due to transient artifact sources such as subject head motion. Projection scrubbing can be cited with the following papers: 
+In this vignette we will highlight the use of projection scrubbing for identifying and removing contaminated volumes from fMRI scans. Projection scrubbing works by identifying component directions in the data likely to represent artifactual patterns, and then computing a composite measure for the amount of these signals at each volume. The projection can be PCA, ICA, or "fused PCA," and the composite measure is based on the linear model concept of leverage. (An earlier version of projection scrubbing was named "PCA leverage"). Like other scrubbing methods, it is designed to detect burst noise which occurs due to transient artifact sources such as subject head motion. Projection scrubbing can be cited with the following papers: 
 
 * Mejia, A. F., Nebel, M. B., Eloyan, A., Caffo, B. & Lindquist, M. A. PCA leverage: outlier detection for high-dimensional functional magnetic resonance imaging data. Biostatistics 18, 521-536 (2017).
 * Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021+).
@@ -52,20 +52,20 @@ We will now run projection scrubbing on both datasets. We'll use the default imp
 [^1]: Although the data will be mean-detrended during the nuisance regression with DCT bases, some trends may persist in the components because that nuisance regression is estimated non-robustly. A robust nuisance regression would take too much time to estimate at every data location. But since $Q << V$, we can implement a robust nuisance regression for component detrending. Still, component detrending is disabled by default because more rigorous detrending of the original data, such as with anatomical CompCor, seem to reduce long-term trends in the components, even if estimated non-robustly. Since the CSF and white matter data are unavailable for these scans, we use component detrending instead of anatomical CompCor.
 
 ```{r}
-Dat1.lev = pscrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+ps.Dat1 = pscrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 # same as: scrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
-Dat2.lev = pscrub(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+ps.Dat2 = pscrub(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 ```
 
-Let's take a look at the leverage timeseries with `plot`. The flagged timepoints are highlighted by the grey bars.
+Let's take a look at the leverage timeseries for both scans with `plot`. The flagged timepoints are highlighted by the grey bars.
 
 ```{r fig.width=8, fig.height=3}
-p1 <- plot(Dat1.lev, title="Dat1", show.legend=FALSE)
-p2 <- plot(Dat2.lev, title="Dat2", show.legend=FALSE)
+p1 <- plot(ps.Dat1, title="Dat1", show.legend=FALSE)
+p2 <- plot(ps.Dat2, title="Dat2", show.legend=FALSE)
 cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. while the second dataset is relatively artifact-free, a few timepoints are still flagged including around the 40th and 110th timepoints. The suspected artifacts in the first dataset have significantly greater leverage than the suspected artifacts in the second dataset.
+ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. while the second dataset is relatively artifact-free, a few timepoints are still flagged including around the 40th and 110th timepoints. Note that the suspected artifacts in the first dataset have significantly greater leverage than the suspected artifacts in the second dataset.
 
 DVARS, another data-driven scrubbing technique [(Afyouni and Nichols, 2018)](https://doi.org/10.1016/j.neuroimage.2017.12.098), yields similar results:
 
@@ -78,7 +78,7 @@ cowplot::plot_grid(p1, p2, nrow=1)
 
 ### fMRI image reconstruction
 
-Let's see what was going on in the first scan. We can reconstruct the original fMRI image using the mask which was applied to vectorize it. 
+Let's see what the problem was in the first scan. We can reconstruct the original fMRI image using the mask which was originally applied to vectorize it. 
 
 ```{r warning=FALSE}
 library(oro.nifti)
@@ -97,7 +97,7 @@ We will compare the timepoint of median leverage (left) to the timepoint of maxi
 
 ```{r, fig.width=7, fig.height=4}
 par(mfrow=c(1,2))
-levs = Dat1.lev$measure
+levs = ps.Dat1$measure
 t_med = order(levs)[ceiling(length(levs)/2)]
 t_max = which.max(levs)
 
@@ -107,29 +107,28 @@ image(Img1[,,,t_max], main=paste0('Maximum lev (T = ', t_max, ')'))
 
 The median time point appears normal, whereas the most outlying time point clearly has banding artifacts likely due to subject motion.
 
-### Leverage images
+### Artifact images
 
-`fMRIscrub` can also display the "leverage images" for each outlying observation. These are based on the projection directions for the selected components. There are two types of leverage images: the composite of the selected directions, weighed by the variance-normalized scores for that timepoint, and the single direction with the strongest signal at that timepoint. Here are the leverage images at \eqn{T = } `r t_max` for the first dataset:
+`fMRIscrub` can also display the "artifact images" for each outlying observation. These are based on the projection directions for the selected components. There are two types of artifact images: the composite of the selected directions, weighed by the variance-normalized scores for that timepoint, and the single direction with the strongest signal at that timepoint. Here are the artifact images at \eqn{T = } `r t_max` for the first dataset:
 
 
 ```{r, fig.width=7, fig.height=4}
 psx <- pscrub(Dat1, projection="ICA", get_dirs=TRUE, comps_mean_dt=1, comps_var_dt=1)
-Lev_Img1 = lev_images(psx)
+artImg1 = artifact_images(psx)
 
 par(mfrow=c(1,2))
 
-# Constant voxels are deleted during the `pscrub` algorithm, so the leverage images will have
-# missing values where the constant voxels were. The NA_fill option is used here to make
-# these voxels have the same color as the background (out-of-mask voxels).
-Lev_Img1.mean = unmask_vol(t(Lev_Img1$mean), Mask1)
-Lev_Img1.top = unmask_vol(t(Lev_Img1$top), Mask1)
+# Constant voxels are deleted during the `pscrub` algorithm, so the artifact images will have
+# missing values where the constant voxels were. 
+artImg1.mean = unmask_vol(t(artImg1$mean), Mask1)
+artImg1.top = unmask_vol(t(artImg1$top), Mask1)
 
 idx = which(which(psx$outlier_flag) == t_max)
-image(Lev_Img1.mean[,,1,idx], main=paste0('Lev image, mean (T=',t_max,')'))
-image(Lev_Img1.top[,,1,idx], main=paste0('Lev image, top (T=',t_max,')'))
+image(artImg1.mean[,,1,idx], main=paste0('Lev image, mean (T=',t_max,')'))
+image(artImg1.top[,,1,idx], main=paste0('Lev image, top (T=',t_max,')'))
 ```
 
-The leverage images highlight the banding artifact present at this time point.
+The artifact images highlight the banding artifact present at this time point.
 
 # Appendix
 
@@ -151,17 +150,17 @@ As input, `pscrub` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 ### Running multiple versions of projection scrubbing at a time
 
-For testing purposes, we can run multiple methods at the same time using the internal function `pscrub_multi`:
+For testing purposes, we can try different projections at the same time using the internal function `pscrub_multi`:
 
 ```{r fig.height=3, fig.width=6}
 # Try all projections: this is excessive to plot
-# Dat1.levAll <- fMRIscrub:::pscrub_multi(
+# ps.Dat1All <- fMRIscrub:::pscrub_multi(
 #   Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 # )
 
 #  the default (ICA + kurtosis), PCATF + kurtosis, and ICA
-Dat1.lev3 <- fMRIscrub:::pscrub_multi(
+ps.Dat1.3 <- fMRIscrub:::pscrub_multi(
   Dat1, projection=c("ICA_kurt", "PCATF_kurt", "ICA"), verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 )
-fMRIscrub:::plot.pscrub_multi(Dat1.lev3, legend.position="bottom")
+fMRIscrub:::plot.scrub_projection_multi(ps.Dat1.3, legend.position="bottom")
 ```

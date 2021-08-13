@@ -24,7 +24,7 @@ Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I} by \eqn{J} by \eqn{K} b
 observations), in which case \code{ROI_data} must be provided.
 (The vectorized data will be \eqn{T timepoints} by \eqn{V_{in-mask} voxels})
 
-Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
+Or, a \code{ciftiTools} \code{"xifti"} object or a file path to a CIFTI
 (The vectorized data will be \eqn{T timepoints} by \eqn{V_{left+right+sub} greyordinates}).}
 
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:
@@ -90,7 +90,8 @@ Should be a list or numeric vector with the same length as \code{ROI_noise}.
 It will be matched to each ROI based on the name of each entry, or if the
 names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
-0 (do not erode the noise ROIs).}
+0 (do not erode the noise ROIs). Note that noise erosion can only be
+performed if the noise ROIs are volumetric.}
 
 \item{center, scale}{Center the columns of the noise ROI data by their medians,
 and scale by their MADs? Default: \code{TRUE} for both. Note that this argument
@@ -104,24 +105,28 @@ regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 Default: \code{NULL}.}
 }
 \value{
-A list with entries \code{"data"} and \code{"noise"}
+A list with entries \code{"data"}, \code{"noise"}, and potentially
+\code{"ROI_data"}.
 
-The entry \code{"data"} will be a \code{V x T} matrix where each row is a
-data voxel (if it was originally an array, the voxels will be in spatial
-order) time series with each noise PC regressed from it. Otherwise, this
-entry will be \code{NULL}.
+The entry \code{"data"} will be a \code{V x T} matrix where each row corresponds to a
+data location (if it was originally an array, the locations will be voxels in spatial
+order). Each row will be a time series with each noise PC regressed from it. This entry
+will be \code{NULL} if there was no data.
 
-The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC
-scores, one for each \code{ROI_noise}.
+The entry \code{"noise"} is a list of noise PC scores, their corresponding variance,
+and their ROI mask, for each noise ROI.
+
+If the data ROI is not all \code{TRUE}, the entry \code{"ROI_data"} will have
+the ROI mask for the data.
 }
 \description{
-The aCompCor algorithm for denoising fMRI data
+The aCompCor algorithm for denoising fMRI data using noise ROIs data
 }
 \details{
-First, the principal components (PCs) of each noise ROI are calculated. For each ROI,
-voxels are centered and scaled (can be disabled with the arguments
-\code{center} and \code{scale}), and then the PCs are calculated via the
-singular value decomposition.
+First, the principal components (PCs) of each noise region of interest (ROI)
+are calculated. For each ROI, voxels are centered and scaled
+(can be disabled with the arguments \code{center} and \code{scale}),
+and then the PCs are calculated via the singular value decomposition.
 
 Next, aCompCor is performed to remove the shared variation between the noise ROI
 PCs and each location in the data. This is accomplished by a nuisance regression
@@ -138,3 +143,6 @@ the function \code{\link{dct_bases}}.)
 }
 }
 
+\seealso{
+CompCor_HCP
+}

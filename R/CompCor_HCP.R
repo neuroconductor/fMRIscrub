@@ -16,9 +16,9 @@
 #'  will be used:
 #'
 #'  \describe{
-#'    \item{wm_cort}{c(3000:4035, 5001, 5002)}
-#'    \item{wm_cblm}{c(7, 46)}
-#'    \item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
+#'    \item{\code{"wm_cort"}}{\code{c(3000:4035, 5001, 5002)}}
+#'    \item{\code{"wm_cblm"}}{\code{c(7, 46)}}
+#'    \item{\code{"csf"}}{\code{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}}
 #'  }
 #'
 #'  These default ROIs are based on this forum post: 
@@ -58,12 +58,14 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
   )
 }
 
-#' Run anatomical CompCor on the HCP CIFTI data
+#' Anatomical CompCor for HCP NIFTI and CIFTI data
 #'
-#' Wrapper to \code{\link{pscrub_multi}} for computing CompCor (and other outlyingness
-#'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
-#'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
-#'
+#' Wrapper to \code{\link{CompCor}} for HCP-format data. Can be used to clean
+#'  the surface-based CIFTI data with aCompCor using the noise PCs and ROIs 
+#'  calculated from the NIFTI fMRI data and NIFTI mask. Can also be used to just
+#'  obtain the noise PCs and ROIs without performing aCompCor, if the CIFTI
+#'  data is not provided.
+#' 
 #' @inheritParams get_NIFTI_ROI_masks
 #' @param nii \eqn{I} by \eqn{J} by \eqn{K} by \eqn{T} 
 #'  NIFTI object or array (or file path to the NIFTI) which contains
@@ -88,13 +90,14 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 #'  0 (do not erode the noise ROIs).
 #' @param brainstructures Choose among "left", "right", and "subcortical".
 #'  Default: \code{c("left", "right")} (cortical data only)
-#' @param frames A numeric vector indicating the timepoints to use, or 
-#'  \code{NULL} (default) to use all frames. (Indexing begins with 1, so the 
+#' @param idx A numeric vector indicating the timepoints to use, or 
+#'  \code{NULL} (default) to use all idx. (Indexing begins with 1, so the 
 #'  first timepoint has index 1 and the last has the same index as the length of 
 #'  the scan.)
 #' @param cii \code{"xifti"} (or file path to the CIFTI) from which the noise
 #'  ROI components will be regressed. In the HCP, the corresponding file is e.g.
-#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"
+#'  "../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii". If not
+#'  provided, only the noise components will be returned (no data will be cleaned).
 #' @param center,scale Center the columns of the data by median, and scale the
 #'  columns of the data by MAD? Default: \code{TRUE} for both. Affects both
 #'  \code{X} and the noise data. \code{center} also applies to \code{nuisance_too}
@@ -108,6 +111,9 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 #'  nuisance regressors (default).
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
+#' @return The noise components, and if \code{cii} is provided, the cleaned
+#'  surface-based data as a \code{"xifti"} object.
+#' 
 #' @section References:
 #'  \itemize{
 #'    \item{Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90-101 (2007).}
@@ -115,10 +121,12 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 #' }
 #' 
 #' @export
+#' 
+#' @seealso CompCor
 CompCor_HCP <- function(
   nii, nii_labels, 
   ROI_noise=c("wm_cort", "csf"), noise_nPC=5, noise_erosion=NULL, 
-  frames=NULL, cii=NULL, brainstructures=c("left", "right"),
+  idx=NULL, cii=NULL, brainstructures=c("left", "right"),
   center = TRUE, scale = TRUE, DCT = 0, nuisance_too = NULL,
   verbose=FALSE){
 
@@ -134,15 +142,15 @@ CompCor_HCP <- function(
   ROI_noise <- get_NIFTI_ROI_masks(nii_labels, ROI_noise)
   stopifnot(all( dim(ROI_noise[[1]]) == dim(nii)[1:3] ))
 
-  # Drop frames in NIFTI.
+  # Drop idx in NIFTI.
   T_ <- dim(nii)[4]
-  if (!is.null(frames)) {
-    stopifnot(all(frames %in% seq(T_)))
-    nii <- nii[,,,frames]
+  if (!is.null(idx)) {
+    stopifnot(all(idx %in% seq(T_)))
+    nii <- nii[,,,idx]
   }
   T_ <- dim(nii)[4]
   if (T_ < 10) {
-    warning("There are very few frames.\n")
+    warning("There are very few `idx`.\n")
   }
 
   if (verbose) { cat("Computing noise components.\n") }
@@ -165,25 +173,8 @@ CompCor_HCP <- function(
   }
   stopifnot(all(names(cii) == c("data", "surf", "meta")))
 
-  cii <- t(do.call(rbind, cii$data))
-
-  # Drop frames.
-  if (!is.null(frames)) {
-    stopifnot(all(frames %in% seq(nrow(cii))))
-    cii <- cii[frames,]
-  }
-
-  # We no longer center and scale the data prior to nuisance regression.
-  # This should be done after for the purpose of computing leverage.
-  # # Normalize CIFTI.
-  # cii <- t(cii)
-  # if (center) { cii <- cii - c(rowMedians(cii, na.rm=TRUE)) }
-  # if (scale) { 
-  #   mad <- 1.4826 * rowMedians(abs(cii), na.rm=TRUE)
-  #   mad_inv <- ifelse(mad < 1e-8, 0, 1/mad)
-  #   cii <- cii * mad_inv
-  # }
-  # cii <- t(cii)
+  # Drop idx.
+  if (!is.null(idx)) { cii <- ciftiTools::select_xifti(cii, idx) }
 
   # Make design matrix.
   design <- do.call(cbind, out$noise$PCs)
@@ -194,6 +185,7 @@ CompCor_HCP <- function(
   }
   design <- check_design_matrix(cbind(1, design))
 
-  # Return data in TxV form.
-  out$data <- nuisance_regression(cii, design)
+  # Return data in \code{"xifti"} format.
+  out$data <- ciftiTools::newdata_xifti(cii, nuisance_regression(cii, design))
+  out
 }

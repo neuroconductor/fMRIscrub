@@ -23,6 +23,6 @@ A list with entries \code{"meas"} (the leverage values),
 }
 \description{
 Computes the leverage of each observation in the PC score / IC mixing matrix (U/M)
-For projection scrubbing. Optionally can threshold the leverage values to
+for projection scrubbing. Optionally can threshold the leverage values to
 flag potential outliers.
 }

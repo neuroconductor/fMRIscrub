@@ -3,7 +3,7 @@ test_that("pscrub works", {
     Dat1,
     projection = "all"
   ))
-  testthat::expect_warning(fMRIscrub:::plot.pscrub_multi(psx))
+  testthat::expect_warning(fMRIscrub:::plot.scrub_projection_multi(psx))
 
   psx <- testthat::expect_warning(fMRIscrub:::pscrub_multi(
     Dat2,
@@ -12,7 +12,7 @@ test_that("pscrub works", {
     cutoff = 5,
     verbose = TRUE
   ))
-  fMRIscrub:::plot.pscrub_multi(psx, title = "My Plot")
+  fMRIscrub:::plot.scrub_projection_multi(psx, title = "My Plot")
 
   psx <- testthat::expect_warning(scrub(Dat1))
   print(psx)

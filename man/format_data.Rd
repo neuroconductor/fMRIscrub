@@ -21,7 +21,7 @@ Or, a 4D array or NIFTI or file path to a NIFTI (\eqn{I} by \eqn{J} by \eqn{K} b
 observations), in which case \code{ROI_data} must be provided.
 (The vectorized data will be \eqn{T timepoints} by \eqn{V_{in-mask} voxels})
 
-Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
+Or, a \code{ciftiTools} \code{"xifti"} object or a file path to a CIFTI
 (The vectorized data will be \eqn{T timepoints} by \eqn{V_{left+right+sub} greyordinates}).}
 
 \item{ROI_data}{Indicates the data ROI. Allowed arguments depend on \code{X}:

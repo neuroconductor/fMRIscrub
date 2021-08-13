@@ -22,9 +22,9 @@ matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
 will be used:
 
 \describe{
-\item{wm_cort}{c(3000:4035, 5001, 5002)}
-\item{wm_cblm}{c(7, 46)}
-\item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
+\item{\code{"wm_cort"}}{\code{c(3000:4035, 5001, 5002)}}
+\item{\code{"wm_cblm"}}{\code{c(7, 46)}}
+\item{\code{"csf"}}{\code{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}}
 }
 
 These default ROIs are based on this forum post:

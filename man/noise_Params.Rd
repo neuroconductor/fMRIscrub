@@ -21,8 +21,10 @@ Should be a list or numeric vector with the same length as \code{ROI_noise}.
 It will be matched to each ROI based on the name of each entry, or if the
 names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
-0 (do not erode the noise ROIs).}
+0 (do not erode the noise ROIs). Note that noise erosion can only be
+performed if the noise ROIs are volumetric.}
 }
 \description{
 noise parameters for CompCor
 }
+\keyword{internal}

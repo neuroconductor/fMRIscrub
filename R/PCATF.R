@@ -27,7 +27,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 # #' @param X.svd (Optional) The svd decomposition of X. Save time by providing
 # #'  this argument if the svd has already been computed. Default NULL.
 # #' @param solve_directions Should the principal directions be solved for? These
-# #'	will be needed to display the leverage images for outlying observations.
+# #'	will be needed to display the artifact images for outlying observations.
 # #' @param K (Optional) The number of trend-filtered PCs to solve for. If not
 # #'  provided, it will be set to the number of regular PCs with variance above
 # #'	the mean, up to 100 PCs.
@@ -151,7 +151,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #' @param X.svd (Optional) The svd decomposition of X. Save time by providing
 #'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
-#'	will be needed to display the leverage images for outlying observations.
+#'	will be needed to display the artifact images for outlying observations.
 #' @param K (Optional) The number of trend-filtered PCs to solve for. If not
 #'  provided, it will be set to the number of regular PCs with variance above
 #'	the mean, up to 100 PCs.

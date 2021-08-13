@@ -482,5 +482,5 @@ pscrub_multi = function(
 
   out <- out[!vapply(out, is.null, FALSE)]
  
-  structure(out, class="pscrub_multi")
+  structure(out, class="scrub_projection_multi")
 }

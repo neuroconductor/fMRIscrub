@@ -2,7 +2,7 @@
 % Please edit documentation in R/fsl_bptf.R
 \name{fsl_bptf}
 \alias{fsl_bptf}
-\title{bptf function from FSL}
+\title{\code{bptf} function from FSL}
 \usage{
 fsl_bptf(orig_data, HP_sigma = 2000)
 }
@@ -12,7 +12,7 @@ fsl_bptf(orig_data, HP_sigma = 2000)
 \item{HP_sigma}{The frequency parameter for the highpass filter}
 }
 \description{
-Copy of highpass filter as implemented by bptf in FSL. The results are very
+Copy of highpass filter as implemented by \code{bptf} in FSL. The results are very
 similar but not identical.
 }
 \details{

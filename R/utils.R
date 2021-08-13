@@ -18,7 +18,7 @@ is_constant <- function(x, TOL=1e-8) {
 #' @return The (modified) design matrix
 #' 
 #' @keywords internal
-check_design_matrix <- function(design, T_) {
+check_design_matrix <- function(design, T_=nrow(design)) {
   class(design) <- "numeric"
   if (identical(design, 1)) { design <- matrix(1, nrow=T_) }
   design <- as.matrix(design)

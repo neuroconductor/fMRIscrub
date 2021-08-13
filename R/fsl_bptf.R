@@ -1,6 +1,6 @@
-#' bptf function from FSL
+#' \code{bptf} function from FSL
 #' 
-#' Copy of highpass filter as implemented by bptf in FSL. The results are very
+#' Copy of highpass filter as implemented by \code{bptf} in FSL. The results are very
 #'  similar but not identical.
 #' 
 #' Sources:

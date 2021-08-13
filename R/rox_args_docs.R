@@ -75,7 +75,7 @@
 #'  }
 #' @param get_dirs Do the projection directions need to be returned? This is the 
 #'  \eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
-#'  to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.
+#'  to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{artifact_images}}.
 #' @param full_PCA Only applies to the PCA projection. Return the full SVD? 
 #'  Default: \code{FALSE} (return only the high-variance components).
 #' @param get_outliers Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.
@@ -86,7 +86,7 @@
 #' @keywords internal
 NULL
 
-#' fMRI data for scrub and CompCor
+#' fMRI data for \code{scrub} and \code{CompCor}
 #' 
 #' @param X Wide numeric data matrix (\eqn{T observations} by \eqn{V variables}, \eqn{T << V}).
 #'  For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
@@ -96,7 +96,7 @@ NULL
 #'  observations), in which case \code{ROI_data} must be provided. 
 #'  (The vectorized data will be \eqn{T timepoints} by \eqn{V_{in-mask} voxels})
 #' 
-#'  Or, a \code{ciftiTools} code{"xifti"} object or a file path to a CIFTI
+#'  Or, a \code{ciftiTools} \code{"xifti"} object or a file path to a CIFTI
 #'  (The vectorized data will be \eqn{T timepoints} by \eqn{V_{left+right+sub} greyordinates}).
 #' @param ROI_data Indicates the data ROI. Allowed arguments depend on \code{X}:
 #' 
@@ -142,7 +142,8 @@ NULL
 #' 
 #'  (If \code{X} is a \code{"xifti"}, entries must be data matrices, since no 
 #'  greyordinate locations in \code{X} are appropriate noise ROIs).
-#' @name data_CompCor_params
+#' @name data_CompCor_Params
+#' @keywords internal
 NULL
 
 #' noise parameters for CompCor
@@ -162,6 +163,8 @@ NULL
 #'  It will be matched to each ROI based on the name of each entry, or if the 
 #'  names are missing, the order of entries. If it is an unnamed vector, its 
 #'  elements will be recycled. Default: \code{NULL}, which will use a value of
-#'  0 (do not erode the noise ROIs).
+#'  0 (do not erode the noise ROIs). Note that noise erosion can only be
+#'  performed if the noise ROIs are volumetric.
 #' @name noise_Params
+#' @keywords internal
 NULL

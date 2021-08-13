@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompCor_HCP.R
 \name{CompCor_HCP}
 \alias{CompCor_HCP}
-\title{Run anatomical CompCor on the HCP CIFTI data}
+\title{Anatomical CompCor for HCP NIFTI and CIFTI data}
 \usage{
 CompCor_HCP(
   nii,
@@ -10,7 +10,7 @@ CompCor_HCP(
   ROI_noise = c("wm_cort", "csf"),
   noise_nPC = 5,
   noise_erosion = NULL,
-  frames = NULL,
+  idx = NULL,
   cii = NULL,
   brainstructures = c("left", "right"),
   center = TRUE,
@@ -41,9 +41,9 @@ matter), \code{"csf"} (cerebrospinal fluid). In the latter case, these labels
 will be used:
 
 \describe{
-\item{wm_cort}{c(3000:4035, 5001, 5002)}
-\item{wm_cblm}{c(7, 46)}
-\item{csf}{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}
+\item{\code{"wm_cort"}}{\code{c(3000:4035, 5001, 5002)}}
+\item{\code{"wm_cblm"}}{\code{c(7, 46)}}
+\item{\code{"csf"}}{\code{c(4, 5, 14, 15, 24, 31, 43, 44, 63, 250, 251, 252, 253, 254, 255))}}
 }
 
 These default ROIs are based on this forum post:
@@ -70,14 +70,15 @@ names are missing, the order of entries. If it is an unnamed vector, its
 elements will be recycled. Default: \code{NULL}, which will use a value of
 0 (do not erode the noise ROIs).}
 
-\item{frames}{A numeric vector indicating the timepoints to use, or
-\code{NULL} (default) to use all frames. (Indexing begins with 1, so the
+\item{idx}{A numeric vector indicating the timepoints to use, or
+\code{NULL} (default) to use all idx. (Indexing begins with 1, so the
 first timepoint has index 1 and the last has the same index as the length of
 the scan.)}
 
 \item{cii}{\code{"xifti"} (or file path to the CIFTI) from which the noise
 ROI components will be regressed. In the HCP, the corresponding file is e.g.
-"../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"}
+"../Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii". If not
+provided, only the noise components will be returned (no data will be cleaned).}
 
 \item{brainstructures}{Choose among "left", "right", and "subcortical".
 Default: \code{c("left", "right")} (cortical data only)}
@@ -98,10 +99,16 @@ nuisance regressors (default).}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
+\value{
+The noise components, and if \code{cii} is provided, the cleaned
+surface-based data as a \code{"xifti"} object.
+}
 \description{
-Wrapper to \code{\link{pscrub_multi}} for computing CompCor (and other outlyingness
-measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
-ROIs, which are regressed from the greyordinate data in the CIFTI.
+Wrapper to \code{\link{CompCor}} for HCP-format data. Can be used to clean
+the surface-based CIFTI data with aCompCor using the noise PCs and ROIs
+calculated from the NIFTI fMRI data and NIFTI mask. Can also be used to just
+obtain the noise PCs and ROIs without performing aCompCor, if the CIFTI
+data is not provided.
 }
 \section{References}{
 
@@ -111,3 +118,6 @@ ROIs, which are regressed from the greyordinate data in the CIFTI.
 }
 }
 
+\seealso{
+CompCor
+}

@@ -147,7 +147,7 @@ entries are:
 
 \item{get_dirs}{Do the projection directions need to be returned? This is the
 \eqn{V} matrix in PCA and \eqn{S} matrix in ICA. The default is \code{FALSE}
-to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{lev_images}}.}
+to save memory. However, \code{get_dirs==TRUE} is required for \code{\link{artifact_images}}.}
 
 \item{full_PCA}{Only applies to the PCA projection. Return the full SVD?
 Default: \code{FALSE} (return only the high-variance components).}

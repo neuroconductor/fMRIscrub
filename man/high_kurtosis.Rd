@@ -2,7 +2,7 @@
 % Please edit documentation in R/high_kurtosis.R
 \name{high_kurtosis}
 \alias{high_kurtosis}
-\title{Identifies the components of sufficient kurtosis.}
+\title{Which components have high kurtosis?}
 \usage{
 high_kurtosis(Comps, kurt_quantile = 0.99, n_sim = 5000, min_1 = FALSE)
 }

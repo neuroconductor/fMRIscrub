@@ -59,7 +59,7 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
 
 #' Format data for pscrub and CompCor
 #'
-#' @inheritParams data_CompCor_params
+#' @inheritParams data_CompCor_Params
 #' @param noise_nPC The number of principal components to compute for each noise
 #'  ROI. Alternatively, values between 0 and 1, in which case they will 
 #'  represent the minimum proportion of variance explained by the PCs used for
@@ -93,10 +93,10 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
       }
       if (identical(ROI_data, "infer")) { ROI_data <- "all" }
       X <- ciftiTools::read_cifti(X, brainstructures=ROI_data)
-    } else if (endsWith(X, ".nii")) {
+    } else if (endsWith(X, ".nii") | endsWith(X, ".nii.gz")) {
       X <- read_nifti(X)
     } else {
-      stop("The argument `X`,", X, ", does not look like a CIFTI or NIFTI file name.")
+      stop("The argument `X`, '", X, "', does not look like a CIFTI or NIFTI file name.")
     }
   } 
 
@@ -117,7 +117,7 @@ format_data <- function(X, ROI_data="infer", ROI_noise=NULL, noise_nPC=5, noise_
     X_type <- "volume"
   } else if (inherits(X, "xifti")) {
     xifti_meta <- X$meta
-    X <- t(do.call(rbind, X$data))
+    X <- t(as.matrix(X))
     T_ <- nrow(X); V_ <- ncol(X)
     X_type <- "xifti"
   } else {

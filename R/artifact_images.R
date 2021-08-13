@@ -1,34 +1,37 @@
-#' Leverage images
+#' Artifact images
 #' 
-#' Visualize artifact patterns with leverage images
+#' Visualize artifact patterns from the results of \code{\link{pscrub}}.
+#'  Requires \code{pscrub(..., get_dirs==TRUE)}. 
 #' 
-#' Leverage images can be computed from a call to \code{"scrub"} with
-#'  \code{get_dirs==TRUE} 
+#' Computes two types: "mean" artifact images based on a weighted sum of the 
+#'  projection directions, with weights determined by the scores for each 
+#'  component at the flagged timepoint, and "top" artifact images based on the 
+#'  projection direction with the greatest score at the flagged timepoint.
 #'
-#' @param psx A \code{"scrub"} object containing projection scrubbing results
-#'  (not DVARS).
-#' @param idx The timepoints or column indexes for which to compute leverage
+#' @param psx A \code{"scrub_projection"} object containing projection scrubbing
+#'  results.
+#' @param idx The timepoints or column indexes for which to compute artifact
 #'  images. If \code{NULL} (default), use the outlying timepoints. 
 #' @param use_dt If detrended components are available (the "U" matrix of PCA 
-#'  or "M" matrix of ICA), should they be used to compute the leverage images?
+#'  or "M" matrix of ICA), should they be used to compute the artifact images?
 #'  Otherwise, use the non-detrended components. Default: \code{TRUE}.
 #'
-#' @return A list of three: \code{idx}, the timepoints for which the leverage images
-#'  were computed; \code{mean}, the mean leverage images; and \code{top}, the
-#'  top leverage images. The row names of the \code{top} leverage images
+#' @return A list of three: \code{idx}, the timepoints for which the artifact images
+#'  were computed; \code{mean}, the "mean" artifact images; and \code{top}, the
+#'  "top" artifact images. The row names of the \code{top} artifact images
 #'  matrix give the index of the top component ("V" in PCA and "S" in ICA) at
 #'  each timepoint.
 #'
 #' @export
-lev_images <- function(psx, idx=NULL, use_dt=TRUE){
+artifact_images <- function(psx, idx=NULL, use_dt=TRUE){
 
   # Check idx.
   if (is.null(idx)) {
     idx <- which(psx$outlier_flag)
     if (!(length(idx) > 0)) {
       warning(
-        "`idx=NULL` will get leverage images for outliers, ",
-        "but no outliers were detected."
+        "`idx=NULL` will get artifact images at each flagged timepoint, ",
+        "but no timepoints were flagged."
       )
       return(NULL)
     }
@@ -40,13 +43,13 @@ lev_images <- function(psx, idx=NULL, use_dt=TRUE){
   if ("PCA" %in% names(psx)) {
     U <- psx$PCA$U
     if (!("V" %in% names(psx$PCA))) { 
-      stop("No directions. Run `scrub` again with `get_dirs=TRUE`.") 
+      stop("No directions. Run `pscrub` again with `get_dirs=TRUE`.") 
     }
     V <- psx$PCA$V
   } else if ("PCATF" %in% names(psx)) {
     U <- psx$PCATF$U
     if (!("V" %in% names(psx$PCA))) { 
-      stop("No directions. Run `scrub` again with `get_dirs=TRUE`.")
+      stop("No directions. Run `pscrub` again with `get_dirs=TRUE`.")
     }
     V <- psx$PCATF$V
   } else if ("ICA" %in% names(psx)) {
