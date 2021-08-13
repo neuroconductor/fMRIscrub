@@ -186,5 +186,5 @@ DVARS <- function(
     }
   }
 
-  structure(out, class="clever")
+  structure(out, class="scrub")
 }

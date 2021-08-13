@@ -10,7 +10,7 @@
 #'  realignment parameters (3 translation and 3 rotation). 
 #' @param method \code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}
 #' @param ... Additional arguments to each specific scrubbing function: 
-#'  \code{\link{clever}}, \code{\link{DVARS}} or \code{\link{FD}}.
+#'  \code{\link{pscrub}}, \code{\link{DVARS}} or \code{\link{FD}}.
 #' 
 #' @return A list with components
 #' \describe{
@@ -24,7 +24,7 @@
 #' 
 scrub <- function(X, method=c("leverage", "DVARS", "FD"), ...) {
   method <- match.arg(method, c("leverage", "DVARS", "FD"))
-  FUN <- switch(method, leverage=clever, DVARS=DVARS, FD=FD)
+  FUN <- switch(method, leverage=pscrub, DVARS=DVARS, FD=FD)
   FUN(X, ...)
 }
 
@@ -41,7 +41,7 @@ scrub <- function(X, method=c("leverage", "DVARS", "FD"), ...) {
 #'  gray matter). Can also be \code{"all"} (obtain all three brain structures). 
 #'  Default: \code{c("left", "right")} (excludes the subcortex). 
 #' @param ... Additional arguments to each specific scrubbing function: 
-#'  \code{\link{clever}} or \code{\link{DVARS}}.
+#'  \code{\link{pscrub}} or \code{\link{DVARS}}.
 #' 
 #' @return A list with components
 #' \describe{
@@ -55,7 +55,7 @@ scrub <- function(X, method=c("leverage", "DVARS", "FD"), ...) {
 #' 
 scrub_xifti <- function(X, method=c("leverage", "DVARS"), brainstructures=c("left", "right"), ...) {
   method <- match.arg(method, c("leverage", "DVARS"))
-  FUN <- switch(method, leverage=clever, DVARS=DVARS)
+  FUN <- switch(method, leverage=pscrub, DVARS=DVARS)
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
     stop("Package \"ciftiTools\" needed. Please install it.", call. = FALSE)

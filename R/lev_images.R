@@ -2,10 +2,11 @@
 #' 
 #' Visualize artifact patterns with leverage images
 #' 
-#' Leverage images can be computed from a call to \code{"clever"} with
+#' Leverage images can be computed from a call to \code{"scrub"} with
 #'  \code{get_dirs==TRUE} 
 #'
-#' @param clev A \code{"clever"} object.
+#' @param psx A \code{"scrub"} object containing projection scrubbing results
+#'  (not DVARS).
 #' @param idx The timepoints or column indexes for which to compute leverage
 #'  images. If \code{NULL} (default), use the outlying timepoints. 
 #' @param use_dt If detrended components are available (the "U" matrix of PCA 
@@ -19,11 +20,11 @@
 #'  each timepoint.
 #'
 #' @export
-lev_images <- function(clev, idx=NULL, use_dt=TRUE){
+lev_images <- function(psx, idx=NULL, use_dt=TRUE){
 
   # Check idx.
   if (is.null(idx)) {
-    idx <- which(clev$outlier_flag)
+    idx <- which(psx$outlier_flag)
     if (!(length(idx) > 0)) {
       warning(
         "`idx=NULL` will get leverage images for outliers, ",
@@ -36,29 +37,29 @@ lev_images <- function(clev, idx=NULL, use_dt=TRUE){
   }
 
   # Get PCA scores and directions (or ICA mixing and source matrices).
-  if ("PCA" %in% names(clev)) {
-    U <- clev$PCA$U
-    if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run `clever` again with `get_dirs=TRUE`.") 
+  if ("PCA" %in% names(psx)) {
+    U <- psx$PCA$U
+    if (!("V" %in% names(psx$PCA))) { 
+      stop("No directions. Run `scrub` again with `get_dirs=TRUE`.") 
     }
-    V <- clev$PCA$V
-  } else if ("PCATF" %in% names(clev)) {
-    U <- clev$PCATF$U
-    if (!("V" %in% names(clev$PCA))) { 
-      stop("No directions. Run `clever` again with `get_dirs=TRUE`.")
+    V <- psx$PCA$V
+  } else if ("PCATF" %in% names(psx)) {
+    U <- psx$PCATF$U
+    if (!("V" %in% names(psx$PCA))) { 
+      stop("No directions. Run `scrub` again with `get_dirs=TRUE`.")
     }
-    V <- clev$PCATF$V
-  } else if ("ICA" %in% names(clev)) {
-    U <- scale_med(clev$ICA$M)$mat
-    V <- clev$ICA$S
+    V <- psx$PCATF$V
+  } else if ("ICA" %in% names(psx)) {
+    U <- scale_med(psx$ICA$M)$mat
+    V <- psx$ICA$S
   }
 
   stopifnot(all(idx %in% seq(nrow(U))))
 
-  if (is.null(clev$mask)) {
+  if (is.null(psx$mask)) {
     const_mask = rep(TRUE, nrow(V))
   } else {
-    const_mask <- clev$mask > 0
+    const_mask <- psx$mask > 0
   }
   N_ <- length(const_mask)
   n_imgs <- length(idx)

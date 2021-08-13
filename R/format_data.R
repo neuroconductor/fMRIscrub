@@ -57,7 +57,7 @@ erode_vol <- function(vol, n_erosion=1, out_of_mask_val=NA){
   vol
 }
 
-#' Format data for clever and CompCor
+#' Format data for pscrub and CompCor
 #'
 #' @inheritParams data_CompCor_params
 #' @param noise_nPC The number of principal components to compute for each noise

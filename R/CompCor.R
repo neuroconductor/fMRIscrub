@@ -159,6 +159,6 @@ CompCor <- function(
 
   list(
     data=out1$X, 
-    noise=structure(list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise), class="clever_CompCor")
+    noise=structure(list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise), class="CompCor")
   )
 }

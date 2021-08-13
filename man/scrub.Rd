@@ -16,7 +16,7 @@ realignment parameters (3 translation and 3 rotation).}
 \item{method}{\code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}}
 
 \item{...}{Additional arguments to each specific scrubbing function:
-\code{\link{clever}}, \code{\link{DVARS}} or \code{\link{FD}}.}
+\code{\link{pscrub}}, \code{\link{DVARS}} or \code{\link{FD}}.}
 }
 \value{
 A list with components

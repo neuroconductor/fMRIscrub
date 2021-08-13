@@ -99,7 +99,7 @@ nuisance regressors (default).}
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }
 \description{
-Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
+Wrapper to \code{\link{pscrub_multi}} for computing CompCor (and other outlyingness
 measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
 ROIs, which are regressed from the greyordinate data in the CIFTI.
 }

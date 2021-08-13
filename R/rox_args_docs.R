@@ -1,4 +1,4 @@
-#' clever
+#' pscrub
 #' 
 #' @param X Wide numeric data matrix (\eqn{T} observations by \eqn{V} variables, 
 #'  \eqn{T << V}). If \code{X} represents an fMRI run, \eqn{T} should be the 
@@ -82,11 +82,11 @@
 #' @param cutoff Median leverage cutoff value. Default: \code{4}.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
 #'
-#' @name clever_Params
+#' @name pscrub_Params
 #' @keywords internal
 NULL
 
-#' fMRI data for clever and CompCor
+#' fMRI data for scrub and CompCor
 #' 
 #' @param X Wide numeric data matrix (\eqn{T observations} by \eqn{V variables}, \eqn{T << V}).
 #'  For example, if \code{X} represents an fMRI run, \eqn{T} should be the number

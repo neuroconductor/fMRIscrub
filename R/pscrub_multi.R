@@ -1,9 +1,9 @@
-#' Compare multiple leverage measures with \code{clever_multi}
+#' Compare multiple leverage measures with \code{pscrub_multi}
 #' 
 #' Calculates leverage to identify outliers in high-dimensional data. 
 #'  Can compute multiple kinds of leverage at once. 
 #' 
-#' @inheritParams clever_Params
+#' @inheritParams pscrub_Params
 #' @param projection Leverage works by projecting the data onto directions likely to 
 #'  contain outlier information. Choose at least one of the following:
 #' 
@@ -26,7 +26,7 @@
 #'  is the number of principal components with above-average variance.
 #'  
 #'  Use \code{"all"} to use all projection methods. Default: \code{"ICA_kurt"}.
-#' @return A \code{"clever_multi"} object, i.e. a list with components
+#' @return A \code{"pscrub_multi"} object, i.e. a list with components
 #' \describe{
 #'  \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
 #'  \item{measure_info}{A data.frame with \eqn{P} rows listing information about each projection used.}
@@ -90,8 +90,8 @@
 #' n_timepoints = 100
 #' X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 #'
-#' clev = fMRIscrub:::clever_multi(X)
-clever_multi = function(
+#' psx = fMRIscrub:::pscrub_multi(X)
+pscrub_multi = function(
   X, projection = "ICA_kurt", 
   nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
@@ -265,7 +265,7 @@ clever_multi = function(
         cat(
           "Trying `corpcor::fast.svd`. An error will occur if this package ",
           "is not available, in which case the package should be installed ",
-          "and `clever` should be run again.\n"
+          "and `pscrub` should be run again.\n"
         )
         if (!requireNamespace("corpcor", quietly = TRUE)) {
           stop("Package \"corpcor\" needed since `svd` failed. Please install it.", call. = FALSE)
@@ -285,7 +285,7 @@ clever_multi = function(
         cat(
           "Trying `corpcor::fast.svd`. An error will occur if this package",
           "is not available, in which case the package should be installed",
-          "and `clever` should be run again.\n"
+          "and `pscrub` should be run again.\n"
         )
         if (!requireNamespace("corpcor", quietly = TRUE)) {
           stop("Package \"corpcor\" needed since `svd` failed. Please install it.", call. = FALSE)
@@ -482,5 +482,5 @@ clever_multi = function(
 
   out <- out[!vapply(out, is.null, FALSE)]
  
-  structure(out, class="clever_multiLev")
+  structure(out, class="pscrub_multi")
 }

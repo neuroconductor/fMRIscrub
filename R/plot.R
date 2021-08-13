@@ -1,4 +1,4 @@
-#' \code{"clever"} plot sub-function
+#' \code{"scrub"} plot sub-function
 #'
 #' Plot outlyingness measure(s) with the corresponding threshold(s). Requires
 #'  the \code{cowplot} and \code{ggplot2} packages
@@ -24,7 +24,7 @@
 #' @importFrom utils stack
 #'
 #' @keywords internal
-clever_plot <- function(
+scrub_plot <- function(
   meas, cut=NULL, flag_intersect=FALSE, 
   colors=NULL, log_y=FALSE, geom="point", 
   ylim_min=0, ylim_max= max(meas$measure),
@@ -34,11 +34,11 @@ clever_plot <- function(
   need_cow <- !requireNamespace("cowplot", quietly = TRUE)
   need_gg <- !requireNamespace("ggplot2", quietly = TRUE)
   if (need_cow && need_gg) {
-    stop("Packages \"cowplot\" and \"ggplot2\" needed to plot `clever` results. Please install them.", call. = FALSE)
+    stop("Packages \"cowplot\" and \"ggplot2\" needed to plot `scrub` results. Please install them.", call. = FALSE)
   } else if (need_cow) {
-    stop("Package \"cowplot\" needed to plot `clever` results. Please install it.", call. = FALSE)
+    stop("Package \"cowplot\" needed to plot `scrub` results. Please install it.", call. = FALSE)
   } else if (need_gg) {
-    stop("Package \"ggplot2\" needed to plot `clever` results. Please install it.", call. = FALSE)
+    stop("Package \"ggplot2\" needed to plot `scrub` results. Please install it.", call. = FALSE)
   }
   rm(need_cow, need_gg)
 
@@ -260,21 +260,21 @@ clever_plot <- function(
   return(plt)
 }
 
-#' Plot \code{"clever"}
+#' Plot \code{"scrub"}
 #' 
 #' Plot a leverage, DVARS, or FD timeseries. Highlight volumes flagged for
 #'  outlier presence.
 #'
-#' @param x The \code{"clever"} object.
+#' @param x The \code{"scrub"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
 #' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
 #'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'
-#' @method plot clever
+#' @method plot scrub
 #' @export
-plot.clever <- function(x, title=NULL, ...){
+plot.scrub <- function(x, title=NULL, ...){
   gg_args <- list(...)
   mtype <- as.character(x$measure_info["type"])
   stopifnot(mtype %in% c("Leverage", "DVARS", "FD"))
@@ -305,12 +305,12 @@ plot.clever <- function(x, title=NULL, ...){
 
   # Make the plot
   if ("legend.position" %in% names(gg_args)) {
-    plt <- clever_plot(
+    plt <- scrub_plot(
       meas, cut, flag_intersect=(mtype=="DVARS"), 
       ylab=mtype, ylim_min=ylim_min, ylim_max=ylim_max, ...
     )
   } else {
-    plt <- clever_plot(
+    plt <- scrub_plot(
       meas, cut, legend.position="none", flag_intersect=(mtype=="DVARS"), 
       ylab=mtype, ylim_min=ylim_min, ylim_max=ylim_max, ...
     )
@@ -331,24 +331,24 @@ plot.clever <- function(x, title=NULL, ...){
   return(plt)
 }
 
-#' Plot \code{"clever_multi"}
+#' Plot \code{"pscrub_multi"}
 #'
-#' @param x The \code{"clever_multi"} object.
+#' @param x The \code{"pscrub_multi"} object.
 #' @param title (Optional) If provided, will add a title to the plot.
 #' @param ... Additional arguments to ggplot, e.g. \code{main}, \code{sub}, 
 #'  \code{xlab}, \code{ylab}, \code{legend.position}
 #'
 #' @return A ggplot
 #'
-# @method plot clever_multi
+# @method plot pscrub_multi
 #' @keywords internal
-plot.clever_multi <- function(x, title=NULL, ...){
+plot.pscrub_multi <- function(x, title=NULL, ...){
   gg_args <- list(...)
   
   if ("legend.position" %in% names(gg_args)) {
-    plt <- clever_plot(x$measure, x$outlier_cutoff, ...)
+    plt <- scrub_plot(x$measure, x$outlier_cutoff, ...)
   } else {
-    plt <- clever_plot(x$measure, x$outlier_cutoff, legend.position="none", ...)
+    plt <- scrub_plot(x$measure, x$outlier_cutoff, legend.position="none", ...)
   }
 
   # Add title.

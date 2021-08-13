@@ -13,7 +13,7 @@ as.matrix2(x)
 x as a matrix.
 }
 \description{
-A \code{"xifti"} is VxT, whereas \code{clever} and \code{DVARS} accept a
+A \code{"xifti"} is VxT, whereas \code{scrub} accepts a
 TxV matrix. This function calls \code{as.matrix} and transposes the data
 if it is a \code{"xifti"}.
 }

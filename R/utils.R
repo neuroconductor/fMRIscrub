@@ -156,7 +156,7 @@ read_nifti <- function(nifti_fname){
 
 #' Convert to \eqn{T} by \eqn{V} matrix
 #' 
-#' A \code{"xifti"} is VxT, whereas \code{clever} and \code{DVARS} accept a
+#' A \code{"xifti"} is VxT, whereas \code{scrub} accepts a
 #'  TxV matrix. This function calls \code{as.matrix} and transposes the data
 #'  if it is a \code{"xifti"}.
 #' 

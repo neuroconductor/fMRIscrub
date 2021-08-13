@@ -1,28 +1,28 @@
-#' Summarize a \code{"clever"} object
+#' Summarize a \code{"scrub"} object
 #'
-#' Summary method for class \code{"clever"}
+#' Summary method for class \code{"scrub"}
 #'
-#' @param object Object of class \code{"clever"}. 
+#' @param object Object of class \code{"scrub"}. 
 #' @param ... further arguments passed to or from other methods.
 #' @export
-#' @method summary clever
-summary.clever <- function(object, ...) {
+#' @method summary scrub
+summary.scrub <- function(object, ...) {
   plot(object, ...)
 }
 
-#' @rdname summary.clever
+#' @rdname summary.scrub
 #' @export
 #' 
-#' @param x Object of class \code{"clever"}. 
-#' @method print summary.clever
-print.summary.clever <- function(x, ...) {
-  print(summary.clever(x))
+#' @param x Object of class \code{"scrub"}. 
+#' @method print summary.scrub
+print.summary.scrub <- function(x, ...) {
+  print(summary.scrub(x))
 }
 
-#' @rdname summary.clever
+#' @rdname summary.scrub
 #' @export
 #' 
-#' @method print clever
-print.clever <- function(x, ...) {
-  print.summary.clever(summary(x, ...))
+#' @method print scrub
+print.scrub <- function(x, ...) {
+  print.summary.scrub(summary(x, ...))
 }

@@ -4,10 +4,11 @@
 \alias{lev_images}
 \title{Leverage images}
 \usage{
-lev_images(clev, idx = NULL, use_dt = TRUE)
+lev_images(psx, idx = NULL, use_dt = TRUE)
 }
 \arguments{
-\item{clev}{A \code{"clever"} object.}
+\item{psx}{A \code{"scrub"} object containing projection scrubbing results
+(not DVARS).}
 
 \item{idx}{The timepoints or column indexes for which to compute leverage
 images. If \code{NULL} (default), use the outlying timepoints.}
@@ -27,6 +28,6 @@ each timepoint.
 Visualize artifact patterns with leverage images
 }
 \details{
-Leverage images can be computed from a call to \code{"clever"} with
+Leverage images can be computed from a call to \code{"scrub"} with
 \code{get_dirs==TRUE}
 }

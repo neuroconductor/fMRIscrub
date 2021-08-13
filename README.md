@@ -33,9 +33,9 @@ devtools::install_github("mandymejia/fMRIscrub")
 ## Quick start guide
 
 ``` r
-pscrub <- clever(Dat1)
-plot(pscrub)
-Dat1_cleaned <- Dat1[!pscrub$outlier_flag,]
+s_Dat1 <- scrub(Dat1)
+plot(s_Dat1)
+Dat1_cleaned <- Dat1[!s_Dat1$outlier_flag,]
 ```
 
 ## Vignette

@@ -52,9 +52,9 @@ We will now run projection scrubbing on both datasets. We'll use the default imp
 [^1]: Although the data will be mean-detrended during the nuisance regression with DCT bases, some trends may persist in the components because that nuisance regression is estimated non-robustly. A robust nuisance regression would take too much time to estimate at every data location. But since $Q << V$, we can implement a robust nuisance regression for component detrending. Still, component detrending is disabled by default because more rigorous detrending of the original data, such as with anatomical CompCor, seem to reduce long-term trends in the components, even if estimated non-robustly. Since the CSF and white matter data are unavailable for these scans, we use component detrending instead of anatomical CompCor.
 
 ```{r}
-Dat1.lev = clever(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+Dat1.lev = pscrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 # same as: scrub(Dat1, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
-Dat2.lev = clever(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
+Dat2.lev = pscrub(Dat2, verbose=TRUE, comps_mean_dt=1, comps_var_dt=1)
 ```
 
 Let's take a look at the leverage timeseries with `plot`. The flagged timepoints are highlighted by the grey bars.
@@ -65,7 +65,7 @@ p2 <- plot(Dat2.lev, title="Dat2", show.legend=FALSE)
 cowplot::plot_grid(p1, p2, nrow=1)
 ```
 
-ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. while the second dataset is relatively artifact-free, a few timepoints are still flagged including around the 40th and 110th timepoints. 
+ICA leverage indicates clear outliers in the first dataset around the 60th and 150th timepoints. while the second dataset is relatively artifact-free, a few timepoints are still flagged including around the 40th and 110th timepoints. The suspected artifacts in the first dataset have significantly greater leverage than the suspected artifacts in the second dataset.
 
 DVARS, another data-driven scrubbing technique [(Afyouni and Nichols, 2018)](https://doi.org/10.1016/j.neuroimage.2017.12.098), yields similar results:
 
@@ -113,18 +113,18 @@ The median time point appears normal, whereas the most outlying time point clear
 
 
 ```{r, fig.width=7, fig.height=4}
-clev <- clever(Dat1, projection="ICA", get_dirs=TRUE, comps_mean_dt=1, comps_var_dt=1)
-Lev_Img1 = lev_images(clev)
+psx <- pscrub(Dat1, projection="ICA", get_dirs=TRUE, comps_mean_dt=1, comps_var_dt=1)
+Lev_Img1 = lev_images(psx)
 
 par(mfrow=c(1,2))
 
-# Constant voxels are deleted during the `clever` algorithm, so the leverage images will have
+# Constant voxels are deleted during the `pscrub` algorithm, so the leverage images will have
 # missing values where the constant voxels were. The NA_fill option is used here to make
 # these voxels have the same color as the background (out-of-mask voxels).
 Lev_Img1.mean = unmask_vol(t(Lev_Img1$mean), Mask1)
 Lev_Img1.top = unmask_vol(t(Lev_Img1$top), Mask1)
 
-idx = which(which(clev$outlier_flag) == t_max)
+idx = which(which(psx$outlier_flag) == t_max)
 image(Lev_Img1.mean[,,1,idx], main=paste0('Lev image, mean (T=',t_max,')'))
 image(Lev_Img1.top[,,1,idx], main=paste0('Lev image, top (T=',t_max,')'))
 ```
@@ -135,7 +135,7 @@ The leverage images highlight the banding artifact present at this time point.
 
 ### More information about projection scrubbing
 
-As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an fMRI run: each row is a vectorized volume, and each column represents the timeseries of a single data location. Next, the algorithm performs the following steps: 
+As input, `pscrub` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an fMRI run: each row is a vectorized volume, and each column represents the timeseries of a single data location. Next, the algorithm performs the following steps: 
 
 1. Perform a nuisance regression with four discrete cosine transform (DCT) bases to remove low-frequency trends in the data. This helps the data projection method better identify artifactual components. (More or less nuisance regressors can be specified with the `nuisance` argument.)
 
@@ -151,17 +151,17 @@ As input, `clever` takes a $T$ x $V$ matrix, $Y$. In our case, $Y$ represents an
 
 ### Running multiple versions of projection scrubbing at a time
 
-For testing purposes, we can run multiple methods at the same time using the internal function `clever_multi`:
+For testing purposes, we can run multiple methods at the same time using the internal function `pscrub_multi`:
 
 ```{r fig.height=3, fig.width=6}
 # Try all projections: this is excessive to plot
-# Dat1.levAll <- fMRIscrub:::clever_multi(
+# Dat1.levAll <- fMRIscrub:::pscrub_multi(
 #   Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 # )
 
 #  the default (ICA + kurtosis), PCATF + kurtosis, and ICA
-Dat1.lev3 <- fMRIscrub:::clever_multi(
+Dat1.lev3 <- fMRIscrub:::pscrub_multi(
   Dat1, projection=c("ICA_kurt", "PCATF_kurt", "ICA"), verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 )
-fMRIscrub:::plot.clever_multi(Dat1.lev3, legend.position="bottom") # Doesn't work yet!
+fMRIscrub:::plot.pscrub_multi(Dat1.lev3, legend.position="bottom")
 ```

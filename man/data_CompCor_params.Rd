@@ -2,7 +2,7 @@
 % Please edit documentation in R/rox_args_docs.R
 \name{data_CompCor_params}
 \alias{data_CompCor_params}
-\title{fMRI data for clever and CompCor}
+\title{fMRI data for scrub and CompCor}
 \arguments{
 \item{X}{Wide numeric data matrix (\eqn{T observations} by \eqn{V variables}, \eqn{T << V}).
 For example, if \code{X} represents an fMRI run, \eqn{T} should be the number
@@ -62,5 +62,5 @@ be mutually exclusive with each other, and with \code{ROI_data}.
 greyordinate locations in \code{X} are appropriate noise ROIs).}
 }
 \description{
-fMRI data for clever and CompCor
+fMRI data for scrub and CompCor
 }

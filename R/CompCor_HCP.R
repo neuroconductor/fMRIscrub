@@ -60,7 +60,7 @@ get_NIFTI_ROI_masks <- function(nii_labels, ROI_noise=c("wm_cort", "csf")){
 
 #' Run anatomical CompCor on the HCP CIFTI data
 #'
-#' Wrapper to \code{\link{clever_multi}} for computing CompCor (and other outlyingness
+#' Wrapper to \code{\link{pscrub_multi}} for computing CompCor (and other outlyingness
 #'  measures) on HCP data. The whole-brain NIFTI is used to obtain the noise
 #'  ROIs, which are regressed from the greyordinate data in the CIFTI. 
 #'

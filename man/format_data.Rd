@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_data.R
 \name{format_data}
 \alias{format_data}
-\title{Format data for clever and CompCor}
+\title{Format data for pscrub and CompCor}
 \usage{
 format_data(
   X,
@@ -93,6 +93,6 @@ elements will be recycled. Default: \code{NULL}, which will use a value of
 A list with components "X", "X_noise", "ROI_data", and "ROI_noise"
 }
 \description{
-Format data for clever and CompCor
+Format data for pscrub and CompCor
 }
 \keyword{internal}

@@ -23,7 +23,7 @@ gray matter). Can also be \code{"all"} (obtain all three brain structures).
 Default: \code{c("left", "right")} (excludes the subcortex).}
 
 \item{...}{Additional arguments to each specific scrubbing function:
-\code{\link{clever}} or \code{\link{DVARS}}.}
+\code{\link{pscrub}} or \code{\link{DVARS}}.}
 }
 \value{
 A list with components

@@ -109,5 +109,5 @@ FD <- function(
     out$outlier_flag <- out$measure > out$outlier_cutoff
   }
 
-  structure(out, class="clever")
+  structure(out, class="scrub")
 }

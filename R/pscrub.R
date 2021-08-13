@@ -18,7 +18,7 @@
 #'    \item{Pham, D., McDonald, D., Ding, L., Nebel, M. B. & Mejia, A. Projection scrubbing: a more effective, data-driven fMRI denoising method. (2021).}
 #'  }
 #' 
-#' @inheritParams clever_Params
+#' @inheritParams pscrub_Params
 #' @param projection One of the following: \code{"ICA"} (default), \code{"PCA"}, 
 #'  or \code{"PCATF"}.
 # @param R_true The \eqn{T} by \eqn{T} correlation matrix, if known. Used for the bootstrap
@@ -26,7 +26,7 @@
 #' @param PESEL Use \code{\link[pesel]{pesel}} to select the number of 
 #'  components? Default: \code{TRUE}. Otherwise, use the number of principal
 #'  components with above-average variance.
-#' @return A \code{"clever"} object, i.e. a list with components
+#' @return A \code{"pscrub"} object, i.e. a list with components
 #' \describe{
 #'  \item{measure}{A numeric vector of leverage values.}
 #'  \item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}
@@ -85,8 +85,8 @@
 #' n_timepoints = 100
 #' X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
 #'
-#' clev = clever(X)
-clever = function(
+#' psx = pscrub(X)
+pscrub = function(
   X, projection=c("ICA", "PCATF", "PCA"), 
   nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
@@ -103,8 +103,8 @@ clever = function(
     kurt_quantile <- .99
   }
 
-  # Run `clever_multi`.
-  clev <- clever_multi(
+  # Run `pscrub_multi`.
+   psx <- pscrub_multi(
     X=X, projection=projection, 
     nuisance=nuisance,
     center=center, scale=scale, comps_mean_dt=comps_mean_dt, comps_var_dt=comps_var_dt,
@@ -115,5 +115,5 @@ clever = function(
   )
 
   # Re-format results.
-  clever_from_multi(clev)
+  pscrub_from_multi(psx)
 }
