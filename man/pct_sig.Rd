@@ -7,11 +7,11 @@
 pct_sig(X, center = median, by = c("column", "all"))
 }
 \arguments{
-\item{X}{a \eqn{T \times N} numeric matrix. The columns will be normalized to
+\item{X}{a \eqn{T} by \eqn{N} numeric matrix. The columns will be normalized to
 percent signal.}
 
 \item{center}{A function that computes the center of a numeric vector.
-Default: \code{median}. Other common options include \code{mean} and 
+Default: \code{median}. Other common options include \code{mean} and
 \code{mode}.}
 
 \item{by}{Should the center be measured individualy for each \code{"column"}
@@ -19,7 +19,7 @@ Default: \code{median}. Other common options include \code{mean} and
 }
 \value{
 \code{X} with its columns normalized to percent signal. (A value of
- 85 will represent a -15% signal change.)
+85 will represent a -15\% signal change.)
 }
 \description{
 Convert data values to percent signal.

@@ -4,7 +4,7 @@
 \alias{check_design_matrix}
 \title{Check design matrix}
 \usage{
-check_design_matrix(design, T_)
+check_design_matrix(design, T_ = nrow(design))
 }
 \arguments{
 \item{design}{The design matrix}

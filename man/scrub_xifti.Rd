@@ -6,7 +6,7 @@
 \usage{
 scrub_xifti(
   X,
-  method = c("leverage", "DVARS"),
+  method = c("projection", "DVARS"),
   brainstructures = c("left", "right"),
   ...
 )
@@ -14,27 +14,28 @@ scrub_xifti(
 \arguments{
 \item{X}{Path to a CIFTI file, or a \code{"xifti"} object.}
 
-\item{method}{\code{"leverage"} or \code{"DVARS"}}
+\item{method}{\code{"projection"} or \code{"DVARS"}}
 
-\item{brainstructures}{Character vector indicating which brain structure(s) 
-to use: \code{"left"} (left cortical surface), \code{"right"} (right 
+\item{brainstructures}{Character vector indicating which brain structure(s)
+to use: \code{"left"} (left cortical surface), \code{"right"} (right
 cortical surface) and/or \code{"subcortical"} (subcortical and cerebellar
-gray matter). Can also be \code{"all"} (obtain all three brain structures). 
+gray matter). Can also be \code{"all"} (obtain all three brain structures).
 Default: \code{c("left", "right")} (excludes the subcortex).}
 
-\item{...}{Additional arguments to each specific scrubbing function: 
-\code{\link{clever}} or \code{\link{DVARS}}.}
+\item{...}{Additional arguments to each specific scrubbing function:
+\code{\link{pscrub}} or \code{\link{DVARS}}.}
 }
 \value{
 A list with components
 \describe{
- \item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
- \item{measure_info}{Describes the outlyingness measure(s)}
- \item{outlier_cutoff}{The outlier cutoff value(s).}
- \item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+\item{measure}{A length \eqn{T} vector or data.frame with \eqn{T} rows, giving the outlyingness measure(s)}
+\item{measure_info}{Describes the outlyingness measure(s)}
+\item{outlier_cutoff}{The outlier cutoff value(s).}
+\item{outlier_flag}{A length \eqn{T} vector or data.frame with \eqn{T} rows,  where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
-Computes leverage, DVARS, or FD, and optionally flags the measure to identify
- artifactual time points. Requires the Connectime Workbench.
+Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
+to identify artifactual time points. Requires \code{ciftiTools} and the
+Connectime Workbench.
 }

@@ -21,5 +21,5 @@ to the original mean and variance? Default: \code{TRUE}.}
 }
 \description{
 Stabilize the center and scale of a timeseries using robust regression of
- DCT bases on the first and second moments.
+DCT bases on the first and second moments.
 }

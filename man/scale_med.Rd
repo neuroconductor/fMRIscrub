@@ -13,8 +13,8 @@ scale_med(mat)
 The input matrix with its columns centered and scaled.
 }
 \description{
-Centers and scales the columns of a matrix robustly for the purpose of 
- covariance estimation.
+Centers and scales the columns of a matrix robustly for the purpose of
+covariance estimation.
 }
 \details{
 Centers each column on its median, and scales each column by its median

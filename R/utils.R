@@ -1,4 +1,4 @@
-#' Is a numeric vector constant?
+#' Is this numeric vector constant?
 #' 
 #' @param x The numeric vector
 #' @param TOL minimum range of \code{x} to be considered non-constant.
@@ -18,7 +18,7 @@ is_constant <- function(x, TOL=1e-8) {
 #' @return The (modified) design matrix
 #' 
 #' @keywords internal
-check_design_matrix <- function(design, T_) {
+check_design_matrix <- function(design, T_=nrow(design)) {
   class(design) <- "numeric"
   if (identical(design, 1)) { design <- matrix(1, nrow=T_) }
   design <- as.matrix(design)
@@ -80,48 +80,7 @@ scale_med <- function(mat){
   list(mat=mat, const_mask=const_mask)
 }
 
-#' Estimates the parameters of the F distribution of MCD distances.
-#'
-#' This estimates the parameters c and m required to determine the distribution
-#'  of robust MCD distances as derived by Hardin and Rocke (2005), The
-#'  Distribution of Robust Distances.
-#'
-#' @param Q The number of variables in dataset used to compute MCD distances.
-#' @param n The total number of observations.
-#' @param h The number of observations included in estimation of MCD center and
-#'  scale.
-#'
-#' @return A list containing the estimated F distribution's c, m, and df.
-#' @importFrom stats pchisq qchisq
-#' @export
-fit.F <- function(Q, n, h){
-  # Estimate c.
-  c <- pchisq(q=qchisq(df=Q, p=h/n), df=Q+2)/(h/n)
-
-  # Estimate asymptotic m.
-  alpha <- (n-h)/n
-  q_alpha <- qchisq(p=1-alpha, df=Q)
-  c_alpha <- (1-alpha)/(pchisq(df=Q+2, q=q_alpha))
-  c2 <- -1*pchisq(df=Q+2, q=q_alpha)/2
-  c3 <- -1*pchisq(df=Q+4, q=q_alpha)/2
-  c4 <- 3*c3
-  b1 <- c_alpha*(c3-c4)/(1-alpha)
-  b2 <- 0.5 + (c_alpha/(1-alpha))*(c3-q_alpha/Q*(c2 + (1-alpha)/2))
-  v1 <- (1-alpha)*b1^2*(alpha*(c_alpha*q_alpha/Q - 1)^2 - 1) -
-    2*c3*c_alpha^2*(3*(b1-Q*b2)^2 + (Q+2)*b2*(2*b1-Q*b2))
-  v2 <- n*(b1*(b1-Q*b2)*(1-alpha))^2*c_alpha^2
-  v <- v1/v2
-  m <- 2/(c_alpha^2*v)
-
-  # Corrected m for finite samples.
-  m <- m * exp(0.725 - 0.00663*Q - 0.078*log(n))
-  df <- c(Q, m-Q+1)
-
-  result <- list(c=c, m=m, df=df)
-  return(result)
-}
-
-#' Get the cosine bases for DCT
+#' Cosine bases for the DCT
 #' 
 #' @param T_ Length of timeseries
 #' @param n Number of cosine bases
@@ -138,8 +97,11 @@ dct_bases <- function(T_, n){
 
 #' Wrapper to common functions for reading NIFTIs
 #' 
+#' Tries \code{RNifti::readNifti}, then \code{oro.nifti::readNIfTI}. If
+#'  neither package is available an error is raised.
+#' 
 #' @param nifti_fname The file name of the NIFTI.
-#' @return The NIFTI.
+#' @return The NIFTI
 #' @keywords internal
 read_nifti <- function(nifti_fname){
   if (requireNamespace("RNifti", quietly = TRUE)) {
@@ -147,6 +109,26 @@ read_nifti <- function(nifti_fname){
   } else if (requireNamespace("oro.nifti", quietly = TRUE)) {
     return(oro.nifti::readNIfTI(nifti_fname, reorient=FALSE))
   } else {
-    stop("Package \"RNifti\" or \"oro.nifti\" needed to read `X`. Please install at least one", call. = FALSE)
+    stop(
+      "Package \"RNifti\" or \"oro.nifti\" needed to read", nifti_fname, 
+      ". Please install at least one", call. = FALSE
+    )
+  }
+}
+
+#' Convert to \eqn{T} by \eqn{V} matrix
+#' 
+#' A \code{"xifti"} is VxT, whereas \code{scrub} accepts a
+#'  TxV matrix. This function calls \code{as.matrix} and transposes the data
+#'  if it is a \code{"xifti"}.
+#' 
+#' @param x The object to coerce to a matrix
+#' @return x as a matrix.
+#' @keywords internal
+as.matrix2 <- function(x) {
+  if (inherits(x, "xifti")) {
+    return( t(as.matrix(x)) )
+  } else {
+    return( as.matrix(x) )
   }
 }

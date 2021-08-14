@@ -7,7 +7,7 @@
 erode_vol(vol, n_erosion = 1, out_of_mask_val = NA)
 }
 \arguments{
-\item{vol}{The volume to erode. Out-of-mask voxels should be indicated by a 
+\item{vol}{The volume to erode. Out-of-mask voxels should be indicated by a
 value in \code{out_of_mask_val}.}
 
 \item{n_erosion}{The number of layers to erode the mask by.}
@@ -18,15 +18,15 @@ the eroded voxels. Default: \code{NA}.}
 }
 \value{
 The eroded \code{vol}. It is the same as \code{vol} but with eroded
- voxels replaced with the value \code{out_of_mask_val[1]}.
+voxels replaced with the value \code{out_of_mask_val[1]}.
 }
 \description{
 Erode a volumetric mask by a certain number of voxel layers. For each layer,
- any in-mask voxel adjacent to at least one out-of-mask voxel is removed
- from the mask.
+any in-mask voxel adjacent to at least one out-of-mask voxel is removed
+from the mask.
 }
 \details{
 Diagonal voxels are not considered adjacent, i.e. the voxel at (0,0,0) is not
- adjacent to the voxel at (1,1,0) or (1,1,1), although it is adjacent to 
- (1,0,0).
+adjacent to the voxel at (1,1,0) or (1,1,1), although it is adjacent to
+(1,0,0).
 }

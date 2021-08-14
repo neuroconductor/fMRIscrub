@@ -4,6 +4,8 @@
 ^\.travis\.yml$
 ^appveyor\.yml$
 ^data-raw$
-^vignettes$
 robdist_new.*\.R
 ^vignettes/vignette_new_RD\.rmd$
+^cran-comments.md
+^doc$
+^Meta$

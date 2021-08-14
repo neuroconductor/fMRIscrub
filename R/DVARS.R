@@ -44,7 +44,7 @@ Mode <- function(x) {
 #' 
 #' Convert data values to percent signal.
 #' 
-#' @param X a \eqn{T \times N} numeric matrix. The columns will be normalized to
+#' @param X a \eqn{T} by \eqn{N} numeric matrix. The columns will be normalized to
 #'  percent signal.
 #' @param center A function that computes the center of a numeric vector.
 #'  Default: \code{median}. Other common options include \code{mean} and 
@@ -76,15 +76,12 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 
 #' DVARS
 #' 
-#' Computes the DSE decomposition and DVARS-related statistics.
-#' 
-#' Citation: Insight and inference for DVARS (Afyouni and Nichols, 2018)
-#' 
-#' github.com/asoroosh/DVARS
+#' Computes the DSE decomposition and DVARS-related statistics. Based on code
+#'  from github.com/asoroosh/DVARS .
 #'
-#' @param X a \eqn{T \times N} numeric matrix representing an fMRI run. There should
+#' @param X a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
 #'  not be any missing data (\code{NA} or \code{NaN}).
-#' @param normalize Normalize the data as proposed in the original paper? Default:
+#' @param normalize Normalize the data as proposed in the paper? Default:
 #'  \code{TRUE}. Normalization removes constant-zero voxels, scales by 100 / the
 #'  median of the mean image, and then centers each voxel on its mean.
 #'
@@ -93,7 +90,7 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #'  center the voxels on their means:
 #'
 #'  \code{Y <- Y/100; DVARS(t(Y - apply(Y, 1, mean)))} where \code{Y} is the 
-#'  \eqn{V \times T} data matrix.
+#'  \eqn{V} by \eqn{T} data matrix.
 #' 
 #'  Note that while voxel centering doesn't affect DVARS, it does affect
 #'  DPD and ZD.
@@ -104,28 +101,33 @@ pct_sig <- function(X, center=median, by=c("column", "all")){
 #'
 #' @return A list with components
 #' \describe{
-#'  \item{measure}{A data.frame with T rows, each column being a different variant of DVARS.}
+#'  \item{measure}{A data.frame with \eqn{T} rows, each column being a different variant of DVARS.}
 #'  \item{measure_info}{"DVARS"}
 #'  \item{outlier_cutoff}{The outlier cutoff value(s).}
-#'  \item{outlier_flag}{A logical data.frame with T rows, where \code{TRUE} indicates suspected outlier presence.}
+#'  \item{outlier_flag}{A logical data.frame with \eqn{T} rows, where \code{TRUE} indicates suspected outlier presence.}
 #' }
 #' @export
 #' @importFrom stats median pchisq qnorm
 #' 
+#' @section References:
+#'  \itemize{
+#'    \item{Afyouni, S. & Nichols, T. E. Insight and inference for DVARS. NeuroImage 172, 291-312 (2018).}
+#' }
+#' 
 DVARS <- function(
   X, normalize=TRUE, 
   cutoff_DPD=5,
-  cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix(X))),
+  cutoff_ZD=qnorm(1 - .05 / nrow(as.matrix2(X))),
   verbose=FALSE){
 
   cutoff_DVARS <- NULL
 
-  X <- as.matrix(X)
+  X <- as.matrix2(X)
   T_ <- nrow(X); N_ <- ncol(X)
 
   cutoff <- list(DVARS=cutoff_DVARS, DPD=cutoff_DPD, ZD=cutoff_ZD)
 
-  if(normalize){
+  if (normalize) {
     # Normalization procedure from original DVARS paper and code.
     # Remove voxels of zeros (assume no NaNs or NAs)
     bad <- apply(X == 0, 2, all)
@@ -184,5 +186,5 @@ DVARS <- function(
     }
   }
 
-  structure(out, class="clever")
+  structure(out, class="scrub_DVARS")
 }

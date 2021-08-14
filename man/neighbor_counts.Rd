@@ -13,10 +13,10 @@ neighbor_counts(arr, pad = FALSE)
 }
 \value{
 An array with the same dimensions as \code{arr}. Each voxel value
- will be the number of its immediate neighbors (0 to 6) which are \code{TRUE}.
+will be the number of its immediate neighbors (0 to 6) which are \code{TRUE}.
 }
 \description{
 For each voxel in a 3D logical array, count the number of immediate neighbors
- with value \code{TRUE}.
+with value \code{TRUE}.
 }
 \keyword{internal}

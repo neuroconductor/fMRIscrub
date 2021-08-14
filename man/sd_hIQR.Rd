@@ -17,6 +17,6 @@ Scalar for the robust estimate of standard deviation.
 }
 \description{
 Estimates standard deviation robustly using the half IQR (and power trans.).
- Used to measure DVARS in Afyouni and Nichols, 2018.
+Used to measure DVARS in Afyouni and Nichols, 2018.
 }
 \keyword{internal}

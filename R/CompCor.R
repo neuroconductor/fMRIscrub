@@ -71,14 +71,14 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
   list(noise_comps=noise_comps, noise_var=noise_var, noise_vartotal=noise_vartotal)
 }
 
-#' CompCor
+#' Anatomical CompCor
 #'
-#' The aCompCor algorithm (Behzadi et. al., 2007) 10.1016/j.neuroimage.2007.04.042
+#' The aCompCor algorithm for denoising fMRI data using noise ROIs data
 #' 
-#' First, the principal components (PCs) of each noise ROI are calculated. For each ROI,
-#'  voxels are centered and scaled (can be disabled with the arguments 
-#'  \code{center} and \code{scale}), and then the PCs are calculated via the
-#'  singular value decomposition. 
+#' First, the principal components (PCs) of each noise region of interest (ROI) 
+#'  are calculated. For each ROI, voxels are centered and scaled 
+#'  (can be disabled with the arguments \code{center} and \code{scale}), 
+#'  and then the PCs are calculated via the singular value decomposition. 
 #' 
 #' Next, aCompCor is performed to remove the shared variation between the noise ROI
 #'  PCs and each location in the data. This is accomplished by a nuisance regression
@@ -87,35 +87,48 @@ CompCor.noise_comps <- function(X_noise, center, scale, noise_nPC){
 #'  in the same regression, \code{nuisance} can be set to DCT bases obtained with
 #'  the function \code{\link{dct_bases}}.)
 #'
-#' @inheritParams data_clever_CompCor_Params
+#' @inheritParams data_CompCor_Params
 #' @inheritParams noise_Params
 #' @param center,scale Center the columns of the noise ROI data by their medians, 
 #'  and scale by their MADs? Default: \code{TRUE} for both. Note that this argument
 #'  affects the noise ROI data and not the data that is being cleaned with aCompCor.
 #'  Centering and scaling of the data being cleaned can be done after this function call.
 #' @param nuisance Nuisance signals to regress from each data column in addition
-#'  to the noise ROI PCs. Should be a \eqn{T \times N} numeric matrix where 
+#'  to the noise ROI PCs. Should be a \eqn{T} by \eqn{N} numeric matrix where 
 #'  \eqn{N} represents the number of nuisance signals. To not perform any nuisance
 #'  regression set this argument to \code{NULL}, \code{0}, or \code{FALSE}.
 #'  Default: \code{NULL}.
-#' @return A list with entries \code{"data"} and \code{"noise"}
+#' @return A list with entries \code{"data"}, \code{"noise"}, and potentially
+#'  \code{"ROI_data"}.
 #'
-#'  The entry \code{"data"} will be a \code{V x T} matrix where each row is a 
-#'  data voxel (if it was originally an array, the voxels will be in spatial
-#'  order) time series with each noise PC regressed from it. Otherwise, this 
-#'  entry will be \code{NULL}.
+#'  The entry \code{"data"} will be a \code{V x T} matrix where each row corresponds to a
+#'  data location (if it was originally an array, the locations will be voxels in spatial
+#'  order). Each row will be a time series with each noise PC regressed from it. This entry
+#'  will be \code{NULL} if there was no data.
 #'
-#'  The entry \code{"noise"} is a list of \code{T} \eqn{x} \code{noise_nPC} PC 
-#'  scores, one for each \code{ROI_noise}.
+#'  The entry \code{"noise"} is a list of noise PC scores, their corresponding variance,
+#'  and their ROI mask, for each noise ROI.
+#' 
+#'  If the data ROI is not all \code{TRUE}, the entry \code{"ROI_data"} will have
+#'  the ROI mask for the data.
 #'
 #' @importFrom robustbase rowMedians
+#' 
+#' @section References:
+#'  \itemize{
+#'    \item{Behzadi, Y., Restom, K., Liau, J. & Liu, T. T. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37, 90-101 (2007).}
+#'    \item{Muschelli, J. et al. Reduction of motion-related artifacts in resting state fMRI using aCompCor. NeuroImage 96, 22-35 (2014).}
+#' }
 #'
 #' @export
+#' @seealso CompCor_HCP
 CompCor <- function(
   X, ROI_data="infer", ROI_noise=NULL, 
   noise_nPC=5, noise_erosion=NULL, 
   center=TRUE, scale=TRUE, nuisance=NULL
   ){
+
+  if (is.null(ROI_noise)) {stop("`ROI_noise` must be provided. (It is not inferred.)")}
 
   out1 <- format_data(
     X=X, ROI_data=ROI_data, ROI_noise=ROI_noise, 
@@ -128,14 +141,15 @@ CompCor <- function(
 
   T_ <- nrow(out1$X)
 
-  if (any(ROI_data)) {
+  if (any(out1$ROI_data)) {
     # Perform nuisance regression.
     design <- do.call(cbind, out2$noise_comps)
     if (!(is.null(nuisance) || isFALSE(nuisance) || identical(nuisance, 0))) {
-      nuisance <- check_design_matrix(nuisance, T_)
+      if (nrow(nuisance) != T_) { stop("`nuisance` does not have the same number of timepoints as `X`.") }
+      nuisance <- check_design_matrix(nuisance)
       design <- cbind(design, nuisance)
     }
-    design <- check_design_matrix(cbind(1, design))
+    design <- check_design_matrix(cbind(1, design), T_)
     out1$X <- nuisance_regression(out1$X, design)
 
     # # Normalize data.
@@ -151,8 +165,11 @@ CompCor <- function(
     out1["X"] <- list(NULL)
   }
 
-  list(
-    data=out1$X, 
-    noise=structure(list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise), class="clever_CompCor")
+  z <- list(
+    data = out1$X, 
+    noise = list(PCs=out2$noise_comps, var=out2$noise_var, ROI_noise=out1$ROI_noise)
   )
+  if (!all(out1$ROI_data)) { z$ROI_data <- out1$ROI_data }
+  class(z) <- "CompCor"
+  z
 }

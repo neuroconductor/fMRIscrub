@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{dct_bases}
 \alias{dct_bases}
-\title{Get the cosine bases for DCT}
+\title{Cosine bases for the DCT}
 \usage{
 dct_bases(T_, n)
 }
@@ -15,5 +15,5 @@ dct_bases(T_, n)
 Matrix with cosine bases along columns
 }
 \description{
-Get the cosine bases for DCT
+Cosine bases for the DCT
 }

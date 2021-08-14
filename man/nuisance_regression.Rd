@@ -7,14 +7,14 @@
 nuisance_regression(Y, design)
 }
 \arguments{
-\item{Y}{The \eqn{T \times V} or \eqn{V \times T} data.}
+\item{Y}{The \eqn{T} by \eqn{V} or \eqn{V} by \eqn{T} data.}
 
-\item{design}{The \eqn{T \times Q} matrix of nuisance regressors.}
+\item{design}{The \eqn{T} by \eqn{Q} matrix of nuisance regressors.}
 }
 \value{
 The data after nuisance regression.
 }
 \description{
 Performs nuisance regression. The data and design matrix must both be
- centered, or an intercept must be included in the design matrix!
+centered, or an intercept must be included in the design matrix!
 }

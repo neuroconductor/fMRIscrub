@@ -15,7 +15,7 @@ CompCor.noise_comps(X_noise, center, scale, noise_nPC)
 }
 \value{
 A list with components X, X_noise, ROI_data, ROI_noise, noise_nPC,
- noise_erosion, noise_comps, and noise_var.
+noise_erosion, noise_comps, and noise_var.
 }
 \description{
 Get noise components for aCompCor.

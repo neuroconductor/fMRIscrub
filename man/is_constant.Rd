@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{is_constant}
 \alias{is_constant}
-\title{Is a numeric vector constant?}
+\title{Is this numeric vector constant?}
 \usage{
 is_constant(x, TOL = 1e-08)
 }
@@ -16,6 +16,6 @@ Default: \code{1e-8}}
 Is \code{x} constant?
 }
 \description{
-Is a numeric vector constant?
+Is this numeric vector constant?
 }
 \keyword{internal}

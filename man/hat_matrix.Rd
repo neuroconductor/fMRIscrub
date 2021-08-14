@@ -7,10 +7,10 @@
 hat_matrix(design)
 }
 \arguments{
-\item{design}{The \eqn{T \times Q} design matrix}
+\item{design}{The \eqn{T} by \eqn{Q} design matrix}
 }
 \value{
-The \eqn{T \times T} hat matrix
+The \eqn{T} by \eqn{T} hat matrix
 }
 \description{
 Get the hat matrix from a design matrix
