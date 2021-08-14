@@ -1,6 +1,6 @@
 Package: fMRIscrub
 Type: Package
-Title: Scrubbing and other data cleaning routines for fMRI
+Title: Scrubbing and Other Data Cleaning Routines for fMRI
 Version: 0.8.0
 Authors@R: c(
     person(given = "Amanda",
