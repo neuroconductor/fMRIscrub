@@ -2,32 +2,29 @@
 % Please edit documentation in R/scrub.R
 \name{scrub}
 \alias{scrub}
-\title{Scrub fMRI data}
+\title{Data-driven scrubbing}
 \usage{
-scrub(X, method = c("leverage", "DVARS", "FD"), ...)
+scrub(X, method = c("projection", "DVARS"), ...)
 }
 \arguments{
-\item{X}{If \code{method} is \code{"leverage"} or \code{"DVARS"}, this should
-be a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
-not be any missing data (\code{NA} or \code{NaN}). Otherwise, if \code{method}
-is \code{"FD"}, this should be a \eqn{T} by \eqn{6} numeric matrix of the
-realignment parameters (3 translation and 3 rotation).}
+\item{X}{A \eqn{T} by \eqn{V} numeric matrix representing an fMRI run. There should
+not be any missing data (\code{NA} or \code{NaN}).}
 
-\item{method}{\code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}}
+\item{method}{\code{"projection"} (default) or \code{"DVARS"}}
 
-\item{...}{Additional arguments to each specific scrubbing function:
-\code{\link{pscrub}}, \code{\link{DVARS}} or \code{\link{FD}}.}
+\item{...}{Additional arguments to the specific scrubbing function: see
+\code{\link{pscrub}} or \code{\link{DVARS}}.}
 }
 \value{
 A list with components
 \describe{
-\item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
+\item{measure}{A length \eqn{T} vector or data.frame with \eqn{T} rows, giving the outlyingness measure(s)}
 \item{measure_info}{Describes the outlyingness measure(s)}
 \item{outlier_cutoff}{The outlier cutoff value(s).}
-\item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+\item{outlier_flag}{A length \eqn{T} vector or data.frame with \eqn{T} rows,  where \code{TRUE} indicates suspected outlier presence.}
 }
 }
 \description{
-Computes leverage, DVARS, or FD, and optionally flags the measure to identify
-artifactual time points.
+Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
+to identify artifactual time points.
 }

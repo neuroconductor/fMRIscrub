@@ -54,6 +54,9 @@ artifact_images <- function(psx, idx=NULL, use_dt=TRUE){
     V <- psx$fusedPCA$V
   } else if ("ICA" %in% names(psx)) {
     U <- scale_med(psx$ICA$M)$mat
+    if (!("S" %in% names (psx$ICA))) {
+      stop("No directions. Run `pscrub` again with `get_dirs=TRUE`.")
+    }
     V <- psx$ICA$S
   }
 

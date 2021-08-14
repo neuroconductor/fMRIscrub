@@ -1,40 +1,38 @@
-#' Scrub fMRI data
+#' Data-driven scrubbing
 #' 
-#' Computes leverage, DVARS, or FD, and optionally flags the measure to identify
-#'  artifactual time points.
+#' Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
+#'  to identify artifactual time points.
 #'
-#' @param X If \code{method} is \code{"leverage"} or \code{"DVARS"}, this should
-#'  be a \eqn{T} by \eqn{N} numeric matrix representing an fMRI run. There should
-#'  not be any missing data (\code{NA} or \code{NaN}). Otherwise, if \code{method}
-#'  is \code{"FD"}, this should be a \eqn{T} by \eqn{6} numeric matrix of the
-#'  realignment parameters (3 translation and 3 rotation). 
-#' @param method \code{"leverage"} (default), \code{"DVARS"} or \code{"FD"}
-#' @param ... Additional arguments to each specific scrubbing function: 
-#'  \code{\link{pscrub}}, \code{\link{DVARS}} or \code{\link{FD}}.
+#' @param X A \eqn{T} by \eqn{V} numeric matrix representing an fMRI run. There should
+#'  not be any missing data (\code{NA} or \code{NaN}). 
+#' @param method \code{"projection"} (default) or \code{"DVARS"}
+#' @param ... Additional arguments to the specific scrubbing function: see
+#'  \code{\link{pscrub}} or \code{\link{DVARS}}.
 #' 
 #' @return A list with components
 #' \describe{
-#'  \item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
+#'  \item{measure}{A length \eqn{T} vector or data.frame with \eqn{T} rows, giving the outlyingness measure(s)}
 #'  \item{measure_info}{Describes the outlyingness measure(s)}
 #'  \item{outlier_cutoff}{The outlier cutoff value(s).}
-#'  \item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+#'  \item{outlier_flag}{A length \eqn{T} vector or data.frame with \eqn{T} rows,  where \code{TRUE} indicates suspected outlier presence.}
 #' }
 #' 
 #' @export
 #' 
-scrub <- function(X, method=c("leverage", "DVARS", "FD"), ...) {
-  method <- match.arg(method, c("leverage", "DVARS", "FD"))
-  FUN <- switch(method, leverage=pscrub, DVARS=DVARS, FD=FD)
+scrub <- function(X, method=c("projection", "DVARS"), ...) {
+  method <- match.arg(method, c("projection", "DVARS"))
+  FUN <- switch(method, projection=pscrub, DVARS=DVARS)
   FUN(X, ...)
 }
 
 #' Scrub fMRI data in CIFTI format
 #' 
-#' Computes leverage, DVARS, or FD, and optionally flags the measure to identify
-#'  artifactual time points. Requires the Connectime Workbench.
+#' Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
+#'  to identify artifactual time points. Requires \code{ciftiTools} and the 
+#'  Connectime Workbench.
 #' 
 #' @param X Path to a CIFTI file, or a \code{"xifti"} object. 
-#' @param method \code{"leverage"} or \code{"DVARS"}
+#' @param method \code{"projection"} or \code{"DVARS"}
 #' @param brainstructures Character vector indicating which brain structure(s) 
 #'  to use: \code{"left"} (left cortical surface), \code{"right"} (right 
 #'  cortical surface) and/or \code{"subcortical"} (subcortical and cerebellar
@@ -45,17 +43,17 @@ scrub <- function(X, method=c("leverage", "DVARS", "FD"), ...) {
 #' 
 #' @return A list with components
 #' \describe{
-#'  \item{measure}{A length-T vector or data.frame with T rows, giving the outlyingness measure(s)}
+#'  \item{measure}{A length \eqn{T} vector or data.frame with \eqn{T} rows, giving the outlyingness measure(s)}
 #'  \item{measure_info}{Describes the outlyingness measure(s)}
 #'  \item{outlier_cutoff}{The outlier cutoff value(s).}
-#'  \item{outlier_flag}{A length-T vector or data.frame with T rows,  where \code{TRUE} indicates suspected outlier presence.}
+#'  \item{outlier_flag}{A length \eqn{T} vector or data.frame with \eqn{T} rows,  where \code{TRUE} indicates suspected outlier presence.}
 #' }
 #' 
 #' @export 
 #' 
-scrub_xifti <- function(X, method=c("leverage", "DVARS"), brainstructures=c("left", "right"), ...) {
-  method <- match.arg(method, c("leverage", "DVARS"))
-  FUN <- switch(method, leverage=pscrub, DVARS=DVARS)
+scrub_xifti <- function(X, method=c("projection", "DVARS"), brainstructures=c("left", "right"), ...) {
+  method <- match.arg(method, c("projection", "DVARS"))
+  FUN <- switch(method, projection=pscrub, DVARS=DVARS)
 
   if (!requireNamespace("ciftiTools", quietly = TRUE)) {
     stop("Package \"ciftiTools\" needed. Please install it.", call. = FALSE)
