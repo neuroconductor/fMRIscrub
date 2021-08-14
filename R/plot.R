@@ -142,7 +142,7 @@ scrub_plot <- function(
 
   # # Get the upper y-axis limit.
   # ylim_max <- ifelse(
-  #   grepl("Leverage", name) & (!("leverage__PCATF" %in% meas_subnames)),
+  #   grepl("Leverage", name) & (!("leverage__fusedPCA" %in% meas_subnames)),
   #   1,
   #   ifelse(length(cut) < 1, max(meas$measure), max(max(cut), max(meas$measure)))
   # )

@@ -73,7 +73,7 @@ We model each component as a length $T$ vector of Normal iid random variables,
 for which the distribution of kurtosis values can be approximated. The
 quantile is estimated based on this distribution.}
 
-\item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
+\item{fusedPCA_kwargs}{Arguments to \code{\link{fusedPCA}} in list form. Valid
 entries are:
 
 \describe{

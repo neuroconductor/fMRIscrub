@@ -20,7 +20,7 @@
 #' 
 #' @inheritParams pscrub_Params
 #' @param projection One of the following: \code{"ICA"} (default), \code{"PCA"}, 
-#'  or \code{"PCATF"}.
+#'  or \code{"fusedPCA"}.
 # @param R_true The \eqn{T} by \eqn{T} correlation matrix, if known. Used for the bootstrap
 #  robust distance measure.
 #' @param PESEL Use \code{\link[pesel]{pesel}} to select the number of 
@@ -55,8 +55,8 @@
 #'    If PCA was not used, all entries except \code{nPCs_PESEL} and/or \code{nPCs_avgvar} will not be included, depending on which
 #'    method(s) was used to select the number of PCs.
 #'  }
-#'  \item{PCATF}{
-#'    If PCATF was used, this will be a list with components:
+#'  \item{fusedPCA}{
+#'    If fusedPCA was used, this will be a list with components:
 #'    \describe{
 #'      \item{U}{The \eqn{T} by \eqn{Q} PC score matrix.}
 #'      \item{D}{The standard deviation of each PC.}
@@ -87,15 +87,15 @@
 #'
 #' psx = pscrub(X)
 pscrub = function(
-  X, projection=c("ICA", "PCATF", "PCA"), 
+  X, projection=c("ICA", "fusedPCA", "PCA"), 
   nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
-  PESEL=TRUE, kurt_quantile=.99, PCATF_kwargs=NULL, 
+  PESEL=TRUE, kurt_quantile=.99, fusedPCA_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
   get_outliers=TRUE, cutoff=4, 
   verbose=FALSE){
   
-  projection <- match.arg(projection, c("ICA", "PCATF", "PCA"))
+  projection <- match.arg(projection, c("ICA", "fusedPCA", "PCA"))
   if (!PESEL) { projection <- paste0(projection, "2") }
   if (kurt_quantile > 0) { 
     projection <- paste0(projection, "_kurt")
@@ -108,7 +108,7 @@ pscrub = function(
     X=X, projection=projection, 
     nuisance=nuisance,
     center=center, scale=scale, comps_mean_dt=comps_mean_dt, comps_var_dt=comps_var_dt,
-    kurt_quantile=kurt_quantile, PCATF_kwargs=PCATF_kwargs,
+    kurt_quantile=kurt_quantile, fusedPCA_kwargs=fusedPCA_kwargs,
     get_dirs=get_dirs, full_PCA=full_PCA,
     get_outliers=get_outliers, cutoff=cutoff,
     verbose=verbose

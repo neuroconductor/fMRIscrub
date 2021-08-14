@@ -13,7 +13,7 @@ pscrub_multi(
   comps_mean_dt = FALSE,
   comps_var_dt = FALSE,
   kurt_quantile = 0.99,
-  PCATF_kwargs = NULL,
+  fusedPCA_kwargs = NULL,
   get_dirs = FALSE,
   full_PCA = FALSE,
   get_outliers = TRUE,
@@ -36,10 +36,10 @@ contain outlier information. Choose at least one of the following:
 \item{\code{"PCA_kurt"}}{PCA using the high-kurtosis PCs among the top \eqn{k}.}
 \item{\code{"PCA2"}}{PCA using the top \eqn{k2} PCs.}
 \item{\code{"PCA2_kurt"}}{PCA using the high-kurtosis PCs among the top \eqn{k2}.}
-\item{\code{"PCATF"}}{PCATF using the top \eqn{k} trend-filtered PCs.}
-\item{\code{"PCATF_kurt"}}{PCATF using the high-kurtosis trend-filtered PCs among the top \eqn{k}.}
-\item{\code{"PCATF2"}}{PCATF using the top \eqn{k2} trend-filtered PCs.}
-\item{\code{"PCATF2_kurt"}}{PCATF using the high-kurtosis trend-filtered PCs among the top \eqn{k2}.}
+\item{\code{"fusedPCA"}}{fusedPCA using the top \eqn{k} fused PCs.}
+\item{\code{"fusedPCA_kurt"}}{fusedPCA using the high-kurtosis fused PCs among the top \eqn{k}.}
+\item{\code{"fusedPCA2"}}{fusedPCA using the top \eqn{k2} fused PCs.}
+\item{\code{"fusedPCA2_kurt"}}{fusedPCA using the high-kurtosis fused PCs among the top \eqn{k2}.}
 \item{\code{"ICA"}}{ICA using the top \eqn{k} ICs.}
 \item{\code{"ICA_kurt"}}{ICA using the high-kurtosis ICs among the top \eqn{k}.}
 \item{\code{"ICA2"}}{ICA using the top \eqn{k2} ICs.}
@@ -150,7 +150,7 @@ We model each component as a length $T$ vector of Normal iid random variables,
 for which the distribution of kurtosis values can be approximated. The
 quantile is estimated based on this distribution.}
 
-\item{PCATF_kwargs}{Arguments to \code{\link{PCATF}} in list form. Valid
+\item{fusedPCA_kwargs}{Arguments to \code{\link{fusedPCA}} in list form. Valid
 entries are:
 
 \describe{
@@ -204,8 +204,8 @@ where \code{Q} is the number of PCs selected by PESEL or of above-average varian
 If PCA was not used, all entries except \code{nPCs_PESEL} and/or \code{nPCs_avgvar} will not be included, depending on which
 method(s) was used to select the number of PCs.
 }
-\item{PCATF}{
-If PCATF was used, this will be a list with components:
+\item{fusedPCA}{
+If fusedPCA was used, this will be a list with components:
 \describe{
 \item{U}{The \eqn{T} by \eqn{Q} PC score matrix.}
 \item{D}{The standard deviation of each PC.}

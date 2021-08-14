@@ -7,7 +7,7 @@ test_that("pscrub works", {
 
   psx <- testthat::expect_warning(fMRIscrub:::pscrub_multi(
     Dat2,
-    projection = c("PCATF", "ICA_kurt"),
+    projection = c("fusedPCA", "ICA_kurt"),
     kurt_quantile = .90,
     cutoff = 5,
     verbose = TRUE
@@ -18,7 +18,7 @@ test_that("pscrub works", {
   plot(psx)
 
   psx <- pscrub(
-    matrix(rnorm(10000), nrow=50), "PCATF", 1, center=FALSE, PESEL=FALSE, kurt_quantile=.8,
+    matrix(rnorm(10000), nrow=50), "fusedPCA", 1, center=FALSE, PESEL=FALSE, kurt_quantile=.8,
     full_PCA = TRUE, cutoff=5, verbose=TRUE
   )
   plot(psx)

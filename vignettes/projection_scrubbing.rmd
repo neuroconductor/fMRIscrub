@@ -158,9 +158,9 @@ For testing purposes, we can try different projections at the same time using th
 #   Dat1, projection="all", verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 # )
 
-#  the default (ICA + kurtosis), PCATF + kurtosis, and ICA
+#  the default (ICA + kurtosis), fusedPCA + kurtosis, and ICA
 ps.Dat1.3 <- fMRIscrub:::pscrub_multi(
-  Dat1, projection=c("ICA_kurt", "PCATF_kurt", "ICA"), verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
+  Dat1, projection=c("ICA_kurt", "fusedPCA_kurt", "ICA"), verbose=TRUE, comps_mean_dt=1, comps_var_dt=1
 )
 fMRIscrub:::plot.scrub_projection_multi(ps.Dat1.3, legend.position="bottom")
 ```

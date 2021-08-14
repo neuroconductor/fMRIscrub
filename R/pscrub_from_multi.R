@@ -36,16 +36,16 @@ pscrub_from_multi <- function(psx) {
       }
     }
     psx$PCA$nPCs_avgvar <- psx$PCA$nPCs_PESEL <- NULL
-  # For PCATF
-  } else if (!is.null(psx$PCATF)) {
-    if (nrow(psx$PCATF$U) != ncol(psx$PCATF$U)) {
-      psx$PCATF$U <- psx$PCATF$U[, seq(nComps), drop=FALSE]
-      psx$PCATF$D <- psx$PCATF$D[seq(nComps), drop=FALSE]
-      if ("V" %in% names(psx$PCATF)) {
-        psx$PCATF$V <- psx$PCATF$V[, seq(nComps), drop=FALSE]
+  # For fusedPCA
+  } else if (!is.null(psx$fusedPCA)) {
+    if (nrow(psx$fusedPCA$U) != ncol(psx$fusedPCA$U)) {
+      psx$fusedPCA$U <- psx$fusedPCA$U[, seq(nComps), drop=FALSE]
+      psx$fusedPCA$D <- psx$fusedPCA$D[seq(nComps), drop=FALSE]
+      if ("V" %in% names(psx$fusedPCA)) {
+        psx$fusedPCA$V <- psx$fusedPCA$V[, seq(nComps), drop=FALSE]
       }
-      if ("highkurt" %in% names(psx$PCATF)) {
-        psx$PCATF$highkurt <- psx$PCATF$highkurt[seq(nComps)]
+      if ("highkurt" %in% names(psx$fusedPCA)) {
+        psx$fusedPCA$highkurt <- psx$fusedPCA$highkurt[seq(nComps)]
       }
     }
     psx$PCA <- NULL

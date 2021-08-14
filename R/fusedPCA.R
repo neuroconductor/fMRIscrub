@@ -1,12 +1,12 @@
-#' Check PCATF args
+#' Check fusedPCA args
 #' 
-#' Check PCATF arguments for both R-core and cpp-core versions
+#' Check fusedPCA arguments for both R-core and cpp-core versions
 #' 
 #' @param X,X.svd,solve_directions,K,lambda,niter_max,TOL,verbose See respective
 #'  functions.
 #' @return \code{NULL}, invisibly.
 #' @keywords internal
-PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose){
+fusedPCA_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose){
   stopifnot(is.numeric(X))
   stopifnot(all(sort(tolower(names(X.svd)))  == sort(c("u", "d", "v"))))
   stopifnot(is.logical(solve_directions))
@@ -21,14 +21,16 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
   NULL
 }
 
-# #' PCA Trend Filtering. From: https://github.com/Lei-D/PCATF
+# #' Fused PCA
+# #' 
+# #' From: https://github.com/Lei-D/PCATF
 # #'
 # #' @param X A numerical data matrix (observations x variables).
 # #' @param X.svd (Optional) The svd decomposition of X. Save time by providing
 # #'  this argument if the svd has already been computed. Default NULL.
 # #' @param solve_directions Should the principal directions be solved for? These
 # #'	will be needed to display the artifact images for outlying observations.
-# #' @param K (Optional) The number of trend-filtered PCs to solve for. If not
+# #' @param K (Optional) The number of fused PCs to solve for. If not
 # #'  provided, it will be set to the number of regular PCs with variance above
 # #'	the mean, up to 100 PCs.
 # #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
@@ -37,7 +39,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 # #' @param TOL The maximum 2-norm between iterations to accept as convergence.
 # #' @param verbose Print statements about convergence?
 # #'
-# #' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
+# #' @return SVD The fused SVD decomposition of X (list with u, d, v).
 # #'
 # #' @importFrom glmgen trendfilter
 # #' @examples
@@ -49,7 +51,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 # #' D = diag(c(10,5,1))
 # #' V = svd(matrix(rnorm(3*20),nrow=20))$u
 # #' X = U %*% D %*% t(V)
-# #' out3 = PCATF(X, K=3, lambda=.75)
+# #' out3 = fusedPCA(X, K=3, lambda=.75)
 # #' matplot(out3$u, ty='l')
 # #' out3$d
 # #' plot(rowSums(out3$u^2), ty='l')
@@ -60,12 +62,12 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 # #' out3_svd$d
 # #' plot(rowSums(out3_svd$u^2), ty='l')
 # #' @export
-# PCATF_rcore <- function(
+# fusedPCA_rcore <- function(
 #   X, X.svd=NULL, solve_directions = TRUE, K=NULL, lambda=.5,
 #   niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
 #   # Check arguments.
-#   PCATF_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
+#   fusedPCA_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
 #   if(is.null(X.svd)){
 #     X.svd <- svd(X)
 #   } else {
@@ -139,7 +141,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #   out
 # }
 
-#' PCA Trend Filtering (C++ core)
+#' Fused PCA (C++ core)
 #' 
 #' From: https://github.com/Lei-D/PCATF and 
 #'  https://github.com/glmgen/glmgen/blob/master/c_lib/glmgen/src/tf/tf_dp.c .
@@ -152,7 +154,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #'  this argument if the svd has already been computed. Default NULL.
 #' @param solve_directions Should the principal directions be solved for? These
 #'	will be needed to display the artifact images for outlying observations.
-#' @param K (Optional) The number of trend-filtered PCs to solve for. If not
+#' @param K (Optional) The number of fused PCs to solve for. If not
 #'  provided, it will be set to the number of regular PCs with variance above
 #'	the mean, up to 100 PCs.
 #' @param lambda The trend filtering parameter; roughly, the filtering intensity.
@@ -161,7 +163,7 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #' @param TOL The maximum 2-norm between iterations to accept as convergence.
 #' @param verbose Print statements about convergence?
 #'
-#' @return SVD The trend-filtered SVD decomposition of X (list with u, d, v).
+#' @return SVD The fused SVD decomposition of X (list with u, d, v).
 #' @export
 #' 
 #' @section References:
@@ -171,12 +173,12 @@ PCATF_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_max,
 #'    \item{Tibshirani, R. J. Adaptive piecewise polynomial estimation via trend filtering. The Annals of Statistics 42, 285-323 (2014).}
 #' }
 #' 
-PCATF <- function(
+fusedPCA <- function(
   X, X.svd=NULL, solve_directions = TRUE, K=NULL, 
   lambda=5, niter_max = 1000, TOL = 1e-8, verbose=FALSE){
 
   # Check arguments.
-  PCATF_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
+  fusedPCA_check_kwargs(X, X.svd, solve_directions, K, lambda, niter_max, TOL, verbose)
   if(is.null(X.svd)){
     X.svd <- svd(X)
   } else {
