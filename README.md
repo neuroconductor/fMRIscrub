@@ -41,7 +41,7 @@ Dat1_cleaned <- Dat1[!s_Dat1$outlier_flag,]
 ## Vignette
 
 See [this
-link](https://htmlpreview.github.io/?https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/fMRIscrub_vignette.html)
+link](https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/projection_scrubbing.rmd)
 to view the tutorial vignette.
 
 ## Citation
