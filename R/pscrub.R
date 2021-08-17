@@ -92,7 +92,7 @@ pscrub = function(
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
   PESEL=TRUE, kurt_quantile=.99, fusedPCA_kwargs=NULL, 
   get_dirs=FALSE, full_PCA=FALSE,
-  get_outliers=TRUE, cutoff=4, 
+  get_outliers=TRUE, cutoff=4, seed=0,
   verbose=FALSE){
   
   projection <- match.arg(projection, c("ICA", "fusedPCA", "PCA"))
@@ -110,7 +110,7 @@ pscrub = function(
     center=center, scale=scale, comps_mean_dt=comps_mean_dt, comps_var_dt=comps_var_dt,
     kurt_quantile=kurt_quantile, fusedPCA_kwargs=fusedPCA_kwargs,
     get_dirs=get_dirs, full_PCA=full_PCA,
-    get_outliers=get_outliers, cutoff=cutoff,
+    get_outliers=get_outliers, cutoff=cutoff, seed=seed,
     verbose=verbose
   )
 

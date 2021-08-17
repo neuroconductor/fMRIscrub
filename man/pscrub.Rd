@@ -19,6 +19,7 @@ pscrub(
   full_PCA = FALSE,
   get_outliers = TRUE,
   cutoff = 4,
+  seed = 0,
   verbose = FALSE
 )
 }
@@ -155,6 +156,10 @@ Default: \code{FALSE} (return only the high-variance components).}
 \item{get_outliers}{Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.}
 
 \item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
+
+\item{seed}{Set a seed right before the call to \code{pesel::pesel} or
+\code{ica::icaimax}? If \code{NULL}, do not set a seed. If numeric (default:
+\code{0}), will use as the seed.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
 }

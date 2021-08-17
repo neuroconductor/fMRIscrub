@@ -10,6 +10,8 @@
 #' @param orig_data \eqn{T} by \eqn{V} data matrix whose columns will be detrended
 #' @param HP_sigma The frequency parameter for the highpass filter
 #' 
+#' @return The data with detrended columns
+#' 
 #' @export
 #' 
 #' @section References:

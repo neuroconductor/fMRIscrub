@@ -43,7 +43,6 @@ fusedPCA_check_kwargs <- function(X, X.svd, solve_directions, K, lambda, niter_m
 # #'
 # #' @importFrom glmgen trendfilter
 # #' @examples
-# #' set.seed(12345)
 # #' U = matrix(rnorm(100*3),ncol=3)
 # #' U[20:23,1] = U[20:23,1] + 3
 # #' U[40:43,2] = U[40:43,2] - 2

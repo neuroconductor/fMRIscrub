@@ -4,6 +4,7 @@
 #'
 #' @param object Object of class \code{"scrub_projection"}. 
 #' @param ... further arguments passed to or from other methods.
+#' @return A plot of the scrubbing results
 #' @export
 #' @method summary scrub_projection
 summary.scrub_projection <- function(object, ...) {
@@ -34,6 +35,7 @@ print.scrub_projection <- function(x, ...) {
 #' @param object Object of class \code{"scrub_DVARS"}. 
 #' @param ... further arguments passed to or from other methods.
 #' @export
+#' @return A plot of the scrubbing results
 #' @method summary scrub_DVARS
 summary.scrub_DVARS <- function(object, ...) {
   plot(object, ...)
@@ -63,6 +65,7 @@ print.scrub_DVARS <- function(x, ...) {
 #' @param object Object of class \code{"scrub_FD"}. 
 #' @param ... further arguments passed to or from other methods.
 #' @export
+#' @return A plot of the scrubbing results
 #' @method summary scrub_FD
 summary.scrub_FD <- function(object, ...) {
   plot(object, ...)

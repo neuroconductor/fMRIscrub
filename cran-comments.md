@@ -31,3 +31,61 @@ None.
 ## Tests
 
 Passes all the tests in `tests/testthat.R`
+
+## Resubmission
+
+Please always explain all acronyms in the description text.
+
+* Done!
+
+If there are references describing the methods in your package, please
+add these in the description field of your DESCRIPTION file in the form
+authors (year) <doi:...>
+authors (year) <arXiv:...>
+authors (year, ISBN:...)
+or if those are not available: <https:...>
+with no space after 'doi:', 'arXiv:', 'https:' and angle brackets for
+auto-linking.
+(If you want to add a title as well please put it in quotes: "Title")
+
+* Added DOI and arXiv links in this format!
+
+Please add \value to .Rd files regarding exported methods and explain
+the functions results in the documentation. Please write about the
+structure of the output (class) and also what the output means. (If a
+function does not return a value, please document that too, e.g.
+\value{No return value, called for side effects} or similar)
+Missing Rd-tags:
+      data_CompCor_params.Rd: \value
+      fsl_bptf.Rd: \value
+      noise_Params.Rd: \value
+      pscrub_Params.Rd: \value
+      rob_scale.Rd: \value
+      summary.scrub_DVARS.Rd: \value
+      summary.scrub_FD.Rd: \value
+      summary.scrub_projection.Rd: \value
+
+* Done for all exported methods! (`*_Params` are internal)
+
+You have examples for unexported functions.
+Please either omit these examples or export these functions.
+Used ::: in documentation:
+      man/pscrub_multi.Rd:
+         psx = fMRIscrub:::pscrub_multi(X)
+
+* Removed example for unexpored function!
+
+Please always make sure to reset to user's options(), working directory
+or par() after you changed it in examples and vignettes and demos.
+e.g.:
+oldpar <- par(mfrow = c(1,2))
+...
+par(oldpar)
+e.g. inst/doc/projection_scrubbing.R
+
+* Fixed in the vignette!
+
+Please do not set a seed to a specific number within a function.
+
+* We added an argument `seed` to each applicable function to control whether
+  the seed is set or not, and if so, what value it is set to.

@@ -4,7 +4,7 @@
 \alias{rob_trend}
 \title{Robust linear model on DCT bases}
 \usage{
-rob_trend(x, nDCT = 4, lmrob_method = "MM")
+rob_trend(x, nDCT = 4, lmrob_method = "MM", seed = 0)
 }
 \arguments{
 \item{x}{The input vector to regress on DCT bases}
@@ -12,6 +12,10 @@ rob_trend(x, nDCT = 4, lmrob_method = "MM")
 \item{nDCT}{The number of DCT bases to use. Default: \code{4}}
 
 \item{lmrob_method}{The \code{lmrob_method} argument to \code{robustbase::lmrob}.}
+
+\item{seed}{Set a seed right before the call to \code{robustbase::lmrob}?
+If \code{NULL}, do not set a seed. If numeric (default: \code{0}), will use
+as the seed.}
 }
 \value{
 The output of \code{robustbase::lmrob}

@@ -5,11 +5,14 @@
 #' @param x The input vector to regress on DCT bases
 #' @param nDCT The number of DCT bases to use. Default: \code{4}
 #' @param lmrob_method The \code{lmrob_method} argument to \code{robustbase::lmrob}.
+#' @param seed Set a seed right before the call to \code{robustbase::lmrob}?
+#'  If \code{NULL}, do not set a seed. If numeric (default: \code{0}), will use
+#'  as the seed.
 #'
 #' @return The output of \code{robustbase::lmrob}
 #'
 #' @keywords internal
-rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
+rob_trend <- function(x, nDCT=4, lmrob_method="MM", seed=0) {
   x <- as.vector(x)
   T_ <- length(x)
 
@@ -23,11 +26,15 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
     colnames(mat) <- c("x_int", paste0("x_dct", seq(nDCT)))
   }
   mat$y <- x
-  
-  with(
-    set.seed(0),
+
+  if (!is.null(seed)) {
+    with(
+      set.seed(seed),
+      robustbase::lmrob(y~., mat, method=lmrob_method, setting="KS2014")
+    )
+  } else {
     robustbase::lmrob(y~., mat, method=lmrob_method, setting="KS2014")
-  )
+  }
 }
 
 #' Stabilize the center and scale of a timeseries robustly 
@@ -44,6 +51,8 @@ rob_trend <- function(x, nDCT=4, lmrob_method="MM") {
 #' @param rescale After stabilizing \code{x}, re-center and re-scale
 #'  to the original mean and variance? Default: \code{TRUE}.
 #'
+#' @return the timeseries with its center and scale stabilized
+#' 
 #' @export
 #' 
 rob_scale <- function(x, center=TRUE, scale=TRUE, lmrob_method="MM", rescale=TRUE) {

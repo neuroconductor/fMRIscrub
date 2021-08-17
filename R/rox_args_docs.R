@@ -81,6 +81,9 @@
 #' @param get_outliers Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.
 #' @param cutoff Median leverage cutoff value. Default: \code{4}.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
+#' @param seed Set a seed right before the call to \code{pesel::pesel} or 
+#'  \code{ica::icaimax}? If \code{NULL}, do not set a seed. If numeric (default:
+#'  \code{0}), will use as the seed.
 #'
 #' @name pscrub_Params
 #' @keywords internal
@@ -145,7 +148,6 @@ NULL
 #' @name data_CompCor_Params
 #' @keywords internal
 NULL
-
 #' noise parameters for CompCor
 #' @param noise_nPC The number of principal components to compute for each noise
 #'  ROI. Alternatively, values between 0 and 1, in which case they will 

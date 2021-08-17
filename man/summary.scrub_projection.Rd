@@ -19,6 +19,9 @@
 
 \item{x}{Object of class \code{"scrub_projection"}.}
 }
+\value{
+A plot of the scrubbing results
+}
 \description{
 Summary method for class \code{"scrub_projection"}
 }

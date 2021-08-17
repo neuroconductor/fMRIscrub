@@ -11,6 +11,9 @@ fsl_bptf(orig_data, HP_sigma = 2000)
 
 \item{HP_sigma}{The frequency parameter for the highpass filter}
 }
+\value{
+The data with detrended columns
+}
 \description{
 Copy of highpass filter as implemented by \code{bptf} in FSL. The results are very
 similar but not identical.

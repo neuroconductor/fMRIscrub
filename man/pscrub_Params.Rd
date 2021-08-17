@@ -95,6 +95,10 @@ Default: \code{FALSE} (return only the high-variance components).}
 \item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
+
+\item{seed}{Set a seed right before the call to \code{pesel::pesel} or
+\code{ica::icaimax}? If \code{NULL}, do not set a seed. If numeric (default:
+\code{0}), will use as the seed.}
 }
 \description{
 pscrub
