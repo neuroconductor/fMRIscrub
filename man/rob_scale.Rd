@@ -19,6 +19,9 @@ robust stabilization of center/scale; \code{TRUE} will use \code{4}.}
 \item{rescale}{After stabilizing \code{x}, re-center and re-scale
 to the original mean and variance? Default: \code{TRUE}.}
 }
+\value{
+the timeseries with its center and scale stabilized
+}
 \description{
 Stabilize the center and scale of a timeseries using robust regression of
 DCT bases on the first and second moments.

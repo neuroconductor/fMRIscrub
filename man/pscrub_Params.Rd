@@ -26,7 +26,7 @@ induce positive or negative kurtosis, contaminating the connection between
 high kurtosis and outlier presence. Detrending should not be used with
 non-time-series data because the observations are not temporally related.
 
-Additional nuisance regressors can be speficied like so:
+Additional nuisance regressors can be specified like so:
 \code{cbind(1, dct_bases(nrow(x), 4), more_nuisance)}.}
 
 \item{center, scale}{Center the columns of the data by their medians, and scale the
@@ -95,6 +95,10 @@ Default: \code{FALSE} (return only the high-variance components).}
 \item{cutoff}{Median leverage cutoff value. Default: \code{4}.}
 
 \item{verbose}{Should occasional updates be printed? Default: \code{FALSE}.}
+
+\item{seed}{Set a seed right before the call to \code{pesel::pesel} or
+\code{ica::icaimax}? If \code{NULL}, do not set a seed. If numeric (default:
+\code{0}), will use as the seed.}
 }
 \description{
 pscrub

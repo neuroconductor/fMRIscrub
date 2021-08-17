@@ -15,7 +15,7 @@ hat_matrix <- function(design){
   design <- design[, qrd$pivot[seq_len(qrd$rank)], drop=FALSE]
   qrd <- qr(design)
   Qd <- qr.Q(qrd)
-  Qd %*% t(Qd)
+  tcrossprod(Qd)
 }
 
 #' Nuisance regression

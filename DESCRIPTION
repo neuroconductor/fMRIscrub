@@ -1,7 +1,7 @@
 Package: fMRIscrub
 Type: Package
 Title: Scrubbing and Other Data Cleaning Routines for fMRI
-Version: 0.8.0
+Version: 0.8.1
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -23,11 +23,15 @@ Authors@R: c(
            role = c("ctb"))
     )
 Maintainer: Amanda Mejia <mandy.mejia@gmail.com>
-Description: Collection of routines for data-driven scrubbing (projection 
-    scrubbing and DVARS), motion scrubbing, and other fMRI denoising strategies
-    such as anatomical CompCor, detrending, and nuisance regression. The
-    data-driven scrubbing methods are also applicable to other outlier detection
-    tasks involving high-dimensional data.
+Description: Data-driven fMRI denoising with projection scrubbing (Pham et al 
+    (2021) <arXiv:2108.00319>). Also incudes routines for DVARS (Derivatives 
+    VARianceS) (Afyouni and Nichols (2018) 
+    <doi:10.1016/j.neuroimage.2017.12.098>), motion scrubbing (Power et al 
+    (2012) <doi:10.1016/j.neuroimage.2011.10.018>), aCompCor (anatomical 
+    Components Correction) (Muschelli et al (2014)
+    <doi:10.1016/j.neuroimage.2014.03.028>), detrending, and nuisance
+    regression. Projection scrubbing and DVARS are also applicable to other
+    outlier detection tasks involving high-dimensional data.
 Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8

@@ -21,7 +21,7 @@
 #'  high kurtosis and outlier presence. Detrending should not be used with 
 #'  non-time-series data because the observations are not temporally related.
 #' 
-#'  Additional nuisance regressors can be speficied like so:
+#'  Additional nuisance regressors can be specified like so:
 #'  \code{cbind(1, dct_bases(nrow(x), 4), more_nuisance)}.
 #' @param center,scale Center the columns of the data by their medians, and scale the
 #'  columns of the data by their median absolute deviations (MADs)? Default: \code{TRUE}. 
@@ -81,6 +81,9 @@
 #' @param get_outliers Should outliers be flagged based on \code{cutoff}? Default: \code{TRUE}.
 #' @param cutoff Median leverage cutoff value. Default: \code{4}.
 #' @param verbose Should occasional updates be printed? Default: \code{FALSE}.
+#' @param seed Set a seed right before the call to \code{pesel::pesel} or 
+#'  \code{ica::icaimax}? If \code{NULL}, do not set a seed. If numeric (default:
+#'  \code{0}), will use as the seed.
 #'
 #' @name pscrub_Params
 #' @keywords internal
@@ -145,7 +148,6 @@ NULL
 #' @name data_CompCor_Params
 #' @keywords internal
 NULL
-
 #' noise parameters for CompCor
 #' @param noise_nPC The number of principal components to compute for each noise
 #'  ROI. Alternatively, values between 0 and 1, in which case they will 

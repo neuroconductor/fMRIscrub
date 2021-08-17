@@ -49,7 +49,7 @@ Mode <- function(x) {
 #' @param center A function that computes the center of a numeric vector.
 #'  Default: \code{median}. Other common options include \code{mean} and 
 #'  \code{mode}.
-#' @param by Should the center be measured individualy for each \code{"column"}
+#' @param by Should the center be measured individually for each \code{"column"}
 #'  (default), or should the center be the same across \code{"all"} columns?
 #' 
 #' @return \code{X} with its columns normalized to percent signal. (A value of

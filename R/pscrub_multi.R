@@ -31,7 +31,7 @@
 #'  \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
 #'  \item{measure_info}{A data.frame with \eqn{P} rows listing information about each projection used.}
 #'  \item{outlier_cutoff}{A \eqn{1} by \eqn{P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
-#'  \item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
+#'  \item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signaling suspected outlier presence.}
 #'  \item{mask}{
 #'    A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
 #'    \describe{
@@ -85,19 +85,13 @@
 #'
 #' @keywords internal
 #' 
-#' @examples
-#' n_voxels = 1e4
-#' n_timepoints = 100
-#' X = matrix(rnorm(n_timepoints*n_voxels), ncol = n_voxels)
-#'
-#' psx = fMRIscrub:::pscrub_multi(X)
 pscrub_multi = function(
   X, projection = "ICA_kurt", 
   nuisance="DCT4",
   center=TRUE, scale=TRUE, comps_mean_dt=FALSE, comps_var_dt=FALSE,
   kurt_quantile=.99, fusedPCA_kwargs=NULL,
   get_dirs=FALSE, full_PCA=FALSE,
-  get_outliers=TRUE, cutoff=4,
+  get_outliers=TRUE, cutoff=4, seed=0,
   verbose=FALSE){
 
   # ----------------------------------------------------------------------------
@@ -301,7 +295,11 @@ pscrub_multi = function(
   maxK_PCA <- 1
   # [TO DO]: move outside if(PCA) so PCA isn't required for ICA+PESEL
   if (any(valid_projection_PESEL %in% projection)) {
-    out$PCA$nPCs_PESEL <- with(set.seed(0), pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs)
+    if (!is.null(seed)) {
+      out$PCA$nPCs_PESEL <- with(set.seed(seed), pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs)
+    } else {
+      out$PCA$nPCs_PESEL <- pesel::pesel(t(X), npc.max=ceiling(T_/2), method="homogenous")$nPCs
+    }
     if (out$PCA$nPCs_PESEL == 1) {
       warning("PESEL estimates that there is only one component. Using two.")
       out$PCA$nPCs_PESEL <- 2
@@ -367,7 +365,11 @@ pscrub_multi = function(
     if (!requireNamespace("ica", quietly = TRUE)) {
       stop("Package \"ica\" needed to compute the ICA. Please install it.", call. = FALSE)
     }
-    out$ICA <- with(set.seed(0), ica::icaimax(t(X), maxK_ICA, center=FALSE))[c("S", "M")]
+    if (!is.null(seed)) {
+      out$ICA <- with(set.seed(seed), ica::icaimax(t(X), maxK_ICA, center=FALSE))[c("S", "M")]
+    } else {
+      out$ICA <- ica::icaimax(t(X), maxK_ICA, center=FALSE)[c("S", "M")]
+    }
     # Issue due to rank.
     if (ncol(out$ICA$M) < maxK_ICA) {
       cat("Rank issue with ICA: adding constant zero columns.\n")

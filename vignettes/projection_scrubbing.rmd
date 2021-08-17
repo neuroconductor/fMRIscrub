@@ -96,6 +96,7 @@ Img1 = fMRIscrub::unmask_vol(t(Dat1), Mask1)
 We will compare the timepoint of median leverage (left) to the timepoint of maximum leverage (right).
 
 ```{r, fig.width=7, fig.height=4}
+mfrow_original <- par("mfrow")
 par(mfrow=c(1,2))
 levs = ps.Dat1$measure
 t_med = order(levs)[ceiling(length(levs)/2)]
@@ -106,6 +107,10 @@ image(Img1[,,,t_max], main=paste0('Maximum lev (T = ', t_max, ')'))
 ```
 
 The median time point appears normal, whereas the most outlying time point clearly has banding artifacts likely due to subject motion.
+
+```{r}
+par(mfrow=mfrow_original)
+```
 
 ### Artifact images
 

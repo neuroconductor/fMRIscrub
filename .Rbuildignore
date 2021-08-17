@@ -9,3 +9,4 @@ robdist_new.*\.R
 ^cran-comments.md
 ^doc$
 ^Meta$
+^CRAN-RELEASE$
