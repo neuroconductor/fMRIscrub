@@ -39,7 +39,7 @@
 #'  \item{measure}{A length \eqn{N} vector of FD values in \code{trans_units}.}
 #'  \item{measure_info}{"FD"}
 #'  \item{outlier_cutoff}{\code{cutoff}}
-#'  \item{outlier_flag}{A length-N logical vetor, where \code{TRUE} indicates suspected outlier presence.}
+#'  \item{outlier_flag}{A length-N logical vector, where \code{TRUE} indicates suspected outlier presence.}
 #' }
 #'
 #' @importFrom utils read.table

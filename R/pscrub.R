@@ -30,7 +30,7 @@
 #' \describe{
 #'  \item{measure}{A numeric vector of leverage values.}
 #'  \item{outlier_cutoff}{The numeric outlier cutoff value (\code{cutoff} times the median leverage).}
-#'  \item{outlier_flag}{A logical vector where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
+#'  \item{outlier_flag}{A logical vector where \code{TRUE} indicates where leverage exceeds the cutoff, signaling suspected outlier presence.}
 #'  \item{mask}{
 #'    A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
 #'    \describe{

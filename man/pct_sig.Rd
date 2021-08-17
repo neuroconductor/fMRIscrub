@@ -14,7 +14,7 @@ percent signal.}
 Default: \code{median}. Other common options include \code{mean} and
 \code{mode}.}
 
-\item{by}{Should the center be measured individualy for each \code{"column"}
+\item{by}{Should the center be measured individually for each \code{"column"}
 (default), or should the center be the same across \code{"all"} columns?}
 }
 \value{

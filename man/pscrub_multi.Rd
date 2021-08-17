@@ -68,7 +68,7 @@ induce positive or negative kurtosis, contaminating the connection between
 high kurtosis and outlier presence. Detrending should not be used with
 non-time-series data because the observations are not temporally related.
 
-Additional nuisance regressors can be speficied like so:
+Additional nuisance regressors can be specified like so:
 \code{cbind(1, dct_bases(nrow(x), 4), more_nuisance)}.}
 
 \item{center}{Center the columns of the data by their medians, and scale the
@@ -184,7 +184,7 @@ A \code{"pscrub_multi"} object, i.e. a list with components
 \item{measure}{A \eqn{T} by \eqn{P} data.frame of numeric leverage values, each column being the leverage values for a projection method in \code{projection}.}
 \item{measure_info}{A data.frame with \eqn{P} rows listing information about each projection used.}
 \item{outlier_cutoff}{A \eqn{1} by \eqn{P} data.frame of numeric outlier cutoff values for each projection (\code{cutoff} times the median leverage).}
-\item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signalling suspected outlier presence.}
+\item{outlier_flag}{A \eqn{T} by \eqn{P} data.frame of logical values where \code{TRUE} indicates where leverage exceeds the cutoff, signaling suspected outlier presence.}
 \item{mask}{
 A length \eqn{P} numeric vector corresponding to the data locations in \code{X}. Each value indicates whether the location was masked:
 \describe{

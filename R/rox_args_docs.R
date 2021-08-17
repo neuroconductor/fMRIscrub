@@ -21,7 +21,7 @@
 #'  high kurtosis and outlier presence. Detrending should not be used with 
 #'  non-time-series data because the observations are not temporally related.
 #' 
-#'  Additional nuisance regressors can be speficied like so:
+#'  Additional nuisance regressors can be specified like so:
 #'  \code{cbind(1, dct_bases(nrow(x), 4), more_nuisance)}.
 #' @param center,scale Center the columns of the data by their medians, and scale the
 #'  columns of the data by their median absolute deviations (MADs)? Default: \code{TRUE}. 
