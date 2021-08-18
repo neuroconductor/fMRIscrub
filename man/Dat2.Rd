@@ -11,11 +11,12 @@ A numeric matrix of 145 time points by 4679 voxels
 Dat2
 }
 \description{
-A sagittal slice from the fMRI time series for subject 0051479 (Caltech). The
-data has been pre-processed with slice time correction, rigid body
-realignment estimation, spatial normalization to MNI space, and linear
-detrending. Subject 0051479 was a typically-developing 20-year-old female.
-The scan has few to no artifacts. A mask was applied to vectorize the spatial
+A sagittal slice from the fMRI time series for subject 0051479. The scan was
+obtained at the California Institute of Technology. The scan has
+been pre-processed with slice time correction, rigid body realignment
+estimation, spatial normalization to MNI space, and linear detrending.
+Subject 0051479 was a typically-developing 20-year-old female. The scan has
+few visible artifacts. A mask was applied to vectorize the spatial
 dimensions.
 }
 \details{
