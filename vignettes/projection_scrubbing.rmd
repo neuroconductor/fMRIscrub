@@ -40,11 +40,11 @@ library(fMRIscrub)
  
 ### Results
 
-The data for both subjects consist of a single slice from an fMRI volume. A brain mask has been applied to vectorize the data, forming a $T \times V$ (time by voxel) matrix. These are automatically added into the environment upon loading `fMRIscrub`:
+The data for both subjects consist of a sagittal slice from an fMRI volume. The fMRI data was preprocessed with pre-processed with slice time correction, rigid body realignment estimation, spatial normalization to MNI space, and linear detrending. A brain mask has been applied to vectorize the data, forming a $T \times V$ (time by voxel) matrix. These are automatically added into the environment upon loading `fMRIscrub`:
 
 ```{r}
-dim(Dat1)
-dim(Dat2)
+dim(Dat1) # subject 0050048 (Pitt); many artifacts
+dim(Dat2) # subject 0051479 (Caltech); few or no artifacts
 ```
 
 We will now run projection scrubbing on both datasets. We'll use the default implementation (ICA leverage), except additionally we will stabilize each component's mean and variance prior to kurtosis and leverage computation.[^1]

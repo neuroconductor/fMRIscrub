@@ -31,6 +31,15 @@ plot(s_Dat1)
 Dat1_cleaned <- Dat1[!s_Dat1$outlier_flag,]
 ```
 
+## Data
+
+Two scans from the [ABIDE I](http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html) are included in `fMRIscrub`: `Dat1` has many artifacts whereas `Dat2` is relatively artifact-free. Both are vectorized sagittal slices stored as numeric matrices. They are loaded into the environment upon loading the package.
+
+We acknowledge the corresponding funding for the ABIDE I data:
+
+> Primary support for the work by Adriana Di Martino was provided by the (NIMH K23MH087770) and the Leon Levy Foundation.
+Primary support for the work by Michael P. Milham and the INDI team was provided by gifts from Joseph P. Healy and the Stavros Niarchos Foundation to the Child Mind Institute, as well as by an NIMH award to MPM ( NIMH R03MH096321). 
+
 ## Vignette
 
 See [this link](https://github.com/mandymejia/fMRIscrub/blob/master/vignettes/projection_scrubbing.rmd) to view the tutorial vignette.

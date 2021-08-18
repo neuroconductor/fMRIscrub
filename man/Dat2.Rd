@@ -3,14 +3,22 @@
 \docType{data}
 \name{Dat2}
 \alias{Dat2}
-\title{Example fMRI Time Series for Subject 2}
+\title{Second Example Time Series from the ABIDE}
 \format{
-A matrix of 145 time points by 4679 voxels
+A numeric matrix of 145 time points by 4679 voxels
 }
 \usage{
 Dat2
 }
 \description{
-A masked slice of an fMRI time series, turned into a matrix
+A sagittal slice from the fMRI time series for subject 0051479 (Caltech). The
+data has been pre-processed with slice time correction, rigid body
+realignment estimation, spatial normalization to MNI space, and linear
+detrending. Subject 0051479 was a typically-developing 20-year-old female.
+The scan has few to no artifacts. A mask was applied to vectorize the spatial
+dimensions.
+}
+\details{
+Source: http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html
 }
 \keyword{datasets}
