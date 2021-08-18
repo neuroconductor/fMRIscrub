@@ -11,6 +11,10 @@
 #'  Source: http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html
 #'
 #' @format A numeric matrix of 193 time points by 4675 voxels
+#' @section References:
+#'  \itemize{
+#'    \item{1.Di Martino, A. et al. The autism brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain architecture in autism. Mol Psychiatry 19, 659–667 (2014).}
+#' }
 "Dat1"
 
 #' Second Example Time Series from the ABIDE
@@ -26,4 +30,8 @@
 #'  Source: http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html
 #' 
 #' @format A numeric matrix of 145 time points by 4679 voxels
+#' @section References:
+#'  \itemize{
+#'    \item{1.Di Martino, A. et al. The autism brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain architecture in autism. Mol Psychiatry 19, 659–667 (2014).}
+#' }
 "Dat2"

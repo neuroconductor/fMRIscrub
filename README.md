@@ -42,8 +42,8 @@ Dat1_cleaned <- Dat1[!s_Dat1$outlier_flag,]
 
 Two scans from the [ABIDE
 I](http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html) are
-included in `fMRIscrub`: `Dat1` has many artifacts whereas `Dat2` is
-relatively artifact-free. Both are vectorized sagittal slices stored as
+included in `fMRIscrub`: `Dat1` has many artifacts whereas `Dat2` has
+few visible artifacts. Both are vectorized sagittal slices stored as
 numeric matrices. They are loaded into the environment upon loading the
 package.
 

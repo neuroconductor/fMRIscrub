@@ -22,4 +22,11 @@ dimensions.
 \details{
 Source: http://fcon_1000.projects.nitrc.org/indi/abide/abide_I.html
 }
+\section{References}{
+
+\itemize{
+\item{1.Di Martino, A. et al. The autism brain imaging data exchange: towards a large-scale evaluation of the intrinsic brain architecture in autism. Mol Psychiatry 19, 659–667 (2014).}
+}
+}
+
 \keyword{datasets}

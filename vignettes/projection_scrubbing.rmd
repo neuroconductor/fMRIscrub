@@ -36,7 +36,7 @@ library(fMRIscrub)
 
 ### Data
 
-`fMRIscrub` includes resting-state scans from two subjects in the Autism and Brain Imaging Data Exchange (ABIDE), a publicly available neuroimaging resource [(Di Martino and others, 2014)](https://doi.org/10.1038/mp.2013.78). The first scan contains artifacts likely due to a couple periods of high subject head motion; the second is relatively artifact-free. The data represent axial slices instead of the entire brain to minimize the package size of `fMRIscrub`.
+`fMRIscrub` includes resting-state scans from two subjects in the Autism and Brain Imaging Data Exchange (ABIDE), a publicly available neuroimaging resource [(Di Martino and others, 2014)](https://doi.org/10.1038/mp.2013.78). The first scan contains several artifacts likely due periods of high subject head motion; the second has few visible artifacts. The data represent axial slices instead of the entire brain to minimize the package size of `fMRIscrub`.
  
 ### Results
 
