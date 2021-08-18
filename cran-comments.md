@@ -89,3 +89,10 @@ Please do not set a seed to a specific number within a function.
 
 * We added an argument `seed` to each applicable function to control whether
   the seed is set or not, and if so, what value it is set to.
+
+## Second resubmission
+
+   Possibly misspelled words in DESCRIPTION:
+     incudes (27:38)
+
+* Fixed!

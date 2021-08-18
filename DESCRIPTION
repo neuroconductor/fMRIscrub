@@ -24,7 +24,7 @@ Authors@R: c(
     )
 Maintainer: Amanda Mejia <mandy.mejia@gmail.com>
 Description: Data-driven fMRI denoising with projection scrubbing (Pham et al 
-    (2021) <arXiv:2108.00319>). Also incudes routines for DVARS (Derivatives 
+    (2021) <arXiv:2108.00319>). Also includes routines for DVARS (Derivatives 
     VARianceS) (Afyouni and Nichols (2018) 
     <doi:10.1016/j.neuroimage.2017.12.098>), motion scrubbing (Power et al 
     (2012) <doi:10.1016/j.neuroimage.2011.10.018>), aCompCor (anatomical 
