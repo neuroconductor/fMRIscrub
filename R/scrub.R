@@ -29,7 +29,7 @@ scrub <- function(X, method=c("projection", "DVARS"), ...) {
 #' 
 #' Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
 #'  to identify artifactual time points. Requires \code{ciftiTools} and the 
-#'  Connectime Workbench.
+#'  Connectome Workbench.
 #' 
 #' @param X Path to a CIFTI file, or a \code{"xifti"} object. 
 #' @param method \code{"projection"} or \code{"DVARS"}

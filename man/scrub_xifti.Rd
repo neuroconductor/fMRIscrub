@@ -37,5 +37,5 @@ A list with components
 \description{
 Performs projection scrubbing or DVARS scrubbing, and optionally thresholds
 to identify artifactual time points. Requires \code{ciftiTools} and the
-Connectime Workbench.
+Connectome Workbench.
 }
