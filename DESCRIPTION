@@ -1,7 +1,7 @@
 Package: fMRIscrub
 Type: Package
 Title: Scrubbing and Other Data Cleaning Routines for fMRI
-Version: 0.8.2
+Version: 0.8.3
 Authors@R: c(
     person(given = "Amanda",
            family = "Mejia",
@@ -36,7 +36,6 @@ Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
 Imports:
-    expm,
     MASS,
     e1071,
     pesel,

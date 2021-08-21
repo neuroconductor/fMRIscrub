@@ -96,3 +96,16 @@ Please do not set a seed to a specific number within a function.
      incudes (27:38)
 
 * Fixed!
+
+## Third resubmission
+
+The package was accepted on CRAN, but we were later notified by email about the following issue:
+
+Version: 0.8.2
+Check: dependencies in R code
+Result: NOTE
+    Namespace in Imports field not imported from: ‘expm’
+     All declared Imports should be used.
+Flavors: r-devel-linux-x86_64-fedora-clang, r-devel-linux-x86_64-fedora-gcc
+
+The `expm` package has been removed from the Imports.
