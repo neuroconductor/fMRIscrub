@@ -109,3 +109,14 @@ Result: NOTE
 Flavors: r-devel-linux-x86_64-fedora-clang, r-devel-linux-x86_64-fedora-gcc
 
 The `expm` package has been removed from the Imports.
+
+## Fourth resubmission
+
+   Found the following (possibly) invalid URLs:
+     URL: https://travis-ci.com/github/mandymejia/fMRIscrub (moved to
+https://app.travis-ci.com:443/github/mandymejia/fMRIscrub)
+       From: README.md
+       Status: 301
+       Message: Moved Permanently
+
+* Fixed!
