@@ -95,6 +95,34 @@ dct_bases <- function(T_, n){
   b
 }
 
+#' Convert between number of DCT bases and Hz of highpass filter
+#' 
+#' Provide either \code{n} or \code{f} to calculate the other.
+#' 
+#' If only the total length of the scan is known, you can set that to \code{TR}
+#' and use \code{T_=1}.
+#' 
+#' \eqn{f = n / (2 * T_ * TR)}
+#' 
+#' @param T_ Length of timeseries (number of timepoints)
+#' @param TR TR of the fMRI scan, in seconds (the time between timepoints)
+#' @param n Number of cosine bases
+#' @param f Hz of highpass filter
+#' 
+#' @return If \code{n} was provided, the highpass filter cutoff (Hz) is returned.
+#'  Otherwise, if \code{f} was provided, the number of cosine bases is returned.
+#'  The result should be rounded before passing to \code{\link{dct_bases}}
+#' 
+#' @export
+dct_convert <- function(T_, TR, n=NULL, f=NULL){
+  stopifnot(xor(is.null(n), is.null(f)))
+  if (is.null(n)) {
+    return(f * 2 * T_ * TR)
+  } else if (is.null(f)) {
+    return(n / (2 * T_ * TR))
+  } else { stop() }
+}
+
 #' Wrapper to common functions for reading NIFTIs
 #' 
 #' Tries \code{RNifti::readNifti}, then \code{oro.nifti::readNIfTI}. If

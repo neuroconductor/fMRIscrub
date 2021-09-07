@@ -120,3 +120,7 @@ https://app.travis-ci.com:443/github/mandymejia/fMRIscrub)
        Message: Moved Permanently
 
 * Fixed!
+
+## Fifth resubmission
+
+Submitting again after the CRAN holiday.
