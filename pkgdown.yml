@@ -1,0 +1,7 @@
+pandoc: 2.7.3
+pkgdown: 1.9000.9000.9000
+pkgdown_sha: 3d38179ceb039be4991155a1213959fb5d20fbfe
+articles:
+  projection_scrubbing: projection_scrubbing.html
+last_built: 2021-10-14T22:09Z
+
